@@ -67,6 +67,32 @@ const updateMe = async (req, res, next) => {
 };
 
 /**
+ * POST /api/auth/me/avatar
+ * Tải ảnh đại diện lên
+ */
+const uploadAvatar = async (req, res, next) => {
+  try {
+    const user = await authService.uploadAvatar(req.user.id, req.file, req);
+    return sendSuccess(res, 'Cập nhật ảnh đại diện thành công.', { user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * DELETE /api/auth/me/avatar
+ * Gỡ ảnh đại diện
+ */
+const removeAvatar = async (req, res, next) => {
+  try {
+    const user = await authService.removeAvatar(req.user.id, req);
+    return sendSuccess(res, 'Đã gỡ ảnh đại diện.', { user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * POST /api/auth/change-password
  * Đổi mật khẩu (yêu cầu mật khẩu cũ)
  */
@@ -85,5 +111,7 @@ module.exports = {
   logout,
   getMe,
   updateMe,
+  uploadAvatar,
+  removeAvatar,
   changePassword,
 };

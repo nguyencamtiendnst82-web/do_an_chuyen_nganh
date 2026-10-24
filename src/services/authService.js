@@ -1,7 +1,13 @@
+const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/userRepository');
 const logRepository = require('../repositories/logRepository');
+const {
+  AVATAR_URL_PREFIX,
+  isRealImageFile,
+  deleteAvatarFile,
+} = require('../middlewares/uploadImage');
 const {
   registerSchema,
   loginSchema,
@@ -171,14 +177,20 @@ const getMe = async (userId) => {
 };
 
 /**
- * Cập nhật hồ sơ cá nhân (full_name, phone, address, avatar_url)
+ * Cập nhật hồ sơ cá nhân (full_name, phone, address)
+ * Ảnh đại diện KHÔNG còn cập nhật qua đây (không nhận URL tự do từ client),
+ * mà đi qua uploadAvatar / removeAvatar.
  */
 const updateMe = async (userId, body, req) => {
   const parsed = updateMeSchema.parse(body);
 
+  // Loại bỏ avatar_url nếu client vẫn gửi lên
+  // eslint-disable-next-line no-unused-vars
+  const { avatar_url, ...fields } = parsed;
+
   // Nếu đổi phone, kiểm tra trùng với người khác
-  if (parsed.phone) {
-    const existingByPhone = await userRepository.findByPhone(parsed.phone);
+  if (fields.phone) {
+    const existingByPhone = await userRepository.findByPhone(fields.phone);
     if (existingByPhone && existingByPhone.id !== userId) {
       const err = new Error('Số điện thoại này đã được đăng ký bởi tài khoản khác.');
       err.statusCode = 409;
@@ -187,7 +199,7 @@ const updateMe = async (userId, body, req) => {
   }
 
   const oldUser = await userRepository.findById(userId);
-  await userRepository.update(userId, parsed);
+  await userRepository.update(userId, fields);
 
   // Ghi log
   await logRepository.insert({
@@ -196,7 +208,90 @@ const updateMe = async (userId, body, req) => {
     entity_name: 'users',
     entity_id: userId,
     old_values: { full_name: oldUser.full_name, phone: oldUser.phone, address: oldUser.address },
-    new_values: parsed,
+    new_values: fields,
+    ip_address: req.ip || null,
+    user_agent: req.headers?.['user-agent'] || null,
+  });
+
+  const updated = await userRepository.findById(userId);
+  return safeUser(updated);
+};
+
+/**
+ * Xóa file vừa tải lên khi có lỗi (tránh để lại file rác)
+ */
+const discardUploadedFile = async (file) => {
+  if (!file?.path) return;
+  try {
+    await fs.promises.unlink(file.path);
+  } catch (err) {
+    if (err.code !== 'ENOENT') console.warn('[Avatar] Không xóa được file tạm:', err.message);
+  }
+};
+
+/**
+ * Tải ảnh đại diện lên
+ * - Kiểm tra lại nội dung file có đúng là ảnh thật (magic bytes)
+ * - Xóa ảnh cũ trên đĩa, lưu đường dẫn mới vào users.avatar_url
+ */
+const uploadAvatar = async (userId, file, req) => {
+  if (!file) {
+    const err = new Error('Vui lòng chọn một ảnh để tải lên.');
+    err.statusCode = 422;
+    throw err;
+  }
+
+  try {
+    const isImage = await isRealImageFile(file.path);
+    if (!isImage) {
+      const err = new Error('Tệp tải lên không phải là ảnh hợp lệ.');
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const oldUser = await userRepository.findById(userId);
+    const newUrl = AVATAR_URL_PREFIX + file.filename;
+
+    await userRepository.update(userId, { avatar_url: newUrl });
+
+    // Chỉ xóa ảnh cũ sau khi đã lưu CSDL thành công
+    await deleteAvatarFile(oldUser?.avatar_url);
+
+    await logRepository.insert({
+      user_id: userId,
+      action: 'UPDATE_AVATAR',
+      entity_name: 'users',
+      entity_id: userId,
+      old_values: { avatar_url: oldUser?.avatar_url || null },
+      new_values: { avatar_url: newUrl },
+      ip_address: req.ip || null,
+      user_agent: req.headers?.['user-agent'] || null,
+    });
+
+    const updated = await userRepository.findById(userId);
+    return safeUser(updated);
+  } catch (err) {
+    await discardUploadedFile(file);
+    throw err;
+  }
+};
+
+/**
+ * Gỡ ảnh đại diện
+ */
+const removeAvatar = async (userId, req) => {
+  const oldUser = await userRepository.findById(userId);
+
+  await userRepository.update(userId, { avatar_url: null });
+  await deleteAvatarFile(oldUser?.avatar_url);
+
+  await logRepository.insert({
+    user_id: userId,
+    action: 'REMOVE_AVATAR',
+    entity_name: 'users',
+    entity_id: userId,
+    old_values: { avatar_url: oldUser?.avatar_url || null },
+    new_values: { avatar_url: null },
     ip_address: req.ip || null,
     user_agent: req.headers?.['user-agent'] || null,
   });
@@ -239,5 +334,7 @@ module.exports = {
   logout,
   getMe,
   updateMe,
+  uploadAvatar,
+  removeAvatar,
   changePassword,
 };

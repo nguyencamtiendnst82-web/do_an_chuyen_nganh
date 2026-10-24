@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
 const authenticate = require('../middlewares/authenticate');
+const { uploadAvatarImage, AVATAR_DIR } = require('../middlewares/uploadImage');
 const {
   register,
   login,
@@ -10,6 +11,8 @@ const {
   getMe,
   updateMe,
   changePassword,
+  uploadAvatar,
+  removeAvatar,
 } = require('../controllers/authController');
 
 // Rate limit cho đăng nhập: 10 lần / 15 phút / IP
@@ -29,6 +32,21 @@ const loginLimiter = rateLimit({
     process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
 });
 
+// GET /api/auth/avatars/<tên-file> – Phục vụ ảnh đại diện (công khai, chỉ đọc)
+// Đi qua tiền tố /api nên proxy của Vite và tunnel đều dùng được, không cần cấu hình thêm.
+router.use(
+  '/avatars',
+  express.static(AVATAR_DIR, {
+    index: false,
+    dotfiles: 'ignore',
+    maxAge: '7d',
+    setHeaders: (res) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
+  })
+);
+
 // POST /api/auth/register
 router.post('/register', register);
 
@@ -43,6 +61,12 @@ router.get('/me', authenticate, getMe);
 
 // PUT /api/auth/me – Cập nhật hồ sơ cá nhân (mọi role)
 router.put('/me', authenticate, updateMe);
+
+// POST /api/auth/me/avatar – Tải ảnh đại diện lên (form-data, field "avatar")
+router.post('/me/avatar', authenticate, uploadAvatarImage, uploadAvatar);
+
+// DELETE /api/auth/me/avatar – Gỡ ảnh đại diện
+router.delete('/me/avatar', authenticate, removeAvatar);
 
 // POST /api/auth/change-password (mọi role)
 router.post('/change-password', authenticate, changePassword);

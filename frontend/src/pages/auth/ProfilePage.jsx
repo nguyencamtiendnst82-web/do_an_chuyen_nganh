@@ -1,26 +1,38 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import axiosClient from '../../api/axiosClient'
+
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024 // 2MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 /**
  * ProfilePage: Xem và chỉnh sửa hồ sơ cá nhân
  * - Cho phép cả 3 role: customer, staff, admin (hiển thị trong layout tương ứng)
- * - Form cập nhật: full_name, phone, address, avatar_url
+ * - Form cập nhật: full_name, phone, address
+ * - Ảnh đại diện: tải file từ máy lên (JPG/PNG/WEBP, tối đa 2MB)
  * - Form đổi mật khẩu: old_password, new_password
  */
 const ProfilePage = () => {
-  const { user, login } = useAuth()
+  const auth = useAuth()
+  const { user } = auth
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
     full_name: '',
     phone: '',
     address: '',
-    avatar_url: '',
   })
   const [profileErrors, setProfileErrors] = useState({})
   const [profileSuccess, setProfileSuccess] = useState('')
   const [profileLoading, setProfileLoading] = useState(false)
+
+  // Avatar
+  const fileInputRef = useRef(null)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState('')
+  const [avatarError, setAvatarError] = useState('')
+  const [avatarSuccess, setAvatarSuccess] = useState('')
+  const [avatarLoading, setAvatarLoading] = useState(false)
 
   // Password form
   const [pwForm, setPwForm] = useState({
@@ -39,10 +51,30 @@ const ProfilePage = () => {
         full_name: user.full_name || '',
         phone: user.phone || '',
         address: user.address || '',
-        avatar_url: user.avatar_url || '',
       })
     }
   }, [user])
+
+  // Giải phóng URL xem trước khi đổi ảnh hoặc rời trang
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
+
+  /**
+   * Cập nhật user trong AuthContext để ảnh hiện ngay trên header.
+   * Dùng hàm mà AuthContext cung cấp; nếu không có thì tải lại trang.
+   */
+  const syncUserToContext = async (updatedUser) => {
+    if (typeof auth.setUser === 'function') {
+      auth.setUser(updatedUser)
+    } else if (typeof auth.refreshUser === 'function') {
+      await auth.refreshUser()
+    } else {
+      window.location.reload()
+    }
+  }
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target
@@ -66,17 +98,15 @@ const ProfilePage = () => {
         full_name: profileForm.full_name.trim(),
         phone: profileForm.phone || undefined,
         address: profileForm.address || null,
-        avatar_url: profileForm.avatar_url || null,
       })
       setProfileSuccess('Cập nhật hồ sơ thành công!')
-      // Cập nhật context (không cần re-login)
       const updatedUser = res.data.data.user
       setProfileForm({
         full_name: updatedUser.full_name || '',
         phone: updatedUser.phone || '',
         address: updatedUser.address || '',
-        avatar_url: updatedUser.avatar_url || '',
       })
+      await syncUserToContext(updatedUser)
     } catch (err) {
       const data = err.response?.data
       if (err.response?.status === 422 && data?.errors) {
@@ -91,6 +121,76 @@ const ProfilePage = () => {
     }
   }
 
+  // ----- Ảnh đại diện -----
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files?.[0]
+    setAvatarError('')
+    setAvatarSuccess('')
+    if (!file) return
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setAvatarError('Chỉ chấp nhận ảnh định dạng JPG, PNG hoặc WEBP.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError('Ảnh quá lớn. Dung lượng tối đa là 2MB.')
+      e.target.value = ''
+      return
+    }
+
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
+  const resetAvatarSelection = () => {
+    setAvatarFile(null)
+    setAvatarPreview('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return
+    setAvatarError('')
+    setAvatarSuccess('')
+    setAvatarLoading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('avatar', avatarFile)
+
+      const res = await axiosClient.post('/auth/me/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setAvatarSuccess('Đã cập nhật ảnh đại diện!')
+      resetAvatarSelection()
+      await syncUserToContext(res.data.data.user)
+    } catch (err) {
+      setAvatarError(err.response?.data?.message || 'Tải ảnh lên thất bại. Vui lòng thử lại.')
+    } finally {
+      setAvatarLoading(false)
+    }
+  }
+
+  const handleAvatarRemove = async () => {
+    if (!window.confirm('Bạn có chắc muốn gỡ ảnh đại diện?')) return
+    setAvatarError('')
+    setAvatarSuccess('')
+    setAvatarLoading(true)
+
+    try {
+      const res = await axiosClient.delete('/auth/me/avatar')
+      setAvatarSuccess('Đã gỡ ảnh đại diện.')
+      resetAvatarSelection()
+      await syncUserToContext(res.data.data.user)
+    } catch (err) {
+      setAvatarError(err.response?.data?.message || 'Gỡ ảnh thất bại. Vui lòng thử lại.')
+    } finally {
+      setAvatarLoading(false)
+    }
+  }
+
+  // ----- Đổi mật khẩu -----
   const handlePwChange = (e) => {
     const { name, value } = e.target
     setPwForm((prev) => ({ ...prev, [name]: value }))
@@ -142,6 +242,9 @@ const ProfilePage = () => {
   }
   const roleColor = roleColors[user?.role_name] || 'text-gray-600 bg-gray-50'
 
+  // Ảnh đang hiển thị: ưu tiên ảnh vừa chọn (xem trước), nếu không thì ảnh đang lưu
+  const displayedAvatar = avatarPreview || user?.avatar_url
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-6">
       {/* Header */}
@@ -154,9 +257,9 @@ const ProfilePage = () => {
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         {/* Avatar + Info */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-2xl font-bold">
-            {user?.avatar_url
-              ? <img src={user.avatar_url} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
+          <div className="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-2xl font-bold overflow-hidden shrink-0">
+            {displayedAvatar
+              ? <img src={displayedAvatar} alt="Ảnh đại diện" className="w-16 h-16 rounded-full object-cover" />
               : user?.full_name?.[0]?.toUpperCase()
             }
           </div>
@@ -166,6 +269,77 @@ const ProfilePage = () => {
               {user?.role_display_name || user?.role_name}
             </span>
           </div>
+        </div>
+
+        {/* Ảnh đại diện: tải lên từ máy */}
+        <div className="mb-6 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-800 border-b border-gray-100 pb-2">Ảnh đại diện</h3>
+
+          {avatarError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+              {avatarError}
+            </div>
+          )}
+          {avatarSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
+              {avatarSuccess}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleAvatarSelect}
+            className="hidden"
+            id="avatar-input"
+          />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <label
+              htmlFor="avatar-input"
+              className="cursor-pointer border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              Chọn ảnh
+            </label>
+
+            {avatarFile && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleAvatarUpload}
+                  disabled={avatarLoading}
+                  className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {avatarLoading ? 'Đang tải lên...' : 'Tải lên'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetAvatarSelection}
+                  disabled={avatarLoading}
+                  className="text-gray-600 px-3 py-2 text-sm hover:underline disabled:opacity-60"
+                >
+                  Hủy
+                </button>
+              </>
+            )}
+
+            {!avatarFile && user?.avatar_url && (
+              <button
+                type="button"
+                onClick={handleAvatarRemove}
+                disabled={avatarLoading}
+                className="text-red-600 px-3 py-2 text-sm hover:underline disabled:opacity-60"
+              >
+                {avatarLoading ? 'Đang xử lý...' : 'Gỡ ảnh'}
+              </button>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-400">
+            {avatarFile ? `Đã chọn: ${avatarFile.name}. ` : ''}
+            Định dạng JPG, PNG hoặc WEBP, tối đa 2MB.
+          </p>
         </div>
 
         {/* Profile form */}
@@ -224,19 +398,6 @@ const ProfilePage = () => {
               placeholder="Địa chỉ liên hệ"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL ảnh đại diện</label>
-            <input
-              name="avatar_url"
-              type="url"
-              value={profileForm.avatar_url}
-              onChange={handleProfileChange}
-              placeholder="https://example.com/avatar.jpg"
-              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors.avatar_url ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-            />
-            {profileErrors.avatar_url && <p className="mt-1 text-xs text-red-600">{profileErrors.avatar_url}</p>}
           </div>
 
           <div className="flex justify-end">
