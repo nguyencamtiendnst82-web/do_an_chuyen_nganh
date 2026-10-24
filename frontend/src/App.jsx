@@ -1,121 +1,96 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 
-function App() {
-  const [count, setCount] = useState(0)
+// Layouts
+import PublicLayout from './layouts/PublicLayout'
+import CustomerLayout from './layouts/CustomerLayout'
+import StaffLayout from './layouts/StaffLayout'
+import AdminLayout from './layouts/AdminLayout'
+
+// Pages – Auth
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import ProfilePage from './pages/auth/ProfilePage'
+
+// Pages – Public
+import HomePage from './pages/HomePage'
+
+// Pages – Staff
+import StaffDashboard from './pages/staff/StaffDashboard'
+
+// Pages – Admin
+import AdminDashboard from './pages/admin/AdminDashboard'
+
+// Pages – 404
+import NotFoundPage from './pages/NotFoundPage'
+
+/**
+ * ProfileRoute: Route /profile hiển thị trong layout tương ứng với role hiện tại
+ */
+const ProfileRoute = () => {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+
+  const layoutMap = {
+    admin: <AdminLayout />,
+    staff: <StaffLayout />,
+    customer: <CustomerLayout />,
+  }
+  const Layout = () => layoutMap[user.role_name] || <CustomerLayout />
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Layout>
+      <Outlet />
+    </Layout>
+  )
+}
 
-      <div className="ticks"></div>
+const App = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* ── Public routes (không cần đăng nhập) ─────────────────── */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {/* ── /profile: cho phép cả 3 role, layout theo role ────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['customer', 'staff', 'admin']} />}>
+            <Route path="/profile" element={<ProfileRoute />}>
+              <Route index element={<ProfilePage />} />
+            </Route>
+          </Route>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          {/* ── Customer routes ────────────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
+            <Route element={<CustomerLayout />}>
+              {/* Thêm các route của customer ở đây */}
+            </Route>
+          </Route>
+
+          {/* ── Staff routes ───────────────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
+            <Route element={<StaffLayout />}>
+              <Route path="/staff" element={<StaffDashboard />} />
+            </Route>
+          </Route>
+
+          {/* ── Admin routes ───────────────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+          </Route>
+
+          {/* ── 404 ────────────────────────────────────────────────────── */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

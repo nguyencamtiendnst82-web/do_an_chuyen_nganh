@@ -1,0 +1,131 @@
+import { useState } from 'react'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+
+/**
+ * CustomerLayout: Layout cho khách hàng đã đăng nhập
+ * - Header với avatar và dropdown menu
+ * - Navigation bar responsive
+ */
+const CustomerLayout = () => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
+
+  const navLinks = [
+    { to: '/', label: 'Trang chủ', exact: true },
+    { to: '/profile', label: 'Hồ sơ của tôi' },
+  ]
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 text-pink-600 font-bold text-xl">
+            <span className="text-2xl">🐾</span>
+            <span className="hidden sm:block">Pet Spa</span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map(({ to, label, exact }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={exact}
+                className={({ isActive }) =>
+                  `text-sm font-medium transition-colors ${isActive ? 'text-pink-600' : 'text-gray-600 hover:text-gray-900'}`
+                }
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* User Dropdown */}
+          <div className="relative flex items-center gap-3">
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden p-2 text-gray-500 hover:text-gray-900"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d={mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+              </svg>
+            </button>
+
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 focus:outline-none"
+            >
+              <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-sm">
+                {user?.full_name?.[0]?.toUpperCase() || 'K'}
+              </div>
+              <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                {user?.full_name}
+              </span>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown menu */}
+            {dropdownOpen && (
+              <div className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                <Link
+                  to="/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Hồ sơ cá nhân
+                </Link>
+                <hr className="my-1 border-gray-100" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Nav */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-2">
+            {navLinks.map(({ to, label, exact }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={exact}
+                className={({ isActive }) =>
+                  `text-sm font-medium py-1 ${isActive ? 'text-pink-600' : 'text-gray-600'}`
+                }
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </header>
+
+      {/* Content */}
+      <main className="flex-1">
+        <Outlet />
+      </main>
+    </div>
+  )
+}
+
+export default CustomerLayout
