@@ -16,10 +16,11 @@ const AdminLayout = () => {
   }
 
   const navLinks = [
-    { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
-    { to: '/admin/users', label: 'Quản lý người dùng', icon: '👥' },
-    { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
-  ]
+  { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
+  { to: '/admin/users', label: 'Quản lý người dùng', icon: '👥' },
+  { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
+  { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
+]
 
   const Sidebar = ({ mobile = false }) => (
     <aside
@@ -42,9 +43,12 @@ const AdminLayout = () => {
         {/* User info */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
-              {user?.full_name?.[0]?.toUpperCase() || 'A'}
-            </div>
+            <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm overflow-hidden shrink-0">
+  {user?.avatar_url
+    ? <img src={user.avatar_url} alt="Ảnh đại diện" className="w-9 h-9 rounded-full object-cover" />
+    : user?.full_name?.[0]?.toUpperCase() || 'A'
+  }
+</div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
               <p className="text-xs text-purple-600 truncate">Quản trị viên</p>

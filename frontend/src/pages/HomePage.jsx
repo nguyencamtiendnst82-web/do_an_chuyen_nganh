@@ -1,22 +1,13 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import axiosClient from '../api/axiosClient'
 import { useAuth } from '../contexts/AuthContext'
 
 /**
  * HomePage: Trang chủ công khai
  * - Banner giới thiệu Pet Spa
- * - Hiển thị trạng thái kết nối backend
+ * - Danh sách dịch vụ nổi bật
  */
 const HomePage = () => {
   const { user } = useAuth()
-  const [healthStatus, setHealthStatus] = useState('loading')
-
-  useEffect(() => {
-    axiosClient.get('/health')
-      .then(() => setHealthStatus('online'))
-      .catch(() => setHealthStatus('offline'))
-  }, [])
 
   const services = [
     { icon: '🛁', title: 'Tắm sấy vệ sinh', desc: 'Làm sạch lông và da, khử mùi, dưỡng lông' },
@@ -80,19 +71,6 @@ const HomePage = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* System status */}
-      <section className="py-8 px-4 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-5xl mx-auto flex items-center justify-center gap-3">
-          <div className={`w-2.5 h-2.5 rounded-full ${healthStatus === 'online' ? 'bg-green-500' : healthStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-400 animate-pulse'}`} />
-          <span className="text-sm text-gray-500">
-            Hệ thống backend:{' '}
-            {healthStatus === 'online' ? <span className="text-green-600 font-medium">Đang hoạt động</span>
-              : healthStatus === 'offline' ? <span className="text-red-600 font-medium">Không thể kết nối</span>
-              : <span className="text-yellow-600 font-medium">Đang kiểm tra...</span>}
-          </span>
         </div>
       </section>
     </div>

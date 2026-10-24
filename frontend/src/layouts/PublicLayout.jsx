@@ -1,9 +1,11 @@
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import UserMenu from '../components/UserMenu'
 
 /**
  * PublicLayout: Header đơn giản với logo và link đăng nhập/đăng ký
  * Dùng cho trang chủ, đăng nhập, đăng ký
+ * - Đã đăng nhập: hiện avatar + menu (Hồ sơ, Đăng xuất; thêm "Vào trang quản lý" nếu là admin/staff)
  */
 const PublicLayout = () => {
   const { user } = useAuth()
@@ -22,13 +24,7 @@ const PublicLayout = () => {
           {/* Navigation */}
           <nav className="flex items-center gap-4">
             {user ? (
-              // Đã đăng nhập → hiển thị link về trang chính
-              <Link
-                to={user.role_name === 'admin' ? '/admin' : user.role_name === 'staff' ? '/staff' : '/'}
-                className="text-sm font-medium text-pink-600 hover:text-pink-700"
-              >
-                Vào trang quản lý
-              </Link>
+              <UserMenu />
             ) : (
               <>
                 <Link
