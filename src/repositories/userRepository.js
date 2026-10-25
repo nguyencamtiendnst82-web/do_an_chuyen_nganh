@@ -87,7 +87,7 @@ const create = async (userData, conn = null) => {
  */
 const update = async (id, fields) => {
   // Chỉ cho phép cập nhật các cột này
-  const allowedFields = ['full_name', 'phone', 'address', 'avatar_url'];
+  const allowedFields = ['full_name', 'phone', 'address', 'avatar_url', 'gender', 'birth_year'];
   const setClauses = [];
   const values = [];
 

@@ -33,6 +33,8 @@ CREATE TABLE `users` (
     `token_version` INT NOT NULL DEFAULT 0 COMMENT 'Tăng mỗi khi đổi mật khẩu để vô hiệu hóa JWT cũ',
     `avatar_url` VARCHAR(255) NULL COMMENT 'Đường dẫn ảnh đại diện',
     `address` VARCHAR(255) NULL COMMENT 'Địa chỉ liên hệ',
+    `gender` ENUM('male', 'female', 'other') NULL COMMENT 'Giới tính (để nhân viên xưng hô phù hợp)',
+    `birth_year` SMALLINT NULL COMMENT 'Năm sinh (để nhân viên xưng hô phù hợp)',
     `status` ENUM('active', 'inactive', 'locked') DEFAULT 'active' COMMENT 'Trạng thái hoạt động tài khoản',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

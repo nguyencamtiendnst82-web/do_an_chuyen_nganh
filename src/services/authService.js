@@ -6,6 +6,8 @@ import logRepository from '../repositories/logRepository.js';
 import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
 import { AVATAR_URL_PREFIX, isRealImageFile, deleteAvatarFile } from '../middlewares/uploadImage.js';
 import { registerSchema, loginSchema, updateMeSchema, changePasswordSchema } from '../validations/authSchemas.js';
+import { profileExtraSchema } from '../validations/profileSchemas.js';
+
 
 // Hằng số role_id (đồng bộ với seed.sql)
 const CUSTOMER_ROLE_ID = 3;
@@ -31,6 +33,8 @@ const safeUser = (user) => ({
   email: user.email,
   phone: user.phone,
   address: user.address,
+  gender: user.gender ?? null,
+  birth_year: user.birth_year ?? null,
   avatar_url: user.avatar_url,
   status: user.status,
   role_name: user.role_name,
@@ -170,16 +174,22 @@ const getMe = async (userId) => {
 };
 
 /**
- * Cập nhật hồ sơ cá nhân (full_name, phone, address)
+ * Cập nhật hồ sơ cá nhân (full_name, phone, address, gender, birth_year)
  * Ảnh đại diện KHÔNG còn cập nhật qua đây (không nhận URL tự do từ client),
  * mà đi qua uploadAvatar / removeAvatar.
  */
 const updateMe = async (userId, body, req) => {
-  const parsed = updateMeSchema.parse(body);
+  // Giới tính / năm sinh được kiểm tra bằng schema riêng; phần còn lại giữ nguyên schema cũ
+  const { gender, birth_year, ...rest } = body || {};
+  const parsed = updateMeSchema.parse(rest);
+  const extra = profileExtraSchema.parse({ gender, birth_year });
 
   // Loại bỏ avatar_url nếu client vẫn gửi lên
   // eslint-disable-next-line no-unused-vars
-  const { avatar_url, ...fields } = parsed;
+  const { avatar_url, ...baseFields } = parsed;
+  const fields = { ...baseFields };
+  if (extra.gender !== undefined) fields.gender = extra.gender;
+  if (extra.birth_year !== undefined) fields.birth_year = extra.birth_year;
 
   // Nếu đổi phone, kiểm tra trùng với người khác
   if (fields.phone) {
@@ -200,7 +210,13 @@ const updateMe = async (userId, body, req) => {
     action: 'UPDATE_PROFILE',
     entity_name: 'users',
     entity_id: userId,
-    old_values: { full_name: oldUser.full_name, phone: oldUser.phone, address: oldUser.address },
+    old_values: {
+      full_name: oldUser.full_name,
+      phone: oldUser.phone,
+      address: oldUser.address,
+      gender: oldUser.gender ?? null,
+      birth_year: oldUser.birth_year ?? null,
+    },
     new_values: fields,
     ip_address: req.ip || null,
     user_agent: req.headers?.['user-agent'] || null,

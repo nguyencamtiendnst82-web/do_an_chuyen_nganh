@@ -14,12 +14,14 @@ const PasswordField = ({
   error,
   hint,
   autoComplete,
-  placeholder = '••••••••',
+  placeholder = '',
   disabled = false,
+  noAutofill = false,
   children,
 }) => {
   const [visible, setVisible] = useState(false)
   const [capsLock, setCapsLock] = useState(false)
+  const [locked, setLocked] = useState(noAutofill)
 
   const handleKey = (e) => {
     if (typeof e.getModifierState === 'function') {
@@ -49,6 +51,8 @@ const PasswordField = ({
           onBlur={() => setCapsLock(false)}
           placeholder={placeholder}
           autoComplete={autoComplete}
+          readOnly={locked}
+          onFocus={() => setLocked(false)}
           disabled={disabled}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={describedBy}

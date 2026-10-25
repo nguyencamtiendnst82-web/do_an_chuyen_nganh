@@ -5,11 +5,19 @@ import ChangePasswordCard from '../../components/ChangePasswordCard'
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024 // 2MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const CURRENT_YEAR = new Date().getFullYear()
+
+const GENDER_OPTIONS = [
+  { value: '', label: 'Không muốn nêu' },
+  { value: 'male', label: 'Nam' },
+  { value: 'female', label: 'Nữ' },
+  { value: 'other', label: 'Khác' },
+]
 
 /**
  * ProfilePage: Xem và chỉnh sửa hồ sơ cá nhân
  * - Cho phép cả 3 role: customer, staff, admin (hiển thị trong layout tương ứng)
- * - Form cập nhật: full_name, phone, address
+ * - Form cập nhật: full_name, phone, address, gender, birth_year (dùng để xác định cách xưng hô)
  * - Ảnh đại diện: tải file từ máy lên (JPG/PNG/WEBP, tối đa 2MB)
  * - Đổi mật khẩu: component ChangePasswordCard
  */
@@ -22,6 +30,8 @@ const ProfilePage = () => {
     full_name: '',
     phone: '',
     address: '',
+    gender: '',
+    birth_year: '',
   })
   const [profileErrors, setProfileErrors] = useState({})
   const [profileSuccess, setProfileSuccess] = useState('')
@@ -42,6 +52,8 @@ const ProfilePage = () => {
         full_name: user.full_name || '',
         phone: user.phone || '',
         address: user.address || '',
+        gender: user.gender || '',
+        birth_year: user.birth_year ? String(user.birth_year) : '',
       })
     }
   }, [user])
@@ -82,6 +94,13 @@ const ProfilePage = () => {
       setProfileErrors({ full_name: 'Họ và tên phải có ít nhất 2 ký tự.' })
       return
     }
+    if (profileForm.birth_year) {
+      const year = Number(profileForm.birth_year)
+      if (!Number.isInteger(year) || year < 1900 || year > CURRENT_YEAR - 5) {
+        setProfileErrors({ birth_year: `Năm sinh phải từ 1900 đến ${CURRENT_YEAR - 5}.` })
+        return
+      }
+    }
 
     setProfileLoading(true)
     try {
@@ -89,6 +108,8 @@ const ProfilePage = () => {
         full_name: profileForm.full_name.trim(),
         phone: profileForm.phone || undefined,
         address: profileForm.address || null,
+        gender: profileForm.gender || null,
+        birth_year: profileForm.birth_year ? Number(profileForm.birth_year) : null,
       })
       setProfileSuccess('Cập nhật hồ sơ thành công!')
       const updatedUser = res.data.data.user
@@ -96,6 +117,8 @@ const ProfilePage = () => {
         full_name: updatedUser.full_name || '',
         phone: updatedUser.phone || '',
         address: updatedUser.address || '',
+        gender: updatedUser.gender || '',
+        birth_year: updatedUser.birth_year ? String(updatedUser.birth_year) : '',
       })
       await syncUserToContext(updatedUser)
     } catch (err) {
@@ -333,6 +356,44 @@ const ProfilePage = () => {
             />
             <p className="mt-1 text-xs text-gray-400">Email không thể thay đổi</p>
           </div>
+
+          {/* Giới tính + năm sinh: để hệ thống biết cách xưng hô */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+              <select
+                id="gender"
+                name="gender"
+                value={profileForm.gender}
+                onChange={handleProfileChange}
+                className={`w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors.gender ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+              >
+                {GENDER_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              {profileErrors.gender && <p className="mt-1 text-xs text-red-600">{profileErrors.gender}</p>}
+            </div>
+            <div>
+              <label htmlFor="birth_year" className="block text-sm font-medium text-gray-700 mb-1">Năm sinh</label>
+              <input
+                id="birth_year"
+                name="birth_year"
+                type="number"
+                inputMode="numeric"
+                min={1900}
+                max={CURRENT_YEAR - 5}
+                value={profileForm.birth_year}
+                onChange={handleProfileChange}
+                placeholder="VD: 1998"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors.birth_year ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+              />
+              {profileErrors.birth_year && <p className="mt-1 text-xs text-red-600">{profileErrors.birth_year}</p>}
+            </div>
+          </div>
+                    <p className="-mt-2 text-xs text-gray-400">
+            Không bắt buộc. Thông tin này giúp nhân viên Pet Spa xưng hô với bạn cho phù hợp khi tiếp đón.
+          </p>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>

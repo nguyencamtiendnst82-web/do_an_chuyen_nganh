@@ -16,7 +16,7 @@ const EMPTY_FORM = { old_password: '', new_password: '', confirm_new_password: '
  * - Hiển thị đúng lỗi từ server (sai mật khẩu cũ, quá nhiều lần thử, mật khẩu dễ đoán...)
  */
 const ChangePasswordCard = () => {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
@@ -113,18 +113,7 @@ const ChangePasswordCard = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        {/* Trường ẩn giúp trình quản lý mật khẩu của trình duyệt nhận đúng tài khoản */}
-        <input
-          type="text"
-          name="username"
-          autoComplete="username"
-          value={user?.email || ''}
-          readOnly
-          tabIndex={-1}
-          aria-hidden="true"
-          className="sr-only"
-        />
-
+        
         {errors._global && (
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">
             {errors._global}
@@ -145,7 +134,8 @@ const ChangePasswordCard = () => {
           value={form.old_password}
           onChange={handleChange}
           error={errors.old_password}
-          autoComplete="current-password"
+          autoComplete="new-password"
+          noAutofill
           disabled={loading}
         />
 
@@ -156,6 +146,7 @@ const ChangePasswordCard = () => {
           onChange={handleChange}
           error={errors.new_password}
           autoComplete="new-password"
+          noAutofill
           disabled={loading}
         >
           <PasswordStrength password={form.new_password} />
@@ -168,6 +159,7 @@ const ChangePasswordCard = () => {
           onChange={handleChange}
           error={errors.confirm_new_password}
           autoComplete="new-password"
+          noAutofill
           disabled={loading}
         >
           {confirmTouched && !errors.confirm_new_password && (
