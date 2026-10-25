@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosClient from '../api/axiosClient'
 import PasswordField from './PasswordField'
@@ -15,7 +16,8 @@ const EMPTY_FORM = { old_password: '', new_password: '', confirm_new_password: '
  * - Hiển thị đúng lỗi từ server (sai mật khẩu cũ, quá nhiều lần thử, mật khẩu dễ đoán...)
  */
 const ChangePasswordCard = () => {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState('')
@@ -72,7 +74,12 @@ const ChangePasswordCard = () => {
         new_password: form.new_password,
       })
       setForm(EMPTY_FORM)
-      setSuccess('Đổi mật khẩu thành công! Hãy dùng mật khẩu mới ở lần đăng nhập sau.')
+      setSuccess('Đổi mật khẩu thành công! Đang chuyển về trang đăng nhập...')
+      // Mọi phiên đăng nhập cũ (kể cả phiên này) đã bị vô hiệu hóa → đăng nhập lại
+      setTimeout(async () => {
+        try { await logout() } catch { /* token cũ đã hết hiệu lực, bỏ qua */ }
+        navigate('/login', { replace: true })
+      }, 1500)
     } catch (err) {
       const status = err.response?.status
       const data = err.response?.data
@@ -127,7 +134,7 @@ const ChangePasswordCard = () => {
           <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700" role="status">
             {success}
             <p className="text-xs text-green-600 mt-1">
-              Nếu bạn đã đăng nhập ở thiết bị khác không phải của mình, hãy đăng xuất khỏi thiết bị đó.
+              Các thiết bị khác đang đăng nhập bằng mật khẩu cũ cũng đã bị đăng xuất.
             </p>
           </div>
         )}
