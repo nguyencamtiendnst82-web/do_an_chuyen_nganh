@@ -32,6 +32,24 @@ const loginLimiter = rateLimit({
     process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
 });
 
+// Rate limit đổi mật khẩu: tối đa 5 lần THẤT BẠI / 15 phút / tài khoản
+// (chống kẻ cầm được token tìm mật khẩu cũ bằng cách thử liên tục).
+// Các lần đổi thành công không bị tính. Bỏ qua khi chạy Jest, giống loginLimiter.
+const changePasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `user-${req.user.id}`,
+  message: {
+    success: false,
+    message: 'Bạn đã thử đổi mật khẩu sai quá nhiều lần. Vui lòng thử lại sau 15 phút.',
+  },
+  skipSuccessfulRequests: true,
+  skip: () =>
+    process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
+});
+
 // GET /api/auth/avatars/<tên-file> – Phục vụ ảnh đại diện (công khai, chỉ đọc)
 // Đi qua tiền tố /api nên proxy của Vite và tunnel đều dùng được, không cần cấu hình thêm.
 router.use(
@@ -69,6 +87,6 @@ router.post('/me/avatar', authenticate, uploadAvatarImage, uploadAvatar);
 router.delete('/me/avatar', authenticate, removeAvatar);
 
 // POST /api/auth/change-password (mọi role)
-router.post('/change-password', authenticate, changePassword);
+router.post('/change-password', authenticate, changePasswordLimiter, changePassword);
 
 module.exports = router;

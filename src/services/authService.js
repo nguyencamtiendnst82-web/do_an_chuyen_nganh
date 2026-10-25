@@ -301,30 +301,68 @@ const removeAvatar = async (userId, req) => {
 };
 
 /**
+ * Tạo lỗi 422 gắn theo trường (để frontend hiện dưới đúng ô nhập)
+ */
+const fieldError = (field, message) => {
+  const err = new Error('Dữ liệu gửi lên không đúng định dạng');
+  err.statusCode = 422;
+  err.errors = [{ field, message }];
+  return err;
+};
+
+/**
  * Đổi mật khẩu (yêu cầu mật khẩu cũ)
+ * - Ghi nhật ký cả khi thất bại (phục vụ phát hiện dò mật khẩu)
+ * - Mật khẩu mới: không trùng mật khẩu cũ, không chứa email/số điện thoại, không vượt 72 byte (giới hạn bcrypt)
  */
 const changePassword = async (userId, body, req) => {
   const parsed = changePasswordSchema.parse(body);
 
   const user = await userRepository.findById(userId);
+  const logBase = {
+    user_id: userId,
+    entity_name: 'users',
+    entity_id: userId,
+    ip_address: req.ip || null,
+    user_agent: req.headers?.['user-agent'] || null,
+  };
+
+  // 1. Xác minh mật khẩu hiện tại
   const isMatch = await bcrypt.compare(parsed.old_password, user.password_hash);
   if (!isMatch) {
-    const err = new Error('Mật khẩu cũ không đúng.');
+    await logRepository.insert({
+      ...logBase,
+      action: 'CHANGE_PASSWORD_FAILED',
+      new_values: { reason: 'wrong_old_password' },
+    });
+    const err = new Error('Mật khẩu hiện tại không đúng.');
     err.statusCode = 400;
     throw err;
   }
 
+  // 2. Chính sách cho mật khẩu mới
+  if (parsed.new_password === parsed.old_password) {
+    throw fieldError('new_password', 'Mật khẩu mới không được trùng với mật khẩu hiện tại.');
+  }
+
+  if (Buffer.byteLength(parsed.new_password, 'utf8') > 72) {
+    throw fieldError('new_password', 'Mật khẩu quá dài (tối đa 72 ký tự).');
+  }
+
+  const lowered = parsed.new_password.toLowerCase();
+  const emailLocal = (user.email || '').split('@')[0].toLowerCase();
+  if ((emailLocal.length >= 4 && lowered.includes(emailLocal)) || (user.phone && lowered.includes(user.phone))) {
+    throw fieldError('new_password', 'Mật khẩu không nên chứa email hoặc số điện thoại của bạn.');
+  }
+
+  // 3. Băm và lưu
   const newHash = await bcrypt.hash(parsed.new_password, 10);
   await userRepository.changePassword(userId, newHash);
 
   // Ghi log (không lưu mật khẩu)
   await logRepository.insert({
-    user_id: userId,
+    ...logBase,
     action: 'CHANGE_PASSWORD',
-    entity_name: 'users',
-    entity_id: userId,
-    ip_address: req.ip || null,
-    user_agent: req.headers?.['user-agent'] || null,
   });
 };
 

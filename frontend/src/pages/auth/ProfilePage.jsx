@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import axiosClient from '../../api/axiosClient'
+import ChangePasswordCard from '../../components/ChangePasswordCard'
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024 // 2MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -10,7 +11,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
  * - Cho phép cả 3 role: customer, staff, admin (hiển thị trong layout tương ứng)
  * - Form cập nhật: full_name, phone, address
  * - Ảnh đại diện: tải file từ máy lên (JPG/PNG/WEBP, tối đa 2MB)
- * - Form đổi mật khẩu: old_password, new_password
+ * - Đổi mật khẩu: component ChangePasswordCard
  */
 const ProfilePage = () => {
   const auth = useAuth()
@@ -33,16 +34,6 @@ const ProfilePage = () => {
   const [avatarError, setAvatarError] = useState('')
   const [avatarSuccess, setAvatarSuccess] = useState('')
   const [avatarLoading, setAvatarLoading] = useState(false)
-
-  // Password form
-  const [pwForm, setPwForm] = useState({
-    old_password: '',
-    new_password: '',
-    confirm_new_password: '',
-  })
-  const [pwErrors, setPwErrors] = useState({})
-  const [pwSuccess, setPwSuccess] = useState('')
-  const [pwLoading, setPwLoading] = useState(false)
 
   // Nạp dữ liệu user hiện tại
   useEffect(() => {
@@ -187,51 +178,6 @@ const ProfilePage = () => {
       setAvatarError(err.response?.data?.message || 'Gỡ ảnh thất bại. Vui lòng thử lại.')
     } finally {
       setAvatarLoading(false)
-    }
-  }
-
-  // ----- Đổi mật khẩu -----
-  const handlePwChange = (e) => {
-    const { name, value } = e.target
-    setPwForm((prev) => ({ ...prev, [name]: value }))
-    if (pwErrors[name]) setPwErrors((prev) => ({ ...prev, [name]: '' }))
-  }
-
-  const handlePwSubmit = async (e) => {
-    e.preventDefault()
-    setPwSuccess('')
-    setPwErrors({})
-
-    if (!pwForm.old_password) {
-      setPwErrors({ old_password: 'Vui lòng nhập mật khẩu cũ.' })
-      return
-    }
-    if (!/^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(pwForm.new_password)) {
-      setPwErrors({ new_password: 'Mật khẩu mới phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số.' })
-      return
-    }
-    if (pwForm.new_password !== pwForm.confirm_new_password) {
-      setPwErrors({ confirm_new_password: 'Xác nhận mật khẩu không khớp.' })
-      return
-    }
-
-    setPwLoading(true)
-    try {
-      await axiosClient.post('/auth/change-password', {
-        old_password: pwForm.old_password,
-        new_password: pwForm.new_password,
-      })
-      setPwSuccess('Đổi mật khẩu thành công!')
-      setPwForm({ old_password: '', new_password: '', confirm_new_password: '' })
-    } catch (err) {
-      const data = err.response?.data
-      if (err.response?.status === 400) {
-        setPwErrors({ old_password: data?.message || 'Mật khẩu cũ không đúng.' })
-      } else {
-        setPwErrors({ _global: data?.message || 'Đổi mật khẩu thất bại.' })
-      }
-    } finally {
-      setPwLoading(false)
     }
   }
 
@@ -412,53 +358,8 @@ const ProfilePage = () => {
         </form>
       </div>
 
-      {/* Change password card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h3 className="text-sm font-semibold text-gray-800 border-b border-gray-100 pb-2 mb-4">Đổi mật khẩu</h3>
-
-        <form onSubmit={handlePwSubmit} className="space-y-4">
-          {pwErrors._global && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-              {pwErrors._global}
-            </div>
-          )}
-          {pwSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
-              {pwSuccess}
-            </div>
-          )}
-
-          {[
-            { name: 'old_password', label: 'Mật khẩu hiện tại' },
-            { name: 'new_password', label: 'Mật khẩu mới' },
-            { name: 'confirm_new_password', label: 'Xác nhận mật khẩu mới' },
-          ].map(({ name, label }) => (
-            <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-              <input
-                name={name}
-                type="password"
-                value={pwForm[name]}
-                onChange={handlePwChange}
-                placeholder="••••••••"
-                autoComplete={name === 'old_password' ? 'current-password' : 'new-password'}
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${pwErrors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-              />
-              {pwErrors[name] && <p className="mt-1 text-xs text-red-600">{pwErrors[name]}</p>}
-            </div>
-          ))}
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={pwLoading}
-              className="bg-gray-800 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-            >
-              {pwLoading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Đổi mật khẩu */}
+      <ChangePasswordCard />
     </div>
   )
 }
