@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+import { pool } from '../config/db.js';
 
 /**
  * Repository cho bảng system_logs
@@ -49,4 +49,5 @@ const insert = async ({
   }
 };
 
-module.exports = { insert };
+export { insert };
+export default { insert };

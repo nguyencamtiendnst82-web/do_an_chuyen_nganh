@@ -1,19 +1,10 @@
-const fs = require('fs');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const userRepository = require('../repositories/userRepository');
-const logRepository = require('../repositories/logRepository');
-const {
-  AVATAR_URL_PREFIX,
-  isRealImageFile,
-  deleteAvatarFile,
-} = require('../middlewares/uploadImage');
-const {
-  registerSchema,
-  loginSchema,
-  updateMeSchema,
-  changePasswordSchema,
-} = require('../validations/authSchemas');
+import fs from 'fs';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import userRepository from '../repositories/userRepository.js';
+import logRepository from '../repositories/logRepository.js';
+import { AVATAR_URL_PREFIX, isRealImageFile, deleteAvatarFile } from '../middlewares/uploadImage.js';
+import { registerSchema, loginSchema, updateMeSchema, changePasswordSchema } from '../validations/authSchemas.js';
 
 // Hằng số role_id (đồng bộ với seed.sql)
 const CUSTOMER_ROLE_ID = 3;
@@ -366,13 +357,5 @@ const changePassword = async (userId, body, req) => {
   });
 };
 
-module.exports = {
-  register,
-  login,
-  logout,
-  getMe,
-  updateMe,
-  uploadAvatar,
-  removeAvatar,
-  changePassword,
-};
+export { register, login, logout, getMe, updateMe, uploadAvatar, removeAvatar, changePassword };
+export default { register, login, logout, getMe, updateMe, uploadAvatar, removeAvatar, changePassword };

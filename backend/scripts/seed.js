@@ -1,5 +1,6 @@
-const bcrypt = require('bcryptjs');
-const { pool } = require('../../src/config/db');
+import { pathToFileURL } from 'node:url';
+import bcrypt from 'bcryptjs';
+import { pool } from '../../src/config/db.js';
 
 const formatDate = (date) => {
   const y = date.getFullYear();
@@ -247,11 +248,11 @@ const seedDatabase = async () => {
   }
 };
 
-if (require.main === module) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   seedDatabase()
     .then(() => process.exit(0))
     .catch(() => process.exit(1));
 }
 
-module.exports = seedDatabase;
+export default seedDatabase;
 

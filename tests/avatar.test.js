@@ -1,11 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const request = require('supertest');
+import fs from 'fs';
+import path from 'path';
+import request from 'supertest';
 
-const appModule = require('../src/app');
+import appModule from '../src/app.js';
 const app = appModule.app || appModule;
-const { pool } = require('../src/config/db');
-const { AVATAR_DIR } = require('../src/middlewares/uploadImage');
+import { pool } from '../src/config/db.js';
+import { AVATAR_DIR } from '../src/middlewares/uploadImage.js';
 
 // Ảnh PNG 1x1 pixel hợp lệ
 const PNG_1X1 = Buffer.from(

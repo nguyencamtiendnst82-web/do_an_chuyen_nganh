@@ -1,5 +1,5 @@
-const authService = require('../services/authService');
-const { sendSuccess, sendError } = require('../utils/response');
+import authService from '../services/authService.js';
+import { sendSuccess, sendError } from '../utils/response.js';
 
 /**
  * POST /api/auth/register
@@ -105,13 +105,5 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  register,
-  login,
-  logout,
-  getMe,
-  updateMe,
-  uploadAvatar,
-  removeAvatar,
-  changePassword,
-};
+export { register, login, logout, getMe, updateMe, uploadAvatar, removeAvatar, changePassword };
+export default { register, login, logout, getMe, updateMe, uploadAvatar, removeAvatar, changePassword };

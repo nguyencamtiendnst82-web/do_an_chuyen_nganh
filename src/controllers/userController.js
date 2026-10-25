@@ -1,5 +1,5 @@
-const userService = require('../services/userService');
-const { sendSuccess } = require('../utils/response');
+import userService from '../services/userService.js';
+import { sendSuccess } from '../utils/response.js';
 
 /**
  * GET /api/users
@@ -55,9 +55,5 @@ const updateUserStatus = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  listUsers,
-  createEmployee,
-  updateUser,
-  updateUserStatus,
-};
+export { listUsers, createEmployee, updateUser, updateUserStatus };
+export default { listUsers, createEmployee, updateUser, updateUserStatus };

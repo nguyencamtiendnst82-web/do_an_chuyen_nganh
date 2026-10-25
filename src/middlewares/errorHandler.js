@@ -1,4 +1,4 @@
-const { sendError } = require('../utils/response');
+import { sendError } from '../utils/response.js';
 
 /**
  * Middleware xử lý lỗi tập trung toàn hệ thống
@@ -40,4 +40,4 @@ const errorHandler = (err, req, res, next) => {
   return sendError(res, message, statusCode, errors);
 };
 
-module.exports = errorHandler;
+export default errorHandler;

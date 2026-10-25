@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --detectOpenHandles --runInBand",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
     "init-db": "node backend/scripts/init-db.js",
     "seed": "node backend/scripts/seed.js"
   },
@@ -39,6 +39,8 @@
   "jest": {
     "testEnvironment": "node",
     "testTimeout": 30000,
-    "verbose": true
-  }
+    "verbose": true,
+    "transform": {}
+  },
+  "type": "module"
 }

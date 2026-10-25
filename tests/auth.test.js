@@ -8,9 +8,9 @@
  * - TUYỆT ĐỐI KHÔNG xóa 5 tài khoản mẫu (admin@petspa.com, staff1@, staff2@, khachhang1@, khachhang2@)
  */
 
-const request = require('supertest');
-const app = require('../src/app');
-const { pool } = require('../src/config/db');
+import request from 'supertest';
+import app from '../src/app.js';
+import { pool } from '../src/config/db.js';
 
 // ── Helper: tạo thông tin user test ngẫu nhiên ──────────────────────────────
 let testCounter = 0;

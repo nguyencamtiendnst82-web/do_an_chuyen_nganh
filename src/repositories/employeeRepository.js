@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+import { pool } from '../config/db.js';
 
 /**
  * Repository tầng dữ liệu cho bảng employees
@@ -56,8 +56,5 @@ const updateByUserId = async (userId, fields) => {
   return result.affectedRows > 0;
 };
 
-module.exports = {
-  create,
-  findByUserId,
-  updateByUserId,
-};
+export { create, findByUserId, updateByUserId };
+export default { create, findByUserId, updateByUserId };

@@ -1,4 +1,4 @@
-const { sendError } = require('../utils/response');
+import { sendError } from '../utils/response.js';
 
 /**
  * Middleware factory kiểm tra phân quyền theo role
@@ -30,4 +30,4 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = authorize;
+export default authorize;

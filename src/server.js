@@ -1,5 +1,5 @@
-const app = require('./app');
-const { testDbConnection, pool } = require('./config/db');
+import app from './app.js';
+import { testDbConnection, pool } from './config/db.js';
 
 const PORT = process.env.PORT || 5000;
 

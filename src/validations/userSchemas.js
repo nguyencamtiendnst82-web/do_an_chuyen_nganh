@@ -1,4 +1,4 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
 const phoneRegex = /^0\d{9}$/;
 const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
@@ -69,8 +69,5 @@ const updateStatusSchema = z.object({
   }),
 });
 
-module.exports = {
-  createEmployeeSchema,
-  updateUserSchema,
-  updateStatusSchema,
-};
+export { createEmployeeSchema, updateUserSchema, updateStatusSchema };
+export default { createEmployeeSchema, updateUserSchema, updateStatusSchema };

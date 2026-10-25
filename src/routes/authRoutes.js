@@ -1,19 +1,10 @@
-const express = require('express');
-const rateLimit = require('express-rate-limit');
+import express from 'express';
+import rateLimit from 'express-rate-limit';
 const router = express.Router();
 
-const authenticate = require('../middlewares/authenticate');
-const { uploadAvatarImage, AVATAR_DIR } = require('../middlewares/uploadImage');
-const {
-  register,
-  login,
-  logout,
-  getMe,
-  updateMe,
-  changePassword,
-  uploadAvatar,
-  removeAvatar,
-} = require('../controllers/authController');
+import authenticate from '../middlewares/authenticate.js';
+import { uploadAvatarImage, AVATAR_DIR } from '../middlewares/uploadImage.js';
+import { register, login, logout, getMe, updateMe, changePassword, uploadAvatar, removeAvatar } from '../controllers/authController.js';
 
 // Rate limit cho đăng nhập: 10 lần / 15 phút / IP
 // Khi chạy Jest (NODE_ENV=test) thì bỏ qua để bộ test không chạm trần giới hạn.
@@ -89,4 +80,4 @@ router.delete('/me/avatar', authenticate, removeAvatar);
 // POST /api/auth/change-password (mọi role)
 router.post('/change-password', authenticate, changePasswordLimiter, changePassword);
 
-module.exports = router;
+export default router;

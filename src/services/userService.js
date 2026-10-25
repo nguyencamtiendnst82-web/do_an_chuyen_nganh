@@ -1,9 +1,9 @@
-const bcrypt = require('bcryptjs');
-const { pool } = require('../config/db');
-const userRepository = require('../repositories/userRepository');
-const employeeRepository = require('../repositories/employeeRepository');
-const logRepository = require('../repositories/logRepository');
-const { createEmployeeSchema, updateUserSchema, updateStatusSchema } = require('../validations/userSchemas');
+import bcrypt from 'bcryptjs';
+import { pool } from '../config/db.js';
+import userRepository from '../repositories/userRepository.js';
+import employeeRepository from '../repositories/employeeRepository.js';
+import logRepository from '../repositories/logRepository.js';
+import { createEmployeeSchema, updateUserSchema, updateStatusSchema } from '../validations/userSchemas.js';
 
 // Hằng role_id (đồng bộ seed.sql)
 const STAFF_ROLE_ID = 2;
@@ -245,9 +245,5 @@ const updateUserStatus = async (targetId, body, req) => {
   return safeUser(updated);
 };
 
-module.exports = {
-  listUsers,
-  createEmployee,
-  updateUser,
-  updateUserStatus,
-};
+export { listUsers, createEmployee, updateUser, updateUserStatus };
+export default { listUsers, createEmployee, updateUser, updateUserStatus };

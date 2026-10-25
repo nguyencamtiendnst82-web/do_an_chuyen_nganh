@@ -1,10 +1,16 @@
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
+import { fileURLToPath as __fileURLToPath } from 'node:url';
+import { dirname as __dirnameOf } from 'node:path';
+import fs from 'fs';
+import path from 'path';
+import readline from 'readline';
+import mysql from 'mysql2/promise';
 
-const seedDatabase = require('./seed');
+import seedDatabase from './seed.js';
+
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __dirnameOf(__filename);
 
 const askConfirmation = (question) => {
   const rl = readline.createInterface({
@@ -67,9 +73,9 @@ const initDatabase = async () => {
   }
 };
 
-if (require.main === module) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   initDatabase();
 }
 
-module.exports = initDatabase;
+export default initDatabase;
 

@@ -1,4 +1,4 @@
-const logRepository = require('../repositories/logRepository');
+import logRepository from '../repositories/logRepository.js';
 
 /**
  * Helper ghi nhật ký thao tác vào system_logs
@@ -28,4 +28,4 @@ const logAction = async (req, action, entityName, entityId = null, oldValues = n
   });
 };
 
-module.exports = logAction;
+export default logAction;

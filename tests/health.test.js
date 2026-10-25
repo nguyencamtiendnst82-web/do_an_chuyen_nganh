@@ -1,6 +1,6 @@
-const request = require('supertest');
-const app = require('../src/app');
-const { pool } = require('../src/config/db');
+import request from 'supertest';
+import app from '../src/app.js';
+import { pool } from '../src/config/db.js';
 
 describe('API Health & Error Handling Tests', () => {
   afterAll(async () => {

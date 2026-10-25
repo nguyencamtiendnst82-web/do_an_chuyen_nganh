@@ -1,7 +1,12 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
+import { fileURLToPath as __fileURLToPath } from 'node:url';
+import { dirname as __dirnameOf } from 'node:path';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __dirnameOf(__filename);
 
 /**
  * Middleware tải ảnh đại diện lên (dùng chung, có thể tái sử dụng cho ảnh thú cưng sau này)
@@ -119,11 +124,5 @@ const deleteAvatarFile = async (avatarUrl) => {
 // Đường dẫn công khai lưu vào CSDL (được phục vụ bởi authRoutes)
 const AVATAR_URL_PREFIX = '/api/auth/avatars/';
 
-module.exports = {
-  AVATAR_DIR,
-  AVATAR_URL_PREFIX,
-  uploadAvatarImage,
-  detectImageType,
-  isRealImageFile,
-  deleteAvatarFile,
-};
+export { AVATAR_DIR, AVATAR_URL_PREFIX, uploadAvatarImage, detectImageType, isRealImageFile, deleteAvatarFile };
+export default { AVATAR_DIR, AVATAR_URL_PREFIX, uploadAvatarImage, detectImageType, isRealImageFile, deleteAvatarFile };

@@ -1,8 +1,8 @@
-const request = require('supertest');
+import request from 'supertest';
 
-const appModule = require('../src/app');
+import appModule from '../src/app.js';
 const app = appModule.app || appModule;
-const { pool } = require('../src/config/db');
+import { pool } from '../src/config/db.js';
 
 const OLD_PASSWORD = 'MatKhauCu123@';
 let counter = 0;

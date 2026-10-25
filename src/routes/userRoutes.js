@@ -1,14 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const authenticate = require('../middlewares/authenticate');
-const authorize = require('../middlewares/authorize');
-const {
-  listUsers,
-  createEmployee,
-  updateUser,
-  updateUserStatus,
-} = require('../controllers/userController');
+import authenticate from '../middlewares/authenticate.js';
+import authorize from '../middlewares/authorize.js';
+import { listUsers, createEmployee, updateUser, updateUserStatus } from '../controllers/userController.js';
 
 // Tất cả routes trong /api/users đều yêu cầu xác thực và quyền admin
 router.use(authenticate);
@@ -26,4 +21,4 @@ router.put('/:id', updateUser);
 // PATCH /api/users/:id/status – Thay đổi trạng thái (active/inactive/locked)
 router.patch('/:id/status', updateUserStatus);
 
-module.exports = router;
+export default router;

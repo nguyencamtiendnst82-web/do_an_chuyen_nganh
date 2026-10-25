@@ -1,4 +1,4 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
 // Regex số điện thoại VN: 10 số, bắt đầu 0
 const phoneRegex = /^0\d{9}$/;
@@ -67,9 +67,5 @@ const changePasswordSchema = z.object({
     .regex(passwordRegex, 'Mật khẩu mới phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số'),
 });
 
-module.exports = {
-  registerSchema,
-  loginSchema,
-  updateMeSchema,
-  changePasswordSchema,
-};
+export { registerSchema, loginSchema, updateMeSchema, changePasswordSchema };
+export default { registerSchema, loginSchema, updateMeSchema, changePasswordSchema };

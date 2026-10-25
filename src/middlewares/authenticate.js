@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
-const userRepository = require('../repositories/userRepository');
-const { sendError } = require('../utils/response');
+import jwt from 'jsonwebtoken';
+import userRepository from '../repositories/userRepository.js';
+import { sendError } from '../utils/response.js';
 
 /**
  * Middleware xác thực JWT
@@ -61,4 +61,4 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-module.exports = authenticate;
+export default authenticate;

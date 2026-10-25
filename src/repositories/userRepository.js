@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+import { pool } from '../config/db.js';
 
 /**
  * Repository tầng dữ liệu cho bảng users + roles
@@ -202,15 +202,5 @@ const countAll = async ({ role, status, search }) => {
   return rows[0].total;
 };
 
-module.exports = {
-  findByEmail,
-  findByPhone,
-  findByEmailOrPhone,
-  findById,
-  create,
-  update,
-  changePassword,
-  updateStatus,
-  findAll,
-  countAll,
-};
+export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll };
+export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll };

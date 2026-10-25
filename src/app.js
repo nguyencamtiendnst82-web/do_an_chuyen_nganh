@@ -1,12 +1,12 @@
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const morgan = require('morgan');
-require('dotenv').config();
+import 'dotenv/config';
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import morgan from 'morgan';
 
-const routes = require('./routes');
-const errorHandler = require('./middlewares/errorHandler');
-const { sendError } = require('./utils/response');
+import routes from './routes/index.js';
+import errorHandler from './middlewares/errorHandler.js';
+import { sendError } from './utils/response.js';
 
 const app = express();
 
@@ -47,5 +47,5 @@ app.use((req, res) => {
 // Middleware xử lý lỗi tập trung
 app.use(errorHandler);
 
-module.exports = app;
+export default app;
 

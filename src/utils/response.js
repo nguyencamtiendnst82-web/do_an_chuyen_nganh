@@ -29,8 +29,6 @@ const sendError = (res, message = 'Đã có lỗi xảy ra', statusCode = 500, e
   return res.status(statusCode).json(response);
 };
 
-module.exports = {
-  sendSuccess,
-  sendError
-};
+export { sendSuccess, sendError };
+export default { sendSuccess, sendError };
 

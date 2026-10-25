@@ -3,7 +3,7 @@
 
 ## Công nghệ (bắt buộc, không đổi)
 - Front-end: React + Vite (JavaScript), React Router, Axios, giao diện responsive (mobile-first). Dùng Tailwind CSS.
-- Back-end: Node.js + Express.js (CommonJS hoặc ESM, chọn một và giữ nhất quán), kiến trúc MVC phân lớp: routes -> controllers -> services -> repositories(models).
+- Back-end: Node.js + Express.js (ES Modules: dùng import/export, package.json có "type": "module"; import tương đối phải ghi đuôi .js), kiến trúc MVC phân lớp: routes -> controllers -> services -> repositories(models).
 - CSDL: MySQL 8, driver mysql2/promise dùng connection pool, LUÔN dùng prepared statement (placeholder ?), không nối chuỗi SQL.
 - Xác thực: JWT (access token, hạn 8h) + bcrypt (cost 10). Lưu token ở client (localStorage) và gửi qua header Authorization: Bearer.
 - Validate dữ liệu: zod hoặc joi ở mọi endpoint ghi dữ liệu.

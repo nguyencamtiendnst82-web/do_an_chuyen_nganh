@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { pool } = require('../config/db');
-const { sendSuccess, sendError } = require('../utils/response');
+import { pool } from '../config/db.js';
+import { sendSuccess, sendError } from '../utils/response.js';
 
 router.get('/health', async (req, res) => {
   try {
@@ -24,5 +24,5 @@ router.get('/health', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
 
