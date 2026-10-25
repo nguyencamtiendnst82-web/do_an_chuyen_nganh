@@ -135,6 +135,8 @@ describe('POST /api/auth/login', () => {
       credential: testUser.email,
       password: testUser.password,
     });
+    console.log('LOGIN STATUS:', res.status);
+    console.log('LOGIN BODY:', JSON.stringify(res.body, null, 2));
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -257,19 +259,33 @@ describe('POST /api/auth/change-password', () => {
     expect(loginRes.status).toBe(200);
   });
 
-  test('4.2 Sai mật khẩu cũ → 400', async () => {
-    const res = await request(app)
-      .post('/api/auth/change-password')
-      .set('Authorization', `Bearer ${pwTestToken}`)
-      .send({
-        old_password: 'WrongOldPassword999',
-        new_password: 'AnotherPass789',
-      });
+  
+test('4.2 Sai mật khẩu cũ → 400', async () => {
+  // Dang nhap lai de lay token con hieu luc
+  const loginRes = await request(app)
+    .post('/api/auth/login')
+    .send({
+      credential: pwTestUser.email,
+      password: 'NewPass456',
+    });
 
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-  });
+  expect(loginRes.status).toBe(200);
+
+  const freshToken = loginRes.body.data.token;
+
+  const res = await request(app)
+    .post('/api/auth/change-password')
+    .set('Authorization', `Bearer ${freshToken}`)
+    .send({
+      old_password: 'WrongOldPassword999',
+      new_password: 'AnotherPass789',
+    });
+
+  expect(res.status).toBe(400);
+  expect(res.body.success).toBe(false);
 });
+});
+
 
 // ────────────────────────────────────────────────────────────────────────────
 // 5. PHÂN QUYỀN: Customer gọi API Admin

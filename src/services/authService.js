@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import userRepository from '../repositories/userRepository.js';
 import logRepository from '../repositories/logRepository.js';
+import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
 import { AVATAR_URL_PREFIX, isRealImageFile, deleteAvatarFile } from '../middlewares/uploadImage.js';
 import { registerSchema, loginSchema, updateMeSchema, changePasswordSchema } from '../validations/authSchemas.js';
 
@@ -11,10 +12,11 @@ const CUSTOMER_ROLE_ID = 3;
 
 /**
  * Ký JWT cho user
+ * - tv (token version): tăng lên mỗi khi đổi mật khẩu → mọi token cũ tự mất hiệu lực
  */
-const signToken = (userId) => {
+const signToken = (userId, tokenVersion = 0) => {
   return jwt.sign(
-    { id: userId },
+    { id: userId, tv: tokenVersion },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
   );
@@ -121,7 +123,7 @@ const login = async (body, req) => {
   if (!isMatch) throw genericError;
 
   // Ký token
-  const token = signToken(user.id);
+  const token = signToken(user.id, await tokenVersionRepository.get(user.id));
 
   // Ghi log
   await logRepository.insert({
@@ -349,6 +351,9 @@ const changePassword = async (userId, body, req) => {
   // 3. Băm và lưu
   const newHash = await bcrypt.hash(parsed.new_password, 10);
   await userRepository.changePassword(userId, newHash);
+
+  // 4. Vô hiệu hóa MỌI token đã cấp trước đó (kể cả trên thiết bị khác)
+  await tokenVersionRepository.bump(userId);
 
   // Ghi log (không lưu mật khẩu)
   await logRepository.insert({

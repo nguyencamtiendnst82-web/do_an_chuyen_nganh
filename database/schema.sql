@@ -30,6 +30,7 @@ CREATE TABLE `users` (
     `email` VARCHAR(150) NOT NULL UNIQUE COMMENT 'Địa chỉ email duy nhất (dùng đăng nhập)',
     `phone` VARCHAR(20) NOT NULL UNIQUE COMMENT 'Số điện thoại liên hệ duy nhất',
     `password_hash` VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã mã hóa bằng bcrypt',
+    `token_version` INT NOT NULL DEFAULT 0 COMMENT 'Tăng mỗi khi đổi mật khẩu để vô hiệu hóa JWT cũ',
     `avatar_url` VARCHAR(255) NULL COMMENT 'Đường dẫn ảnh đại diện',
     `address` VARCHAR(255) NULL COMMENT 'Địa chỉ liên hệ',
     `status` ENUM('active', 'inactive', 'locked') DEFAULT 'active' COMMENT 'Trạng thái hoạt động tài khoản',

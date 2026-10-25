@@ -1,11 +1,13 @@
 import jwt from 'jsonwebtoken';
 import userRepository from '../repositories/userRepository.js';
+import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
 import { sendError } from '../utils/response.js';
 
 /**
  * Middleware xác thực JWT
  * - Xác minh token từ header Authorization: Bearer <token>
  * - Nạp thông tin user từ DB để phát hiện tài khoản bị khóa SAU khi đăng nhập
+ * - Từ chối token cấp trước lần đổi mật khẩu gần nhất (so token_version)
  * - Gắn req.user = { id, full_name, email, phone, role_name, status }
  */
 const authenticate = async (req, res, next) => {
@@ -43,6 +45,12 @@ const authenticate = async (req, res, next) => {
     }
     if (user.status === 'inactive') {
       return sendError(res, 'Tài khoản của bạn hiện không hoạt động. Vui lòng liên hệ quản trị viên.', 403);
+    }
+
+    // Token cấp trước lần đổi mật khẩu gần nhất → hết hiệu lực
+    const currentVersion = await tokenVersionRepository.get(user.id);
+    if ((decoded.tv ?? 0) !== currentVersion) {
+      return sendError(res, 'Phiên đăng nhập đã hết hiệu lực do mật khẩu đã được thay đổi. Vui lòng đăng nhập lại.', 401);
     }
 
     // Gắn thông tin user vào request (không bao gồm password_hash)
