@@ -22,7 +22,7 @@ axiosClient.interceptors.request.use(
 
 // Danh sách các endpoint KHÔNG xử lý 401 tự động
 // (tránh xóa token khi trang đăng nhập nhận lỗi sai thông tin)
-const AUTH_WHITELIST = ['/auth/login', '/auth/register']
+const AUTH_WHITELIST = ['/auth/login', '/auth/register', '/auth/google']
 
 // Response interceptor: bắt 401 → xóa token, redirect login
 // NGOẠI TRỪ các endpoint trong AUTH_WHITELIST

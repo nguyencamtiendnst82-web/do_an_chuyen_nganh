@@ -53,6 +53,15 @@ export const AuthProvider = ({ children }) => {
     setUser(newUser)
     return { user: newUser, token: newToken }
   }
+    /**
+   * Lưu phiên đăng nhập khi server đã trả sẵn token + user (đăng nhập bằng Google)
+   */
+  const loginWithToken = (newToken, newUser) => {
+    localStorage.setItem('token', newToken)
+    setToken(newToken)
+    setUser(newUser)
+    return { user: newUser, token: newToken }
+  }
 
   /**
    * Đăng xuất: POST /api/auth/logout → xóa localStorage → clear state
@@ -70,7 +79,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-        <AuthContext.Provider value={{ user, setUser, token, loading, login, logout }}>
+         <AuthContext.Provider value={{ user, setUser, token, loading, login, loginWithToken, logout }}>
       {children}
     </AuthContext.Provider>
   )

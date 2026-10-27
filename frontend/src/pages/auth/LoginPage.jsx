@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import GoogleLoginButton from '../../components/GoogleLoginButton'
 
 /**
  * LoginPage: Đăng nhập bằng email hoặc số điện thoại
@@ -8,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
  * - Redirect theo role sau khi đăng nhập thành công
  */
 const LoginPage = () => {
-  const { login, user } = useAuth()
+  const { login, loginWithToken, user } = useAuth()
   const navigate = useNavigate()
 
   const [credential, setCredential] = useState('')
@@ -48,6 +49,11 @@ const LoginPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+  const handleGoogleSuccess = ({ token, user: googleUser }) => {
+    loginWithToken(token, googleUser)
+    const roleHome = { admin: '/admin', staff: '/staff', customer: '/' }
+    navigate(roleHome[googleUser.role_name] || '/', { replace: true })
   }
 
   return (
@@ -110,6 +116,16 @@ const LoginPage = () => {
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </form>
+
+                    {/* Đăng nhập bằng Google */}
+          <div className="mt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400">hoặc</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <GoogleLoginButton onSuccess={handleGoogleSuccess} onError={setError} />
+          </div>
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Chưa có tài khoản?{' '}

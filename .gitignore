@@ -27,3 +27,4 @@ Thumbs.db
 .idea/
 
 coverage/
+client_secret*.json
