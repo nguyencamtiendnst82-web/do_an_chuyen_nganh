@@ -17,6 +17,8 @@ const safeUser = (user) => ({
   email: user.email,
   phone: user.phone,
   address: user.address,
+  gender: user.gender ?? null,
+  birth_year: user.birth_year ?? null,
   avatar_url: user.avatar_url,
   status: user.status,
   role_name: user.role_name,
@@ -90,6 +92,8 @@ const createEmployee = async (body, req) => {
         phone: parsed.phone,
         password_hash: passwordHash,
         address: parsed.address || null,
+        gender: parsed.gender ?? null,
+        birth_year: parsed.birth_year ?? null,
       },
       connection
     );
@@ -165,6 +169,8 @@ const updateUser = async (targetId, body, req) => {
     full_name: target.full_name,
     phone: target.phone,
     address: target.address,
+    gender: target.gender ?? null,
+    birth_year: target.birth_year ?? null,
     avatar_url: target.avatar_url,
   };
 
@@ -174,6 +180,8 @@ const updateUser = async (targetId, body, req) => {
   if (parsed.phone !== undefined) userFields.phone = parsed.phone;
   if (parsed.address !== undefined) userFields.address = parsed.address;
   if (parsed.avatar_url !== undefined) userFields.avatar_url = parsed.avatar_url;
+  if (parsed.gender !== undefined) userFields.gender = parsed.gender;
+  if (parsed.birth_year !== undefined) userFields.birth_year = parsed.birth_year;
 
   if (Object.keys(userFields).length > 0) {
     await userRepository.update(targetId, userFields);

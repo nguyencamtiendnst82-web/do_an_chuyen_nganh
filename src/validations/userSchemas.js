@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { profileExtraSchema } from './profileSchemas.js';
 
 const phoneRegex = /^0\d{9}$/;
 const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
@@ -21,6 +22,9 @@ const createEmployeeSchema = z.object({
     .regex(passwordRegex, 'Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số'),
 
   address: z.string().max(255).trim().optional().nullable(),
+
+  // Giới tính + năm sinh (không bắt buộc)
+  ...profileExtraSchema.shape,
 
   specialty: z.string().max(150, 'Chuyên môn tối đa 150 ký tự').optional().nullable(),
 
@@ -56,6 +60,9 @@ const updateUserSchema = z.object({
     .max(255, 'URL tối đa 255 ký tự')
     .optional()
     .nullable(),
+
+  // Giới tính + năm sinh (không bắt buộc)
+  ...profileExtraSchema.shape,
 
   // Thông tin nhân viên (chỉ áp dụng nếu user có role staff)
   specialty: z.string().max(150).optional().nullable(),

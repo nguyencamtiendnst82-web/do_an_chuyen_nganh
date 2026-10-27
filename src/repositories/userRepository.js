@@ -67,16 +67,19 @@ const findById = async (id) => {
 
 /**
  * Tạo user mới
- * @param {object} userData - { role_id, full_name, email, phone, password_hash, address? }
+ * @param {object} userData - { role_id, full_name, email, phone, password_hash, address?, gender?, birth_year? }
  * @param {object} conn - connection (nếu đang trong transaction), nếu null thì dùng pool
  */
 const create = async (userData, conn = null) => {
   const db = conn || pool;
-  const { role_id, full_name, email, phone, password_hash, address = null } = userData;
+  const {
+    role_id, full_name, email, phone, password_hash,
+    address = null, gender = null, birth_year = null,
+  } = userData;
   const [result] = await db.query(
-    `INSERT INTO users (role_id, full_name, email, phone, password_hash, address)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [role_id, full_name, email, phone, password_hash, address]
+    `INSERT INTO users (role_id, full_name, email, phone, password_hash, address, gender, birth_year)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [role_id, full_name, email, phone, password_hash, address, gender, birth_year]
   );
   return result.insertId;
 };
@@ -156,7 +159,7 @@ const findAll = async ({ page = 1, limit = 10, role, status, search }) => {
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const [rows] = await pool.query(
-    `SELECT u.id, u.full_name, u.email, u.phone, u.address, u.avatar_url,
+    `SELECT u.id, u.full_name, u.email, u.phone, u.address, u.gender, u.birth_year, u.avatar_url,
             u.status, u.created_at, u.updated_at,
             r.role_name, r.display_name AS role_display_name
      FROM users u

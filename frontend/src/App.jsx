@@ -16,11 +16,17 @@ import ProfilePage from './pages/auth/ProfilePage'
 // Pages – Public
 import HomePage from './pages/HomePage'
 
+// Pages – Customer
+import PetsPage from './pages/customer/PetsPage'
+import ServiceCatalogPage from './pages/customer/ServiceCatalogPage'
+
 // Pages – Staff
 import StaffDashboard from './pages/staff/StaffDashboard'
+import PetsManagePage from './pages/staff/PetsManagePage'
 
 // Pages – Admin
 import AdminDashboard from './pages/admin/AdminDashboard'
+import ServicesAdminPage from './pages/admin/ServicesAdminPage'
 
 // Pages – 404
 import NotFoundPage from './pages/NotFoundPage'
@@ -68,7 +74,8 @@ const App = () => {
           {/* ── Customer routes ────────────────────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
             <Route element={<CustomerLayout />}>
-              {/* Thêm các route của customer ở đây */}
+              <Route path="/pets" element={<PetsPage />} />
+              <Route path="/services" element={<ServiceCatalogPage />} />
             </Route>
           </Route>
 
@@ -76,6 +83,8 @@ const App = () => {
           <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
             <Route element={<StaffLayout />}>
               <Route path="/staff" element={<StaffDashboard />} />
+              <Route path="/staff/pets" element={<PetsManagePage />} />
+              <Route path="/staff/services" element={<ServiceCatalogPage />} />
             </Route>
           </Route>
 
@@ -83,6 +92,8 @@ const App = () => {
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route element={<AdminLayout />}>
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/services" element={<ServicesAdminPage />} />
+              <Route path="/admin/pets" element={<PetsManagePage />} />
             </Route>
           </Route>
 

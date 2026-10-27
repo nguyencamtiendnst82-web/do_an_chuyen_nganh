@@ -10,8 +10,10 @@ import UserMenu from '../components/UserMenu'
 const CustomerLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const navLinks = [
+    const navLinks = [
     { to: '/', label: 'Trang chủ', exact: true },
+    { to: '/pets', label: 'Thú cưng của tôi' },
+    { to: '/services', label: 'Dịch vụ' },
     { to: '/profile', label: 'Hồ sơ của tôi' },
   ]
 

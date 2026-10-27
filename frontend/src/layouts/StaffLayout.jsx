@@ -17,6 +17,8 @@ const StaffLayout = () => {
 
   const navLinks = [
   { to: '/staff', label: 'Dashboard', icon: '📊', exact: true },
+  { to: '/staff/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
+  { to: '/staff/services', label: 'Dịch vụ', icon: '✂️' },
   { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
   { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
 ]
@@ -41,7 +43,7 @@ const StaffLayout = () => {
         {/* User info */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-purple-600 font-bold text-sm overflow-hidden shrink-0">
+            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden shrink-0">
              {user?.avatar_url
              ? <img src={user.avatar_url} alt="Ảnh đại diện" className="w-9 h-9 rounded-full object-cover" />
     : user?.full_name?.[0]?.toUpperCase() || 'S'

@@ -58,6 +58,7 @@ CREATE TABLE `pets` (
     `breed` VARCHAR(100) NULL COMMENT 'Giống loài cụ thể (Poodle, Golden, Mèo Anh lông ngắn...)',
     `gender` ENUM('male', 'female', 'unknown') DEFAULT 'unknown' COMMENT 'Giới tính thú cưng',
     `age_months` INT NULL COMMENT 'Tuổi tính theo tháng',
+    `birth_month` DATE NULL COMMENT 'Tháng sinh (lưu ngày 01); tuổi được tự tính từ cột này',
     `weight_kg` DECIMAL(5, 2) NULL COMMENT 'Cân nặng (kg) hỗ trợ tính giá/chọn liều lượng dịch vụ',
     `special_notes` TEXT NULL COMMENT 'Lưu ý sức khỏe, dị ứng thuốc, tính khí, thói quen',
     `avatar_url` VARCHAR(255) NULL COMMENT 'Hình ảnh thú cưng',

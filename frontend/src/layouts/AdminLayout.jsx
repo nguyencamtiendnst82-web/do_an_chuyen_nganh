@@ -18,6 +18,8 @@ const AdminLayout = () => {
   const navLinks = [
   { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
   { to: '/admin/users', label: 'Quản lý người dùng', icon: '👥' },
+      { to: '/admin/services', label: 'Dịch vụ', icon: '✂️' },
+    { to: '/admin/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
   { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
   { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
 ]
