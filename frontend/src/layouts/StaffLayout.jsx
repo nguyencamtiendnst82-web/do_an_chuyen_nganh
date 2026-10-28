@@ -16,12 +16,13 @@ const StaffLayout = () => {
   }
 
   const navLinks = [
-  { to: '/staff', label: 'Dashboard', icon: '📊', exact: true },
-  { to: '/staff/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
-  { to: '/staff/services', label: 'Dịch vụ', icon: '✂️' },
-  { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
-  { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
-]
+    { to: '/staff', label: 'Dashboard', icon: '📊', exact: true },
+    { to: '/staff/shifts', label: 'Ca làm của tôi', icon: '⏰' },
+    { to: '/staff/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
+    { to: '/staff/services', label: 'Dịch vụ', icon: '✂️' },
+    { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
+    { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
+  ]
   const Sidebar = ({ mobile = false }) => (
     <aside
       className={`${mobile

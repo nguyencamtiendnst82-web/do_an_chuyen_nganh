@@ -55,5 +55,18 @@ const updateUserStatus = async (req, res, next) => {
   }
 };
 
-export { listUsers, createEmployee, updateUser, updateUserStatus };
-export default { listUsers, createEmployee, updateUser, updateUserStatus };
+/**
+ * POST /api/users/:id/reset-password
+ * Admin đặt lại mật khẩu cho user
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const result = await userService.resetPassword(req.params.id, req.body, req);
+    return sendSuccess(res, result.message);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
+export default { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };

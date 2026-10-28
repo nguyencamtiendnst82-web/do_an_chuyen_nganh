@@ -23,6 +23,12 @@ const PublicLayout = () => {
 
           {/* Navigation */}
           <nav className="flex items-center gap-4">
+            <Link
+              to="/employees"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Đội ngũ
+            </Link>
             {user ? (
               <UserMenu />
             ) : (

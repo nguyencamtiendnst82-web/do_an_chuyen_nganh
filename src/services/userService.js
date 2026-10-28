@@ -3,6 +3,7 @@ import { pool } from '../config/db.js';
 import userRepository from '../repositories/userRepository.js';
 import employeeRepository from '../repositories/employeeRepository.js';
 import logRepository from '../repositories/logRepository.js';
+import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
 import { createEmployeeSchema, updateUserSchema, updateStatusSchema } from '../validations/userSchemas.js';
 
 // Hằng role_id (đồng bộ seed.sql)
@@ -25,6 +26,13 @@ const safeUser = (user) => ({
   role_display_name: user.role_display_name,
   created_at: user.created_at,
   updated_at: user.updated_at,
+  ...(user.employee_id !== undefined && {
+    employee_id: user.employee_id,
+    specialty: user.specialty,
+    experience_years: user.experience_years !== null && user.experience_years !== undefined ? Number(user.experience_years) : null,
+    hire_date: user.hire_date,
+    employee_status: user.employee_status,
+  }),
 });
 
 /**
@@ -234,6 +242,16 @@ const updateUserStatus = async (targetId, body, req) => {
     throw err;
   }
 
+  // Không cho khóa hoặc vô hiệu hóa admin cuối cùng
+  if (target.role_name === 'admin' && parsed.status !== 'active') {
+    const activeAdmins = await userRepository.countActiveAdmins();
+    if (activeAdmins <= 1) {
+      const err = new Error('Không thể khóa hoặc vô hiệu hóa tài khoản quản trị viên cuối cùng.');
+      err.statusCode = 403;
+      throw err;
+    }
+  }
+
   const oldStatus = target.status;
   await userRepository.updateStatus(targetId, parsed.status);
 
@@ -253,5 +271,42 @@ const updateUserStatus = async (targetId, body, req) => {
   return safeUser(updated);
 };
 
-export { listUsers, createEmployee, updateUser, updateUserStatus };
-export default { listUsers, createEmployee, updateUser, updateUserStatus };
+/**
+ * Admin đặt lại mật khẩu cho tài khoản
+ * Tăng token_version để vô hiệu hóa tất cả JWT cũ
+ */
+const resetPassword = async (targetId, body, req) => {
+  const password = body?.password;
+  const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
+  if (!password || !passwordRegex.test(password)) {
+    const err = new Error('Mật khẩu mới phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số.');
+    err.statusCode = 422;
+    throw err;
+  }
+
+  const target = await userRepository.findById(targetId);
+  if (!target) {
+    const err = new Error('Không tìm thấy tài khoản.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await userRepository.changePassword(targetId, passwordHash);
+  await tokenVersionRepository.bump(targetId);
+
+  // Ghi log
+  await logRepository.insert({
+    user_id: req.user.id,
+    action: 'ADMIN_RESET_PASSWORD',
+    entity_name: 'users',
+    entity_id: targetId,
+    ip_address: req.ip || null,
+    user_agent: req.headers?.['user-agent'] || null,
+  });
+
+  return { message: 'Đặt lại mật khẩu thành công.' };
+};
+
+export { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
+export default { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };

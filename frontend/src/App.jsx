@@ -23,10 +23,16 @@ import ServiceCatalogPage from './pages/customer/ServiceCatalogPage'
 // Pages – Staff
 import StaffDashboard from './pages/staff/StaffDashboard'
 import PetsManagePage from './pages/staff/PetsManagePage'
+import MyShiftsPage from './pages/staff/MyShiftsPage'
 
 // Pages – Admin
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ServicesAdminPage from './pages/admin/ServicesAdminPage'
+import UsersManagePage from './pages/admin/UsersManagePage'
+import ShiftsManagePage from './pages/admin/ShiftsManagePage'
+
+// Pages – Public & Shared
+import EmployeesPage from './pages/public/EmployeesPage'
 
 // Pages – 404
 import NotFoundPage from './pages/NotFoundPage'
@@ -60,6 +66,7 @@ const App = () => {
           {/* ── Public routes (không cần đăng nhập) ─────────────────── */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/employees" element={<EmployeesPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
@@ -76,6 +83,7 @@ const App = () => {
             <Route element={<CustomerLayout />}>
               <Route path="/pets" element={<PetsPage />} />
               <Route path="/services" element={<ServiceCatalogPage />} />
+              <Route path="/employees" element={<EmployeesPage />} />
             </Route>
           </Route>
 
@@ -84,6 +92,7 @@ const App = () => {
             <Route element={<StaffLayout />}>
               <Route path="/staff" element={<StaffDashboard />} />
               <Route path="/staff/pets" element={<PetsManagePage />} />
+              <Route path="/staff/shifts" element={<MyShiftsPage />} />
               <Route path="/staff/services" element={<ServiceCatalogPage />} />
             </Route>
           </Route>
@@ -92,6 +101,8 @@ const App = () => {
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route element={<AdminLayout />}>
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<UsersManagePage />} />
+              <Route path="/admin/shifts" element={<ShiftsManagePage />} />
               <Route path="/admin/services" element={<ServicesAdminPage />} />
               <Route path="/admin/pets" element={<PetsManagePage />} />
             </Route>

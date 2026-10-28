@@ -161,15 +161,20 @@ const findAll = async ({ page = 1, limit = 10, role, status, search }) => {
   const [rows] = await pool.query(
     `SELECT u.id, u.full_name, u.email, u.phone, u.address, u.gender, u.birth_year, u.avatar_url,
             u.status, u.created_at, u.updated_at,
-            r.role_name, r.display_name AS role_display_name
+            r.role_name, r.display_name AS role_display_name,
+            e.id AS employee_id, e.specialty, e.experience_years, e.hire_date, e.status AS employee_status
      FROM users u
      JOIN roles r ON u.role_id = r.id
+     LEFT JOIN employees e ON u.id = e.user_id
      ${whereClause}
      ORDER BY u.created_at DESC
      LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    experience_years: r.experience_years !== null ? Number(r.experience_years) : null,
+  }));
 };
 
 /**
@@ -205,5 +210,15 @@ const countAll = async ({ role, status, search }) => {
   return rows[0].total;
 };
 
-export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll };
-export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll };
+const countActiveAdmins = async () => {
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total
+     FROM users u
+     JOIN roles r ON u.role_id = r.id
+     WHERE r.role_name = 'admin' AND u.status = 'active'`
+  );
+  return rows[0].total;
+};
+
+export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins };
+export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins };
