@@ -13,6 +13,7 @@ import googleAuthRoutes from './googleAuthRoutes.js';
 import employeeRoutes from './employeeRoutes.js';
 import shiftRoutes from './shiftRoutes.js';
 import employeeShiftRoutes from './employeeShiftRoutes.js';
+import appointmentRoutes from './appointmentRoutes.js';
 
 // Gắn các routes phân hệ
 router.use('/', healthRoutes);
@@ -25,6 +26,7 @@ router.use('/customers', customerRoutes);
 router.use('/employees', employeeRoutes);
 router.use('/shifts', shiftRoutes);
 router.use('/employee-shifts', employeeShiftRoutes);
+router.use('/appointments', appointmentRoutes);
 
 export default router;
 

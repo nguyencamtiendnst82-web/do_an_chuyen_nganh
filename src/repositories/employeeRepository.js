@@ -157,5 +157,20 @@ const findAll = async ({ scope = 'public', status, search } = {}) => {
   }));
 };
 
-export { create, findByUserId, findById, updateByUserId, updateById, findAll };
-export default { create, findByUserId, findById, updateByUserId, updateById, findAll };
+/**
+ * Đếm số lịch hẹn tương lai chưa hoàn tất của nhân viên
+ */
+const countActiveFutureAppointmentsByEmployee = async (employeeId) => {
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total
+     FROM appointments
+     WHERE employee_id = ?
+       AND status NOT IN ('cancelled', 'completed')
+       AND (appointment_date > CURDATE() OR (appointment_date = CURDATE() AND end_time > CURTIME()))`,
+    [employeeId]
+  );
+  return rows[0]?.total || 0;
+};
+
+export { create, findByUserId, findById, updateByUserId, updateById, findAll, countActiveFutureAppointmentsByEmployee };
+export default { create, findByUserId, findById, updateByUserId, updateById, findAll, countActiveFutureAppointmentsByEmployee };

@@ -97,6 +97,22 @@ const updateEmployee = async (user, rawId, body, req) => {
     status: existing.status,
   };
 
+  // Nếu đổi sang trạng thái nghỉ việc hoặc tạm nghỉ, kiểm tra lịch hẹn tương lai
+  if (
+    parsed.status &&
+    parsed.status !== existing.status &&
+    (parsed.status === 'resigned' || parsed.status === 'on_leave')
+  ) {
+    const futureApts = await employeeRepository.countActiveFutureAppointmentsByEmployee(id);
+    if (futureApts > 0) {
+      const statusLabel = parsed.status === 'resigned' ? 'đã nghỉ việc' : 'tạm nghỉ';
+      throw httpError(
+        409,
+        `Không thể chuyển trạng thái nhân viên sang "${statusLabel}" vì nhân viên còn ${futureApts} lịch hẹn chưa hoàn thành trong tương lai.`
+      );
+    }
+  }
+
   const fieldsToUpdate = {};
   if (parsed.specialty !== undefined) fieldsToUpdate.specialty = parsed.specialty;
   if (parsed.experience_years !== undefined) fieldsToUpdate.experience_years = parsed.experience_years;

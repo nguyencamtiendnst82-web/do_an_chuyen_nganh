@@ -10,14 +10,15 @@ import UserMenu from '../components/UserMenu'
 const CustomerLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const navLinks = [
+    const navLinks = [
     { to: '/', label: 'Trang chủ', exact: true },
     { to: '/pets', label: 'Thú cưng của tôi' },
+    { to: '/booking', label: 'Đặt lịch' },
+    { to: '/appointments', label: 'Lịch hẹn của tôi' },
     { to: '/services', label: 'Dịch vụ' },
     { to: '/employees', label: 'Đội ngũ' },
     { to: '/profile', label: 'Hồ sơ của tôi' },
   ]
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}

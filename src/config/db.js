@@ -11,7 +11,8 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  dateStrings: ['DATE']   // cột DATE luôn trả về chuỗi 'YYYY-MM-DD', không bị lệch múi giờ
 });
 
 // Hàm kiểm tra kết nối CSDL
