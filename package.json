@@ -7,8 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
-    "init-db": "node backend/scripts/init-db.js",
-    "seed": "node backend/scripts/seed.js"
+    "init-db": "node scripts/init-db.js",
+    "seed": "node scripts/seed.js"
   },
   "keywords": [
     "pet-spa",

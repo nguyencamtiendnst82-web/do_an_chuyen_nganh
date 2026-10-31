@@ -8,9 +8,11 @@ import readline from 'readline';
 import mysql from 'mysql2/promise';
 
 import seedDatabase from './seed.js';
+import { assertDatabaseDoesNotExist, applySchemaToNewDatabase } from './dbSafety.js';
 
 const __filename = __fileURLToPath(import.meta.url);
 const __dirname = __dirnameOf(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
 const askConfirmation = (question) => {
   const rl = readline.createInterface({
@@ -26,26 +28,27 @@ const askConfirmation = (question) => {
   });
 };
 
-const initDatabase = async () => {
+const initDatabase = async ({ confirm = askConfirmation } = {}) => {
+  let connection;
+  let databaseCreatedThisRun = false;
   try {
     const hasForceFlag = process.argv.includes('--yes') || process.argv.includes('-y');
 
     if (!hasForceFlag) {
       console.log('====================================================================');
-      console.log('⚠️  CẢNH BÁO NGUY HIỂM: KHỞI TẠO LẠI CƠ SỞ DỮ LIỆU PET SPA');
-      console.log('Hành động này sẽ XÓA SẠCH toàn bộ cơ sở dữ liệu hiện tại (DROP DATABASE IF EXISTS `pet_spa_db`)');
-      console.log('và thiết lập lại toàn bộ cấu trúc từ database/schema.sql.');
+      console.log('⚠️  Khởi tạo cơ sở dữ liệu Pet Spa chỉ khi database chưa tồn tại.');
+      console.log('Script sẽ từ chối nếu database đã có; không xóa hoặc sửa dữ liệu hiện tại.');
       console.log('====================================================================');
 
-      const answer = await askConfirmation('👉 Bạn có chắc chắn muốn tiếp tục? Nhập "y" hoặc "yes" để xác nhận: ');
+      const answer = await confirm('👉 Tiếp tục tạo database mới? Nhập "y" hoặc "yes" để xác nhận: ');
       if (answer !== 'y' && answer !== 'yes') {
-        console.log('🛑 Thao tác khởi tạo đã được hủy bỏ an toàn.');
-        process.exit(0);
+        console.log('🛑 Đã hủy khởi tạo; không có thay đổi nào được thực hiện.');
+        return false;
       }
     }
 
     console.log('\n⏳ [Init DB] Đang kết nối tới MySQL Server...');
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: process.env.DB_HOST || '127.0.0.1',
       port: parseInt(process.env.DB_PORT || '3306', 10),
       user: process.env.DB_USER || 'root',
@@ -53,29 +56,50 @@ const initDatabase = async () => {
       multipleStatements: true
     });
 
-    const schemaPath = path.resolve(__dirname, '../../database/schema.sql');
+    const databaseName = process.env.DB_NAME || 'pet_spa_db';
+    await assertDatabaseDoesNotExist(connection, databaseName);
+
+    const schemaPath = path.join(projectRoot, 'database', 'schema.sql');
     console.log(`📖 [Init DB] Đang đọc tệp cấu trúc: ${schemaPath}`);
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
-    console.log('⚡ [Init DB] Đang thực thi lệnh DDL tạo CSDL và bảng...');
-    await connection.query(schemaSql);
+    console.log('⚡ [Init DB] Đang tạo database và cấu trúc bảng...');
+    await applySchemaToNewDatabase(connection, schemaSql, databaseName)
+      .catch((error) => {
+        databaseCreatedThisRun = error.databaseCreated === true;
+        throw error;
+      });
+    databaseCreatedThisRun = true;
     await connection.end();
+    connection = null;
     console.log('✅ [Init DB] Đã khởi tạo cấu trúc CSDL thành công!');
 
-    // Chạy seed dữ liệu mẫu sau khi tạo bảng
+    // Chỉ thêm dữ liệu mẫu sau khi tạo database mới, rỗng.
     console.log('\n🌱 [Init DB] Tiến hành nạp dữ liệu mẫu...');
     await seedDatabase();
 
     console.log('\n🎉 [Init DB] Toàn bộ quá trình khởi tạo CSDL và dữ liệu mẫu đã hoàn tất!');
+    return true;
   } catch (error) {
     console.error('❌ [Init DB] Khởi tạo CSDL thất bại:', error.message);
-    process.exit(1);
+    if (databaseCreatedThisRun || error.databaseCreated === true) {
+      const failedDatabaseName = error.databaseName || process.env.DB_NAME || 'pet_spa_db';
+      console.error(
+        `⚠️ Database "${failedDatabaseName}" được tạo trong lần chạy hiện tại và có thể chưa hoàn chỉnh. Database được giữ nguyên; không tự động xóa hoặc sửa. Hãy giữ database này để kiểm tra, đặt DB_NAME thành tên database mới chưa tồn tại rồi chạy lại init để phục hồi an toàn.`
+      );
+    }
+    throw error;
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
   }
 };
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  initDatabase();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  initDatabase().catch(() => {
+    process.exitCode = 1;
+  });
 }
 
 export default initDatabase;
-

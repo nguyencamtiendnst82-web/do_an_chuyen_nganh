@@ -1,6 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import bcrypt from 'bcryptjs';
-import { pool } from '../../src/config/db.js';
+import { pool } from '../src/config/db.js';
+import { assertSeedDatabaseIsEmpty } from './dbSafety.js';
 
 const formatDate = (date) => {
   const y = date.getFullYear();
@@ -18,36 +19,17 @@ const formatCodeDate = (date) => {
 
 const seedDatabase = async () => {
   let connection;
+  let transactionStarted = false;
   try {
     console.log('🌱 [Seed] Bắt đầu nạp dữ liệu mẫu vào CSDL...');
     connection = await pool.getConnection();
     await connection.beginTransaction();
+    transactionStarted = true;
 
-    // 1. Tạm thời tắt khóa ngoại để làm sạch bảng an toàn
-    await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-    const tablesToClean = [
-      'system_logs',
-      'incidents',
-      'payments',
-      'invoice_details',
-      'invoices',
-      'pet_care_history',
-      'appointment_details',
-      'appointments',
-      'employee_shifts',
-      'shifts',
-      'services',
-      'pets',
-      'employees',
-      'users',
-      'roles'
-    ];
-    for (const table of tablesToClean) {
-      await connection.query(`TRUNCATE TABLE \`${table}\``);
-    }
-    await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+    // Chỉ seed database có đủ schema và tất cả bảng nghiệp vụ đang rỗng.
+    await assertSeedDatabaseIsEmpty(connection);
 
-    // 2. Thêm Vai trò chuẩn (Roles)
+    // 1. Thêm Vai trò chuẩn (Roles)
     console.log('📌 [Seed] Đang chèn Roles...');
     await connection.query(`
       INSERT INTO \`roles\` (\`id\`, \`role_name\`, \`display_name\`, \`description\`) VALUES
@@ -232,11 +214,12 @@ const seedDatabase = async () => {
     ]);
 
     await connection.commit();
+    transactionStarted = false;
     console.log('✅ [Seed] Nạp dữ liệu mẫu thành công hoàn toàn!');
     console.log('ℹ️ [Seed] Mật khẩu test cho TẤT CẢ tài khoản là: Password123@');
     return true;
   } catch (error) {
-    if (connection) {
+    if (connection && transactionStarted) {
       await connection.rollback();
     }
     console.error('❌ [Seed] Lỗi khi nạp dữ liệu mẫu:', error);
@@ -250,9 +233,10 @@ const seedDatabase = async () => {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   seedDatabase()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1));
+    .catch(() => {
+      process.exitCode = 1;
+    })
+    .finally(() => pool.end());
 }
 
 export default seedDatabase;
-
