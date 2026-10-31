@@ -19,11 +19,12 @@ export const STATUS_STYLE = {
 }
 
 /** Trạng thái kế tiếp trong quy trình + nhãn nút bấm cho nhân viên */
+// kind: cách thực hiện bước đó. 'checkin' và 'complete' mở form ghi chú/ảnh; 'confirm' và 'start' gọi thẳng API.
 export const NEXT_ACTION = {
-  pending: { status: 'confirmed', label: 'Xác nhận' },
-  confirmed: { status: 'checked_in', label: 'Tiếp nhận' },
-  checked_in: { status: 'in_progress', label: 'Bắt đầu làm' },
-  in_progress: { status: 'completed', label: 'Hoàn tất' },
+  pending: { status: 'confirmed', label: 'Xác nhận', kind: 'confirm' },
+  confirmed: { status: 'checked_in', label: 'Tiếp nhận', kind: 'checkin' },
+  checked_in: { status: 'in_progress', label: 'Bắt đầu làm', kind: 'start' },
+  in_progress: { status: 'completed', label: 'Hoàn tất', kind: 'complete' },
 }
 
 export const ACTIVE_STATUSES = ['pending', 'confirmed', 'checked_in', 'in_progress']

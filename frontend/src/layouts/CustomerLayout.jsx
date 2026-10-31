@@ -17,6 +17,7 @@ const CustomerLayout = () => {
     { to: '/appointments', label: 'Lịch hẹn của tôi' },
     { to: '/services', label: 'Dịch vụ' },
     { to: '/employees', label: 'Đội ngũ' },
+    { to: '/care-book', label: 'Sổ tay chăm sóc' },
     { to: '/profile', label: 'Hồ sơ của tôi' },
   ]
   return (

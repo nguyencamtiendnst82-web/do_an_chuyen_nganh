@@ -18,6 +18,7 @@ const StaffLayout = () => {
   const navLinks = [
     { to: '/staff', label: 'Dashboard', icon: '📊', exact: true },
     { to: '/staff/appointments', label: 'Lịch hẹn', icon: '📅' },
+    { to: '/staff/incidents', label: 'Sự cố', icon: '⚠️' },
     { to: '/staff/shifts', label: 'Ca làm của tôi', icon: '⏰' },
     { to: '/staff/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
     { to: '/staff/services', label: 'Dịch vụ', icon: '✂️' },

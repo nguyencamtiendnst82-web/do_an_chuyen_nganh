@@ -3,6 +3,7 @@ import appointmentRepository from '../repositories/appointmentRepository.js';
 import userRepository from '../repositories/userRepository.js';
 import petRepository from '../repositories/petRepository.js';
 import employeeRepository from '../repositories/employeeRepository.js';
+import careRepository from '../repositories/careRepository.js';
 import serviceRepository from '../repositories/serviceRepository.js';
 import logRepository from '../repositories/logRepository.js';
 import {
@@ -52,7 +53,7 @@ const conflictsWithBuffer = (startA, endA, startB, endB) =>
  * Nhân viên (staff) chỉ được thao tác trên lịch hẹn được phân cho chính mình.
  * Admin thao tác được mọi lịch. Khách đã bị chặn riêng theo quyền sở hữu.
  */
-const assertStaffOwnsAppointment = async (actor, appointment) => {
+export const assertStaffOwnsAppointment = async (actor, appointment) => {
   if (actor.role_name !== 'staff') return;
   const emp = await employeeRepository.findByUserId(actor.id);
   if (!emp || appointment.employee_id !== emp.id) {
@@ -499,7 +500,13 @@ export const getAppointmentById = async (actor, rawId) => {
     delete appointment.employee_user_id;
   }
 
-  return { ...appointment, details };
+  // Hồ sơ chăm sóc (tình trạng ban đầu, ghi chú, ảnh trước/sau): khách chỉ thấy khi lịch đã hoàn tất
+  let careRecord = await careRepository.findByAppointmentId(id);
+  if (actor.role_name === 'customer' && appointment.status !== APPOINTMENT_STATUS.COMPLETED) {
+    careRecord = null;
+  }
+
+  return { ...appointment, details, care_record: careRecord };
 };
 
 /**
@@ -903,6 +910,17 @@ export const updateAppointmentStatus = async (actor, rawId, body, req) => {
   await assertStaffOwnsAppointment(actor, appointment);
 
   const parsed = updateStatusSchema.parse(body);
+
+  // Tiếp nhận và hoàn tất phải đi qua chức năng riêng để bắt buộc ghi chú / ảnh vào hồ sơ chăm sóc
+  if (
+    parsed.status !== appointment.status &&
+    (parsed.status === APPOINTMENT_STATUS.CHECKED_IN || parsed.status === APPOINTMENT_STATUS.COMPLETED)
+  ) {
+    throw httpError(
+      422,
+      'Vui lòng dùng chức năng Tiếp nhận hoặc Hoàn tất lịch hẹn để nhập ghi chú và ảnh trước khi đổi trạng thái.'
+    );
+  }
 
   if (parsed.status === APPOINTMENT_STATUS.CANCELLED) {
     validateCancellation(appointment, actor.role_name, parsed.cancellation_reason || 'Nhân viên hủy lịch');

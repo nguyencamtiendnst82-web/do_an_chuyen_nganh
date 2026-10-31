@@ -3,6 +3,7 @@ import axiosClient from '../api/axiosClient'
 import Modal from './Modal'
 import StatusBadge from './StatusBadge'
 import PetAvatar from './PetAvatar'
+import CareRecordCard from './CareRecordCard'
 import { useToast } from './Feedback'
 import { useAuth } from '../contexts/AuthContext'
 import { formatVND, errorMessage, SPECIES_LABEL } from '../utils/format'
@@ -103,6 +104,13 @@ const AppointmentDetailModal = ({ id, onClose, staffMode = false, renderActions,
             <div>
               <p className="text-sm font-medium text-gray-700 mb-1">Ghi chú của khách</p>
               <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-wrap">{apt.customer_notes}</p>
+            </div>
+          )}
+
+          {apt.care_record && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">Hồ sơ chăm sóc</p>
+              <CareRecordCard record={apt.care_record} />
             </div>
           )}
 

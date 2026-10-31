@@ -593,24 +593,33 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
     expect(resJump.status).toBe(422);
 
     // Chuyển đúng trình tự: confirmed -> checked_in -> in_progress -> completed
+    // (tiếp nhận và hoàn tất đi qua chức năng riêng, không đổi thẳng bằng /status)
     const resCheckIn = await request(app)
-      .patch(`/api/appointments/${aptId}/status`)
+      .patch(`/api/appointments/${aptId}/check-in`)
       .set(authHeader(staffUser2))
-      .send({ status: 'checked_in' });
+      .send({ initialHealthNotes: 'Bé khỏe, lông hơi rối' });
     expect(resCheckIn.status).toBe(200);
+    expect(resCheckIn.body.data.appointment.status).toBe('checked_in');
 
     const resInProgress = await request(app)
-      .patch(`/api/appointments/${aptId}/status`)
-      .set(authHeader(staffUser2))
-      .send({ status: 'in_progress' });
+      .patch(`/api/appointments/${aptId}/start`)
+      .set(authHeader(staffUser2));
     expect(resInProgress.status).toBe(200);
+    expect(resInProgress.body.data.appointment.status).toBe('in_progress');
+
+    // Hoàn tất thiếu ghi chú -> 422
+    const resNoNotes = await request(app)
+      .patch(`/api/appointments/${aptId}/complete`)
+      .set(authHeader(staffUser2))
+      .send({});
+    expect(resNoNotes.status).toBe(422);
 
     const resCompleted = await request(app)
-      .patch(`/api/appointments/${aptId}/status`)
+      .patch(`/api/appointments/${aptId}/complete`)
       .set(authHeader(staffUser2))
-      .send({ status: 'completed' });
+      .send({ treatmentNotes: 'Bé hợp tác, tắm sấy xong', recommendations: 'Chải lông mỗi ngày' });
     expect(resCompleted.status).toBe(200);
-    expect(resCompleted.body.data.status).toBe('completed');
+    expect(resCompleted.body.data.appointment.status).toBe('completed');
   });
 
   // ==========================================

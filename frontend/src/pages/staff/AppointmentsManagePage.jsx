@@ -7,6 +7,7 @@ import AppointmentDetailModal from '../../components/AppointmentDetailModal'
 import CancelModal from '../../components/CancelModal'
 import RescheduleModal from '../../components/RescheduleModal'
 import StaffBookingModal from '../../components/StaffBookingModal'
+import CareStepModal from '../../components/CareStepModal'
 import PetAvatar from '../../components/PetAvatar'
 import { ListSkeleton } from '../../components/Skeleton'
 import { errorMessage } from '../../utils/format'
@@ -39,6 +40,7 @@ const AppointmentsManagePage = () => {
   const [busyId, setBusyId] = useState(null)
 
   const [detailId, setDetailId] = useState(null)
+  const [careTarget, setCareTarget] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [reschedTarget, setReschedTarget] = useState(null)
   const [showBooking, setShowBooking] = useState(false)
@@ -82,14 +84,15 @@ const AppointmentsManagePage = () => {
   const advance = async (apt) => {
     const next = NEXT_ACTION[apt.status]
     if (!next) return
-    if (next.status === 'completed') {
-      const ok = await confirm({ title: 'Hoàn tất lịch hẹn?', message: `Xác nhận bé ${apt.pet_name} đã được phục vụ xong.`, confirmText: 'Hoàn tất' })
-      if (!ok) return
+    // Tiếp nhận và hoàn tất cần ghi chú / ảnh nên mở form riêng
+    if (next.kind === 'checkin' || next.kind === 'complete') {
+      setCareTarget({ apt, mode: next.kind })
+      return
     }
     setBusyId(apt.id)
     try {
-      if (next.status === 'confirmed') await axiosClient.patch(`/appointments/${apt.id}/confirm`)
-      else await axiosClient.patch(`/appointments/${apt.id}/status`, { status: next.status })
+      if (next.kind === 'confirm') await axiosClient.patch(`/appointments/${apt.id}/confirm`)
+      else await axiosClient.patch(`/appointments/${apt.id}/start`)
       toast.success(`${apt.appointment_code}: ${STATUS_LABEL[next.status]}.`)
       await load()
     } catch (err) {
@@ -245,6 +248,14 @@ const AppointmentsManagePage = () => {
       {cancelTarget && <CancelModal appointment={cancelTarget} onClose={() => setCancelTarget(null)} onDone={afterChange} />}
       {reschedTarget && <RescheduleModal appointment={reschedTarget} accent="blue" onClose={() => setReschedTarget(null)} onDone={afterChange} />}
       {showBooking && <StaffBookingModal onClose={() => setShowBooking(false)} onDone={afterChange} />}
+      {careTarget && (
+        <CareStepModal
+          appointment={careTarget.apt}
+          mode={careTarget.mode}
+          onClose={() => setCareTarget(null)}
+          onDone={() => { setCareTarget(null); load() }}
+        />
+      )}
     </div>
   )
 }

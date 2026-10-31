@@ -21,12 +21,14 @@ import PetsPage from './pages/customer/PetsPage'
 import ServiceCatalogPage from './pages/customer/ServiceCatalogPage'
 import BookingPage from './pages/customer/BookingPage'
 import MyAppointmentsPage from './pages/customer/MyAppointmentsPage'
+import CareBookPage from './pages/customer/CareBookPage'
 
 // Pages – Staff
 import StaffDashboard from './pages/staff/StaffDashboard'
 import PetsManagePage from './pages/staff/PetsManagePage'
 import MyShiftsPage from './pages/staff/MyShiftsPage'
 import AppointmentsManagePage from './pages/staff/AppointmentsManagePage'
+import IncidentsPage from './pages/staff/IncidentsPage'
 
 // Pages – Admin
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -87,6 +89,7 @@ const App = () => {
               <Route path="/pets" element={<PetsPage />} />
               <Route path="/booking" element={<BookingPage />} />
               <Route path="/appointments" element={<MyAppointmentsPage />} />
+              <Route path="/care-book" element={<CareBookPage />} />
               <Route path="/services" element={<ServiceCatalogPage />} />
               <Route path="/employees" element={<EmployeesPage />} />
             </Route>
@@ -97,6 +100,7 @@ const App = () => {
             <Route element={<StaffLayout />}>
               <Route path="/staff" element={<StaffDashboard />} />
               <Route path="/staff/appointments" element={<AppointmentsManagePage />} />
+              <Route path="/staff/incidents" element={<IncidentsPage />} />
               <Route path="/staff/pets" element={<PetsManagePage />} />
               <Route path="/staff/shifts" element={<MyShiftsPage />} />
               <Route path="/staff/services" element={<ServiceCatalogPage />} />
@@ -109,6 +113,7 @@ const App = () => {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<UsersManagePage />} />
               <Route path="/admin/appointments" element={<AppointmentsManagePage />} />
+              <Route path="/admin/incidents" element={<IncidentsPage />} />
               <Route path="/admin/shifts" element={<ShiftsManagePage />} />
               <Route path="/admin/services" element={<ServicesAdminPage />} />
               <Route path="/admin/pets" element={<PetsManagePage />} />

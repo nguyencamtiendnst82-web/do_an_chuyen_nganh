@@ -19,6 +19,7 @@ const AdminLayout = () => {
     { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
     { to: '/admin/users', label: 'Tài khoản & nhân viên', icon: '👥' },
     { to: '/admin/appointments', label: 'Lịch hẹn', icon: '📅' },
+    { to: '/admin/incidents', label: 'Sự cố', icon: '⚠️' },
     { to: '/admin/shifts', label: 'Ca làm việc', icon: '⏰' },
     { to: '/admin/services', label: 'Dịch vụ', icon: '✂️' },
     { to: '/admin/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
