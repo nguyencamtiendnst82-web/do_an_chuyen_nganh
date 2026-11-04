@@ -8,6 +8,9 @@ import { useToast } from './Feedback'
 import { useAuth } from '../contexts/AuthContext'
 import { formatVND, errorMessage, SPECIES_LABEL } from '../utils/format'
 import { formatDateLong, hm } from '../utils/appointment'
+import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from '../utils/invoice'
+import CreateInvoiceModal from './CreateInvoiceModal'
+import InvoiceDetailModal from './InvoiceDetailModal'
 
 const Row = ({ label, children }) => (
   <div className="flex justify-between gap-4 py-2 text-sm">
@@ -28,6 +31,8 @@ const AppointmentDetailModal = ({ id, onClose, staffMode = false, renderActions,
   const [error, setError] = useState('')
   const [notes, setNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false)
   const canEditNotes = !apt || user?.role_name === 'admin' || apt.employee_user_id === user?.id
 
   const load = useCallback(async () => {
@@ -126,8 +131,76 @@ const AppointmentDetailModal = ({ id, onClose, staffMode = false, renderActions,
             </div>
           )}
 
+          {/* Phân hệ Hóa đơn & Thanh toán */}
+          {apt.status === 'completed' && (
+            <div className="pt-2">
+              {apt.invoice_id ? (
+                <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs text-gray-500 block">Hóa đơn thanh toán</span>
+                    <span className="font-mono font-bold text-gray-900">{apt.invoice_code}</span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${PAYMENT_STATUS_STYLE[apt.invoice_payment_status] || 'bg-gray-100 text-gray-700'}`}>
+                        {PAYMENT_STATUS_LABEL[apt.invoice_payment_status] || apt.invoice_payment_status}
+                      </span>
+                      {apt.invoice_total_amount && (
+                        <span className="text-xs text-gray-700 font-semibold">
+                          {formatVND(apt.invoice_total_amount)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowInvoiceModal(true)}
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition"
+                  >
+                    Xem chi tiết hóa đơn
+                  </button>
+                </div>
+              ) : staffMode ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-amber-900">Lịch hẹn đã hoàn thành nhưng chưa lập hóa đơn.</p>
+                    <p className="text-xs text-amber-700 mt-0.5">Lập hóa đơn để bổ sung phụ phí (nếu có) và thu tiền khách hàng.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateInvoiceModal(true)}
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition"
+                  >
+                    + Lập hóa đơn
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-500">
+                  Hóa đơn cho lịch hẹn này đang được nhân viên xử lý.
+                </div>
+              )}
+            </div>
+          )}
+
           {renderActions && <div className="flex flex-wrap justify-end gap-2 pt-2">{renderActions(apt, reload)}</div>}
         </div>
+      )}
+
+      {showCreateInvoiceModal && apt && (
+        <CreateInvoiceModal
+          appointment={apt}
+          onClose={() => setShowCreateInvoiceModal(false)}
+          onSuccess={() => {
+            setShowCreateInvoiceModal(false);
+            reload();
+          }}
+        />
+      )}
+
+      {showInvoiceModal && apt?.invoice_id && (
+        <InvoiceDetailModal
+          invoiceId={apt.invoice_id}
+          onClose={() => setShowInvoiceModal(false)}
+          onUpdated={reload}
+        />
       )}
     </Modal>
   )

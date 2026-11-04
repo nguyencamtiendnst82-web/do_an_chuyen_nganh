@@ -9,6 +9,8 @@ import PetAvatar from '../../components/PetAvatar'
 import { ListSkeleton } from '../../components/Skeleton'
 import { errorMessage } from '../../utils/format'
 import { ACTIVE_STATUSES, customerCanChange, formatDate, hm } from '../../utils/appointment'
+import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from '../../utils/invoice'
+import InvoiceDetailModal from '../../components/InvoiceDetailModal'
 
 const TABS = [
   { key: 'upcoming', label: 'Sắp tới' },
@@ -27,6 +29,7 @@ const MyAppointmentsPage = () => {
   const [detailId, setDetailId] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [reschedTarget, setReschedTarget] = useState(null)
+  const [invoiceModalId, setInvoiceModalId] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -110,18 +113,40 @@ const MyAppointmentsPage = () => {
                     </p>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-3">
-                  <button type="button" onClick={() => setDetailId(a.id)} className="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Chi tiết</button>
-                  {changeable && (
-                    <>
-                      <button type="button" disabled={!canChange} onClick={() => openReschedule(a)}
-                        title={canChange ? '' : 'Còn dưới 2 giờ: vui lòng liên hệ trực tiếp spa'}
-                        className="px-3 py-1.5 rounded-lg text-sm text-pink-700 bg-pink-50 hover:bg-pink-100 disabled:opacity-40 disabled:cursor-not-allowed">Đổi lịch</button>
-                      <button type="button" disabled={!canChange} onClick={() => setCancelTarget(a)}
-                        title={canChange ? '' : 'Còn dưới 2 giờ: vui lòng liên hệ trực tiếp spa'}
-                        className="px-3 py-1.5 rounded-lg text-sm text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed">Hủy lịch</button>
-                    </>
-                  )}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                  <div>
+                    {a.status === 'completed' && a.invoice_id && (
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+                          PAYMENT_STATUS_STYLE[a.invoice_payment_status] || 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {PAYMENT_STATUS_LABEL[a.invoice_payment_status] || a.invoice_payment_status}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={() => setDetailId(a.id)} className="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Chi tiết</button>
+                    {a.status === 'completed' && a.invoice_id && (
+                      <button
+                        type="button"
+                        onClick={() => setInvoiceModalId(a.invoice_id)}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 transition"
+                      >
+                        Xem hóa đơn / VietQR
+                      </button>
+                    )}
+                    {changeable && (
+                      <>
+                        <button type="button" disabled={!canChange} onClick={() => openReschedule(a)}
+                          title={canChange ? '' : 'Còn dưới 2 giờ: vui lòng liên hệ trực tiếp spa'}
+                          className="px-3 py-1.5 rounded-lg text-sm text-pink-700 bg-pink-50 hover:bg-pink-100 disabled:opacity-40 disabled:cursor-not-allowed">Đổi lịch</button>
+                        <button type="button" disabled={!canChange} onClick={() => setCancelTarget(a)}
+                          title={canChange ? '' : 'Còn dưới 2 giờ: vui lòng liên hệ trực tiếp spa'}
+                          className="px-3 py-1.5 rounded-lg text-sm text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed">Hủy lịch</button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </li>
             )
@@ -129,9 +154,10 @@ const MyAppointmentsPage = () => {
         </ul>
       )}
 
-      {detailId && <AppointmentDetailModal id={detailId} onClose={() => setDetailId(null)} />}
+      {detailId && <AppointmentDetailModal id={detailId} onClose={() => setDetailId(null)} onChanged={load} />}
       {cancelTarget && <CancelModal appointment={cancelTarget} onClose={() => setCancelTarget(null)} onDone={afterChange} />}
       {reschedTarget && <RescheduleModal appointment={reschedTarget} onClose={() => setReschedTarget(null)} onDone={afterChange} />}
+      {invoiceModalId && <InvoiceDetailModal invoiceId={invoiceModalId} onClose={() => setInvoiceModalId(null)} onUpdated={load} />}
     </div>
   )
 }

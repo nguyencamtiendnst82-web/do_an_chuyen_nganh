@@ -100,12 +100,14 @@ export const findById = async (id, conn = null) => {
             u_c.full_name AS customer_name, u_c.email AS customer_email, u_c.phone AS customer_phone, u_c.avatar_url AS customer_avatar,
             p.name AS pet_name, p.species AS pet_species, p.breed AS pet_breed, p.avatar_url AS pet_avatar,
             e.id AS employee_record_id, e.user_id AS employee_user_id, e.specialty AS employee_specialty,
-            u_e.full_name AS employee_name, u_e.avatar_url AS employee_avatar
+            u_e.full_name AS employee_name, u_e.avatar_url AS employee_avatar,
+            i.id AS invoice_id, i.invoice_code, i.payment_status AS invoice_payment_status, i.total_amount AS invoice_total_amount
      FROM appointments a
      JOIN users u_c ON a.customer_id = u_c.id
      JOIN pets p ON a.pet_id = p.id
      LEFT JOIN employees e ON a.employee_id = e.id
      LEFT JOIN users u_e ON e.user_id = u_e.id
+     LEFT JOIN invoices i ON i.appointment_id = a.id
      WHERE a.id = ?
      LIMIT 1`,
     [id]
@@ -359,12 +361,14 @@ export const findAll = async ({
             u_c.full_name AS customer_name, u_c.email AS customer_email, u_c.phone AS customer_phone, u_c.avatar_url AS customer_avatar,
             p.name AS pet_name, p.species AS pet_species, p.breed AS pet_breed, p.avatar_url AS pet_avatar,
             e.id AS employee_record_id, e.user_id AS employee_user_id, e.specialty AS employee_specialty,
-            u_e.full_name AS employee_name, u_e.avatar_url AS employee_avatar
+            u_e.full_name AS employee_name, u_e.avatar_url AS employee_avatar,
+            i.id AS invoice_id, i.invoice_code, i.payment_status AS invoice_payment_status, i.total_amount AS invoice_total_amount
      FROM appointments a
      JOIN users u_c ON a.customer_id = u_c.id
      JOIN pets p ON a.pet_id = p.id
      LEFT JOIN employees e ON a.employee_id = e.id
      LEFT JOIN users u_e ON e.user_id = u_e.id
+     LEFT JOIN invoices i ON i.appointment_id = a.id
      ${whereClause}
      ORDER BY a.appointment_date DESC, a.start_time DESC
      LIMIT ? OFFSET ?`,

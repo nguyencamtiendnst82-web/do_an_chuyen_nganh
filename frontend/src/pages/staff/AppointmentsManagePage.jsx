@@ -12,6 +12,9 @@ import PetAvatar from '../../components/PetAvatar'
 import { ListSkeleton } from '../../components/Skeleton'
 import { errorMessage } from '../../utils/format'
 import { NEXT_ACTION, STATUS_LABEL, todayStr, addDays, formatDate, hm } from '../../utils/appointment'
+import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from '../../utils/invoice'
+import CreateInvoiceModal from '../../components/CreateInvoiceModal'
+import InvoiceDetailModal from '../../components/InvoiceDetailModal'
 
 const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
 
@@ -46,6 +49,17 @@ const AppointmentsManagePage = () => {
   const [showBooking, setShowBooking] = useState(false)
   const [employees, setEmployees] = useState([])
   const [assignId, setAssignId] = useState('')
+  const [invoiceTarget, setInvoiceTarget] = useState(null)
+  const [invoiceDetailId, setInvoiceDetailId] = useState(null)
+
+  const openCreateInvoice = async (apt) => {
+    try {
+      const res = await axiosClient.get(`/appointments/${apt.id}`)
+      setInvoiceTarget(res.data.data)
+    } catch (err) {
+      toast.error(errorMessage(err, 'Không tải được chi tiết lịch hẹn để lập hóa đơn.'))
+    }
+  }
 
   useEffect(() => {
     axiosClient.get('/employees')
@@ -218,13 +232,34 @@ const AppointmentsManagePage = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 justify-between sm:justify-end">
+                <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
                   <StatusBadge status={a.status} />
+                  {a.status === 'completed' && a.invoice_id && (
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+                        PAYMENT_STATUS_STYLE[a.invoice_payment_status] || 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {PAYMENT_STATUS_LABEL[a.invoice_payment_status] || a.invoice_payment_status}
+                    </span>
+                  )}
                   <button type="button" onClick={() => setDetailId(a.id)} className="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Chi tiết</button>
                   {next && canAct(a) && (
                     <button type="button" disabled={busyId === a.id} onClick={() => advance(a)}
                       className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
                       {busyId === a.id ? '...' : next.label}
+                    </button>
+                  )}
+                  {a.status === 'completed' && !a.invoice_id && canAct(a) && (
+                    <button type="button" onClick={() => openCreateInvoice(a)}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700">
+                      + Lập hóa đơn
+                    </button>
+                  )}
+                  {a.status === 'completed' && a.invoice_id && (
+                    <button type="button" onClick={() => setInvoiceDetailId(a.invoice_id)}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100">
+                      Hóa đơn
                     </button>
                   )}
                 </div>
@@ -254,6 +289,23 @@ const AppointmentsManagePage = () => {
           mode={careTarget.mode}
           onClose={() => setCareTarget(null)}
           onDone={() => { setCareTarget(null); load() }}
+        />
+      )}
+      {invoiceTarget && (
+        <CreateInvoiceModal
+          appointment={invoiceTarget}
+          onClose={() => setInvoiceTarget(null)}
+          onSuccess={() => {
+            setInvoiceTarget(null);
+            load();
+          }}
+        />
+      )}
+      {invoiceDetailId && (
+        <InvoiceDetailModal
+          invoiceId={invoiceDetailId}
+          onClose={() => setInvoiceDetailId(null)}
+          onUpdated={load}
         />
       )}
     </div>

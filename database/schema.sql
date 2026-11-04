@@ -204,7 +204,7 @@ CREATE TABLE `invoices` (
     `discount_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền giảm giá (khuyến mãi, voucher)',
     `tax_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Thuế VAT (nếu có)',
     `total_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền thực tế phải thanh toán (tính tại server)',
-    `payment_status` ENUM('unpaid', 'paid', 'refunded') DEFAULT 'unpaid' COMMENT 'Trạng thái thanh toán',
+    `payment_status` ENUM('unpaid', 'partially_paid', 'paid', 'refunded') DEFAULT 'unpaid' COMMENT 'Trạng thái thanh toán',
     `notes` TEXT NULL COMMENT 'Ghi chú thêm trên hóa đơn',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
