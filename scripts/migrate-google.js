@@ -1,12 +1,12 @@
 import 'dotenv/config';
-import { pool } from '../../src/config/db.js';
+import { pool } from '../src/config/db.js';
 
 /**
  * Migration cho đăng nhập Google:
  *  - users.google_id (mã tài khoản Google, duy nhất)
  *  - users.phone cho phép NULL (người đăng nhập bằng Google chưa có số điện thoại)
  * An toàn khi chạy nhiều lần, KHÔNG xóa dữ liệu.
- * Chạy: node backend/scripts/migrate-google.js
+ * Chạy: node scripts/migrate-google.js
  */
 const columnInfo = async (name) => {
   const [rows] = await pool.query(

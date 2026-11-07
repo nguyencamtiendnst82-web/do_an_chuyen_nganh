@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import { pool } from '../../src/config/db.js';
+import { pool } from '../src/config/db.js';
 
 /**
  * Migration: thêm cột users.token_version (an toàn khi chạy nhiều lần, KHÔNG xóa dữ liệu).
- * Chạy: node backend/scripts/migrate-token-version.js
+ * Chạy: node scripts/migrate-token-version.js
  */
 const run = async () => {
   const [cols] = await pool.query(

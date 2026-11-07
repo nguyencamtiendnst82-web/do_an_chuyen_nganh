@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import { pool } from '../../src/config/db.js';
+import { pool } from '../src/config/db.js';
 
 /**
  * Migration: thêm cột users.gender và users.birth_year (an toàn khi chạy nhiều lần, KHÔNG xóa dữ liệu).
- * Chạy: node backend/scripts/migrate-profile-fields.js
+ * Chạy: node scripts/migrate-profile-fields.js
  */
 const hasColumn = async (name) => {
   const [rows] = await pool.query(

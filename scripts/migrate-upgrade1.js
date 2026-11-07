@@ -1,11 +1,11 @@
 import 'dotenv/config';
-import { pool } from '../../src/config/db.js';
+import { pool } from '../src/config/db.js';
 
 /**
  * Migration cho "Nâng cấp 1": thêm cột pets.birth_month (tháng sinh).
  * An toàn khi chạy nhiều lần, KHÔNG xóa dữ liệu.
  * Với thú cưng cũ chỉ có age_months, tự suy ra tháng sinh gần đúng.
- * Chạy: node backend/scripts/migrate-upgrade1.js
+ * Chạy: node scripts/migrate-upgrade1.js
  */
 const hasColumn = async (table, name) => {
   const [rows] = await pool.query(
