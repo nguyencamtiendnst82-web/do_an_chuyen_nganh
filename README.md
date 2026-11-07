@@ -23,6 +23,20 @@ Website quản lý và vận hành dịch vụ spa thú cưng, phục vụ ba va
 
 Yêu cầu: Node.js 18 trở lên, MySQL 8+ (schema có ghi chú hỗ trợ MariaDB 10.5+). MySQL phải đang chạy trước khi khởi tạo cơ sở dữ liệu.
 
+## 🔐 Danh Sách Tài Khoản Demo
+
+Mật khẩu mặc định cho **TẤT CẢ** các tài khoản mẫu dưới đây là: **`Password123@`**
+
+| Vai trò (Role) | Họ và tên | Email đăng nhập | Số điện thoại | Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | Nguyễn Quản Trị | `admin@petspa.com` | `0901234567` | Toàn quyền quản trị hệ thống, báo cáo, nhân sự |
+| **Nhân viên (Staff 1)** | Trần Kỹ Thuật Viên 1 | `staff1@petspa.com` | `0912345678` | Chuyên môn Tắm sấy & Trị liệu da lông |
+| **Nhân viên (Staff 2)** | Lê Groomer Chuyên Nghiệp | `staff2@petspa.com` | `0923456789` | Chuyên môn Cắt tỉa tạo kiểu dáng Hàn Quốc |
+| **Khách hàng (Customer 1)** | Phạm Văn Khôi | `khachhang1@gmail.com` | `0934567890` | Sở hữu thú cưng: Bông Xù (Poodle), Milo (Golden) |
+| **Khách hàng (Customer 2)** | Vũ Thị Sen | `khachhang2@gmail.com` | `0945678901` | Sở hữu thú cưng: Miu Miu (Mèo Anh lông ngắn) |
+
+---
+
 ## Chạy trên terminal
 
 Mọi lệnh dưới đây chạy trong terminal, ví dụ terminal tích hợp của VS Code.
