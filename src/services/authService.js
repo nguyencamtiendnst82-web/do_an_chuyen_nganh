@@ -7,6 +7,7 @@ import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
 import { AVATAR_URL_PREFIX, isRealImageFile, deleteAvatarFile } from '../middlewares/uploadImage.js';
 import { registerSchema, loginSchema, updateMeSchema, changePasswordSchema } from '../validations/authSchemas.js';
 import { profileExtraSchema } from '../validations/profileSchemas.js';
+import { trySendVerificationEmail } from './emailVerificationService.js';
 
 
 // Hằng số role_id (đồng bộ với seed.sql)
@@ -40,6 +41,7 @@ const safeUser = (user) => ({
   birth_year: user.birth_year ?? null,
   avatar_url: user.avatar_url,
   status: user.status,
+  email_verified: Boolean(user.email_verified),
   role_name: user.role_name,
   role_display_name: user.role_display_name,
   created_at: user.created_at,
@@ -94,6 +96,10 @@ const register = async (body, req) => {
 
   // Trả về thông tin user (không trả password_hash)
   const user = await userRepository.findById(userId);
+
+  // Gửi thư xác minh email (lỗi gửi thư không làm hỏng việc đăng ký)
+  await trySendVerificationEmail(user);
+
   return safeUser(user);
 };
 

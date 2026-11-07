@@ -16,10 +16,10 @@ const link = async (userId, googleId) => {
   return result.affectedRows > 0;
 };
 
-/** Tạo khách hàng mới từ Google: chưa có số điện thoại, mật khẩu là chuỗi ngẫu nhiên không ai biết */
+/** Tạo khách hàng mới từ Google: email do Google xác minh nên email_verified = 1; chưa có số điện thoại, mật khẩu là chuỗi ngẫu nhiên không ai biết */
 const createCustomer = async ({ roleId, fullName, email, passwordHash, googleId }) => {
   const [result] = await pool.query(
-    `INSERT INTO users (role_id, full_name, email, phone, password_hash, google_id) VALUES (?, ?, ?, NULL, ?, ?)`,
+    `INSERT INTO users (role_id, full_name, email, phone, password_hash, google_id, email_verified) VALUES (?, ?, ?, NULL, ?, ?, 1)`,
     [roleId, fullName, email, passwordHash, googleId]
   );
   return result.insertId;

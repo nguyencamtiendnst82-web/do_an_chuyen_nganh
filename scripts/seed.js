@@ -45,12 +45,12 @@ const seedDatabase = async () => {
     // 4. Thêm Người dùng mẫu (Users)
     console.log('📌 [Seed] Đang chèn Users...');
     await connection.query(`
-      INSERT INTO \`users\` (\`id\`, \`role_id\`, \`full_name\`, \`email\`, \`phone\`, \`password_hash\`, \`address\`, \`status\`) VALUES
-      (1, 1, 'Nguyễn Quản Trị', 'admin@petspa.com', '0901234567', ?, '123 Nguyễn Thị Minh Khai, Q1, TP.HCM', 'active'),
-      (2, 2, 'Trần Kỹ Thuật Viên 1', 'staff1@petspa.com', '0912345678', ?, '456 Lê Lợi, Q3, TP.HCM', 'active'),
-      (3, 2, 'Lê Groomer Chuyên Nghiệp', 'staff2@petspa.com', '0923456789', ?, '789 CMT8, Q10, TP.HCM', 'active'),
-      (4, 3, 'Phạm Khách Hàng', 'khachhang1@gmail.com', '0934567890', ?, '12 Điện Biên Phủ, Bình Thạnh, TP.HCM', 'active'),
-      (5, 3, 'Vũ Thị Sen', 'khachhang2@gmail.com', '0945678901', ?, '34 Hai Bà Trưng, Q1, TP.HCM', 'active')
+      INSERT INTO \`users\` (\`id\`, \`role_id\`, \`full_name\`, \`email\`, \`phone\`, \`password_hash\`, \`address\`, \`status\`, \`email_verified\`) VALUES
+      (1, 1, 'Nguyễn Quản Trị', 'admin@petspa.com', '0901234567', ?, '123 Nguyễn Thị Minh Khai, Q1, TP.HCM', 'active', 1),
+      (2, 2, 'Trần Kỹ Thuật Viên 1', 'staff1@petspa.com', '0912345678', ?, '456 Lê Lợi, Q3, TP.HCM', 'active', 1),
+      (3, 2, 'Lê Groomer Chuyên Nghiệp', 'staff2@petspa.com', '0923456789', ?, '789 CMT8, Q10, TP.HCM', 'active', 1),
+      (4, 3, 'Phạm Khách Hàng', 'khachhang1@gmail.com', '0934567890', ?, '12 Điện Biên Phủ, Bình Thạnh, TP.HCM', 'active', 0),
+      (5, 3, 'Vũ Thị Sen', 'khachhang2@gmail.com', '0945678901', ?, '34 Hai Bà Trưng, Q1, TP.HCM', 'active', 0)
     `, [passwordHash, passwordHash, passwordHash, passwordHash, passwordHash]);
 
     // 5. Thêm Thông tin Nhân viên mở rộng (Employees)

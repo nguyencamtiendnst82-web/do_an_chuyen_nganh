@@ -102,6 +102,7 @@ const createEmployee = async (body, req) => {
         address: parsed.address || null,
         gender: parsed.gender ?? null,
         birth_year: parsed.birth_year ?? null,
+        email_verified: 1, // tài khoản nhân viên do admin tạo: admin bảo chứng email
       },
       connection
     );

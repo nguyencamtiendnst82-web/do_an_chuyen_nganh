@@ -15,15 +15,15 @@ export const uniqueStamp = () => {
  * Tạo trực tiếp một user trong DB (đúng vai trò) rồi đăng nhập để lấy token.
  * Email bắt đầu bằng `${prefix}_` để file test tự dọn sau khi chạy xong.
  */
-export const createUser = async (app, { role = 'customer', prefix = 'test_h' } = {}) => {
+export const createUser = async (app, { role = 'customer', prefix = 'test_h', verified = role !== 'customer' } = {}) => {
   const stamp = uniqueStamp();
   const email = `${prefix}_${stamp}@example.com`;
   const phone = `03${stamp.slice(-8)}`;
   const hash = await bcrypt.hash(PASSWORD, 10);
 
   const [result] = await pool.query(
-    `INSERT INTO users (role_id, full_name, email, phone, password_hash) VALUES (?, ?, ?, ?, ?)`,
-    [ROLE_IDS[role], `Test ${role}`, email, phone, hash]
+    `INSERT INTO users (role_id, full_name, email, phone, password_hash, email_verified) VALUES (?, ?, ?, ?, ?, ?)`,
+    [ROLE_IDS[role], `Test ${role}`, email, phone, hash, verified ? 1 : 0]
   );
 
   const res = await request(app).post('/api/auth/login').send({ credential: email, password: PASSWORD });

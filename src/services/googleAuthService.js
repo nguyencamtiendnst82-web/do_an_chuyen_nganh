@@ -37,6 +37,7 @@ const safeUser = (user) => ({
   birth_year: user.birth_year ?? null,
   avatar_url: user.avatar_url,
   status: user.status,
+  email_verified: Boolean(user.email_verified),
   role_name: user.role_name,
   role_display_name: user.role_display_name,
   created_at: user.created_at,
@@ -68,6 +69,14 @@ const googleLogin = async (body, req) => {
   } else {
     user = await userRepository.findByEmail(email);
     if (user) {
+      // Chống chiếm trước tài khoản: ai đó có thể đã đăng ký bằng mật khẩu với email của bạn
+      // (email chưa xác minh). Chỉ gắn Google vào tài khoản đã chứng minh sở hữu email.
+      if (!user.email_verified) {
+        throw httpError(
+          403,
+          'Email này đã đăng ký bằng mật khẩu nhưng chưa được xác minh. Hãy đăng nhập bằng mật khẩu và xác minh email trước khi liên kết với Google.'
+        );
+      }
       const existingGoogleId = await googleUserRepository.getGoogleId(user.id);
       if (existingGoogleId && existingGoogleId !== profile.sub) {
         throw httpError(403, 'Email này đã được liên kết với một tài khoản Google khác.');

@@ -4,6 +4,7 @@ const router = express.Router();
 
 import authenticate from '../middlewares/authenticate.js';
 import { uploadAvatarImage, AVATAR_DIR } from '../middlewares/uploadImage.js';
+import { verifyEmail, resendVerification } from '../controllers/emailVerificationController.js';
 import { register, login, logout, getMe, updateMe, changePassword, uploadAvatar, removeAvatar } from '../controllers/authController.js';
 
 // Rate limit cho đăng nhập: 10 lần / 15 phút / IP
@@ -33,6 +34,28 @@ const registerLimiter = rateLimit({
     success: false,
     message: 'Bạn đăng ký quá nhiều lần. Vui lòng thử lại sau.',
   },
+  skip: () =>
+    process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
+});
+
+// Rate limit xác minh email: bấm link 30 lần / 15 phút / IP; gửi lại thư 3 lần / giờ / tài khoản
+const verifyEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Bạn thử quá nhiều lần. Vui lòng thử lại sau.' },
+  skip: () =>
+    process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
+});
+
+const resendVerificationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `user-${req.user.id}`,
+  message: { success: false, message: 'Bạn yêu cầu gửi lại thư quá nhiều lần. Vui lòng thử lại sau 1 giờ.' },
   skip: () =>
     process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
 });
@@ -75,6 +98,12 @@ router.post('/register', registerLimiter, register);
 
 // POST /api/auth/login (có rate limit)
 router.post('/login', loginLimiter, login);
+
+// GET /api/auth/verify-email?token=... – Link trong thư xác minh email (công khai, trả trang HTML)
+router.get('/verify-email', verifyEmailLimiter, verifyEmail);
+
+// POST /api/auth/resend-verification – Gửi lại thư xác minh (cần đăng nhập)
+router.post('/resend-verification', authenticate, resendVerificationLimiter, resendVerification);
 
 // POST /api/auth/logout (yêu cầu đăng nhập)
 router.post('/logout', authenticate, logout);

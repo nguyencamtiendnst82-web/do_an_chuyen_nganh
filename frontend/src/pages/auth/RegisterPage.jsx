@@ -22,6 +22,7 @@ const RegisterPage = () => {
   const [globalError, setGlobalError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -74,7 +75,8 @@ const RegisterPage = () => {
       })
 
       setSuccess(true)
-      setTimeout(() => navigate('/login'), 2000)
+      setRegisteredEmail(form.email.toLowerCase())
+      setTimeout(() => navigate('/login'), 5000)
     } catch (err) {
       const data = err.response?.data
       if (err.response?.status === 409) {
@@ -116,7 +118,11 @@ const RegisterPage = () => {
         <div className="text-center">
           <span className="text-5xl">✅</span>
           <h2 className="mt-4 text-xl font-bold text-gray-900">Đăng ký thành công!</h2>
-          <p className="mt-2 text-sm text-gray-500">Đang chuyển về trang đăng nhập...</p>
+          <p className="mt-2 text-sm text-gray-600 max-w-sm mx-auto">
+            Chúng tôi đã gửi thư xác minh tới <strong>{registeredEmail}</strong>. Hãy bấm vào liên kết trong thư
+            để xác minh email (có thể phải tìm trong mục Spam).
+          </p>
+          <p className="mt-2 text-sm text-gray-500">Bạn vẫn đăng nhập và đặt lịch được ngay. Đang chuyển về trang đăng nhập...</p>
         </div>
       </div>
     )

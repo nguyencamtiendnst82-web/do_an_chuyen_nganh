@@ -63,8 +63,8 @@ describe('Đăng nhập bằng Google', () => {
     expect(rows[0].total).toBe(1);
   });
 
-  test('G3. Email đã có tài khoản mật khẩu → gắn Google vào, vẫn đăng nhập mật khẩu được', async () => {
-    const existing = await createUser(app, { role: 'customer', prefix: 'test_gg' });
+  test('G3. Email đã có tài khoản mật khẩu ĐÃ XÁC MINH → gắn Google vào, vẫn đăng nhập mật khẩu được', async () => {
+    const existing = await createUser(app, { role: 'customer', prefix: 'test_gg', verified: true });
     const res = await post(cred(`sub${uniqueStamp()}`, existing.email));
     expect(res.status).toBe(200);
     expect(res.body.data.is_new).toBe(false);
@@ -72,6 +72,16 @@ describe('Đăng nhập bằng Google', () => {
 
     const pw = await request(app).post('/api/auth/login').send({ credential: existing.email, password: PASSWORD });
     expect(pw.status).toBe(200);
+  });
+
+  test('G3b. Email đã có tài khoản mật khẩu CHƯA xác minh → 403, không gắn Google (chống chiếm trước tài khoản)', async () => {
+    const squatter = await createUser(app, { role: 'customer', prefix: 'test_gg', verified: false });
+    const res = await post(cred(`sub${uniqueStamp()}`, squatter.email));
+    expect(res.status).toBe(403);
+    expect(res.body.data?.token).toBeUndefined();
+
+    const [rows] = await pool.query('SELECT google_id FROM users WHERE id = ?', [squatter.id]);
+    expect(rows[0].google_id).toBeNull();
   });
 
   test('G4. Email có tài khoản nhưng gắn với Google khác → 403', async () => {

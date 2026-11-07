@@ -355,6 +355,14 @@ const ProfilePage = () => {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
             />
             <p className="mt-1 text-xs text-gray-400">Email không thể thay đổi</p>
+            {user?.email_verified === true && (
+              <p className="mt-1 text-xs text-green-600">✓ Email đã được xác minh</p>
+            )}
+            {user?.email_verified === false && (
+              <p className="mt-1 text-xs text-amber-700">
+                Email chưa được xác minh — dùng dải thông báo ở đầu trang để gửi lại thư xác minh.
+              </p>
+            )}
           </div>
 
           {/* Giới tính + năm sinh: để hệ thống biết cách xưng hô */}

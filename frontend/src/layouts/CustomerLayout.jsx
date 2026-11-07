@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import UserMenu from '../components/UserMenu'
+import EmailVerificationNotice from '../components/EmailVerificationNotice'
 
 /**
  * CustomerLayout: Layout cho khách hàng đã đăng nhập
@@ -85,6 +86,9 @@ const CustomerLayout = () => {
           </div>
         )}
       </header>
+
+      {/* Nhắc xác minh email (chỉ hiện với tài khoản chưa xác minh) */}
+      <EmailVerificationNotice />
 
       {/* Content */}
       <main className="flex-1">

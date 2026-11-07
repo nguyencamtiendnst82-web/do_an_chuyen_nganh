@@ -75,11 +75,12 @@ const create = async (userData, conn = null) => {
   const {
     role_id, full_name, email, phone, password_hash,
     address = null, gender = null, birth_year = null,
+    email_verified = 0,
   } = userData;
   const [result] = await db.query(
-    `INSERT INTO users (role_id, full_name, email, phone, password_hash, address, gender, birth_year)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [role_id, full_name, email, phone, password_hash, address, gender, birth_year]
+    `INSERT INTO users (role_id, full_name, email, phone, password_hash, address, gender, birth_year, email_verified)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [role_id, full_name, email, phone, password_hash, address, gender, birth_year, email_verified ? 1 : 0]
   );
   return result.insertId;
 };
@@ -220,5 +221,39 @@ const countActiveAdmins = async () => {
   return rows[0].total;
 };
 
-export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins };
-export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins };
+/**
+ * Lưu mã xác minh email (chỉ lưu băm SHA-256) kèm hạn dùng; mã cũ bị thay thế.
+ * Hạn tính ngay trong SQL (NOW() + giờ) để không lệch múi giờ giữa Node và MySQL.
+ */
+const setEmailVerifyToken = async (userId, tokenHash, ttlHours) => {
+  await pool.query(
+    `UPDATE users
+     SET email_verify_token_hash = ?, email_verify_expires = DATE_ADD(NOW(), INTERVAL ? HOUR)
+     WHERE id = ? AND email_verified = 0`,
+    [tokenHash, ttlHours, userId]
+  );
+};
+
+/**
+ * Dùng mã xác minh: đánh dấu đã xác minh và xóa mã, trong MỘT câu lệnh nên mã chỉ dùng được một lần.
+ * @returns {Promise<number|null>} id user vừa được xác minh, hoặc null nếu mã sai/hết hạn/đã dùng
+ */
+const consumeEmailVerifyToken = async (tokenHash) => {
+  const [rows] = await pool.query(
+    `SELECT id FROM users
+     WHERE email_verify_token_hash = ? AND email_verify_expires > NOW() AND email_verified = 0
+     LIMIT 1`,
+    [tokenHash]
+  );
+  if (rows.length === 0) return null;
+  const [result] = await pool.query(
+    `UPDATE users
+     SET email_verified = 1, email_verify_token_hash = NULL, email_verify_expires = NULL
+     WHERE id = ? AND email_verify_token_hash = ? AND email_verify_expires > NOW()`,
+    [rows[0].id, tokenHash]
+  );
+  return result.affectedRows > 0 ? rows[0].id : null;
+};
+
+export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins, setEmailVerifyToken, consumeEmailVerifyToken };
+export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins, setEmailVerifyToken, consumeEmailVerifyToken };
