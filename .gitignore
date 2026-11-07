@@ -28,3 +28,6 @@ Thumbs.db
 
 coverage/
 client_secret*.json
+
+# File tạm của Word
+~$*
