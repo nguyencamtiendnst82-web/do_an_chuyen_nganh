@@ -17,7 +17,7 @@ const MAX_PET_AGE_YEARS = 40;
 /** Tháng sinh dạng YYYY-MM, không ở tương lai và không quá 40 năm trước */
 const birthMonth = z.preprocess(
   emptyToNull,
-  z.string({ invalid_type_error: 'Tháng sinh không hợp lệ' })
+  z.string({ error: (issue) => issue.code === 'invalid_type' ? 'Tháng sinh không hợp lệ' : undefined })
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Tháng sinh phải có dạng năm-tháng (VD: 2024-05)')
     .refine((v) => v <= currentYearMonth(), 'Tháng sinh không được ở tương lai')
     .refine((v) => {
@@ -30,14 +30,21 @@ const birthMonth = z.preprocess(
 );
 
 const shape = {
-  name: z.string({ required_error: 'Tên thú cưng là bắt buộc', invalid_type_error: 'Tên thú cưng không hợp lệ' })
+  name: z.string({
+    error: (issue) =>
+      issue.input === undefined
+        ? 'Tên thú cưng là bắt buộc'
+        : issue.code === 'invalid_type'
+          ? 'Tên thú cưng không hợp lệ'
+          : undefined,
+  })
     .trim()
     .min(1, 'Tên thú cưng là bắt buộc')
     .max(100, 'Tên thú cưng tối đa 100 ký tự'),
 
-  species: z.enum(['dog', 'cat', 'other'], { errorMap: () => ({ message: 'Loài phải là chó, mèo hoặc khác' }) }),
+  species: z.enum(['dog', 'cat', 'other'], { error: () => 'Loài phải là chó, mèo hoặc khác' }),
 
-  gender: z.enum(['male', 'female', 'unknown'], { errorMap: () => ({ message: 'Giới tính không hợp lệ' }) }),
+  gender: z.enum(['male', 'female', 'unknown'], { error: () => 'Giới tính không hợp lệ' }),
 
   breed: optionalText(100, 'Giống loài'),
 
@@ -45,7 +52,7 @@ const shape = {
 
   weight_kg: z.preprocess(
     toNumber,
-    z.number({ invalid_type_error: 'Cân nặng phải là số' })
+    z.number({ error: (issue) => issue.code === 'invalid_type' ? 'Cân nặng phải là số' : undefined })
       .min(0.1, 'Cân nặng tối thiểu 0,1 kg')
       .max(150, 'Cân nặng tối đa 150 kg')
       .nullable()
@@ -62,7 +69,7 @@ const createPetSchema = z.object({
   // Chỉ staff/admin được dùng để tạo hộ khách; với customer sẽ bị bỏ qua
   customer_id: z.preprocess(
     toNumber,
-    z.number({ invalid_type_error: 'Mã khách hàng không hợp lệ' }).int().positive().nullable().optional()
+    z.number({ error: (issue) => issue.code === 'invalid_type' ? 'Mã khách hàng không hợp lệ' : undefined }).int().positive().nullable().optional()
   ),
 });
 
@@ -75,7 +82,7 @@ const updatePetSchema = z
     birth_month: shape.birth_month,
     weight_kg: shape.weight_kg,
     special_notes: shape.special_notes,
-    status: z.enum(['active', 'inactive'], { errorMap: () => ({ message: 'Trạng thái không hợp lệ' }) }).optional(),
+    status: z.enum(['active', 'inactive'], { error: () => 'Trạng thái không hợp lệ' }).optional(),
   })
   .refine((obj) => Object.values(obj).some((v) => v !== undefined), {
     message: 'Không có dữ liệu để cập nhật.',

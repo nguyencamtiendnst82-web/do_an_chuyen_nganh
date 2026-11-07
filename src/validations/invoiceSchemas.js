@@ -14,7 +14,7 @@ export const createInvoiceSchema = z.object({
 export const createPaymentSchema = z.object({
   amount: z.coerce.number().positive('Số tiền thanh toán phải lớn hơn 0').min(1000, 'Số tiền thanh toán tối thiểu là 1.000đ'),
   payment_method: z.enum(['cash', 'bank_transfer', 'momo_simulated', 'card'], {
-    errorMap: () => ({ message: 'Phương thức thanh toán phải là cash, bank_transfer, momo_simulated hoặc card' }),
+    error: () => 'Phương thức thanh toán phải là cash, bank_transfer, momo_simulated hoặc card',
   }),
   notes: z.string().trim().max(255, 'Ghi chú tối đa 255 ký tự').nullable().optional(),
 }).strict();

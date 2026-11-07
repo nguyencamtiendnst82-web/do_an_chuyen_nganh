@@ -13,7 +13,7 @@ const emptyToNull = (v) => (v === '' ? null : v);
 const profileExtraSchema = z.object({
   gender: z.preprocess(
     emptyToNull,
-    z.enum(['male', 'female', 'other'], { errorMap: () => ({ message: 'Giới tính không hợp lệ.' }) })
+    z.enum(['male', 'female', 'other'], { error: () => 'Giới tính không hợp lệ.' })
       .nullable()
       .optional()
   ),
@@ -23,7 +23,7 @@ const profileExtraSchema = z.object({
       if (typeof v === 'string' && /^\d+$/.test(v.trim())) return Number(v.trim());
       return v;
     },
-    z.number({ invalid_type_error: 'Năm sinh phải là số.' })
+    z.number({ error: (issue) => issue.code === 'invalid_type' ? 'Năm sinh phải là số.' : undefined })
       .int('Năm sinh phải là số nguyên.')
       .min(MIN_YEAR, `Năm sinh không được nhỏ hơn ${MIN_YEAR}.`)
       .refine((y) => y <= new Date().getFullYear() - MIN_AGE, 'Năm sinh không hợp lệ.')

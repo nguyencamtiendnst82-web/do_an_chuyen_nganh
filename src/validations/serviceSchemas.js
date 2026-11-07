@@ -3,7 +3,14 @@ import { z } from 'zod';
 const emptyToNull = (v) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 const shape = {
-  name: z.string({ required_error: 'Tên dịch vụ là bắt buộc', invalid_type_error: 'Tên dịch vụ không hợp lệ' })
+  name: z.string({
+    error: (issue) =>
+      issue.input === undefined
+        ? 'Tên dịch vụ là bắt buộc'
+        : issue.code === 'invalid_type'
+          ? 'Tên dịch vụ không hợp lệ'
+          : undefined,
+  })
     .trim()
     .min(2, 'Tên dịch vụ phải có ít nhất 2 ký tự')
     .max(150, 'Tên dịch vụ tối đa 150 ký tự'),
@@ -14,12 +21,26 @@ const shape = {
   ),
 
   // Giá tính bằng VND, số nguyên; server không tin giá từ client ở các bước đặt lịch/hóa đơn sau này
-  price: z.number({ required_error: 'Giá dịch vụ là bắt buộc', invalid_type_error: 'Giá dịch vụ phải là số' })
+  price: z.number({
+    error: (issue) =>
+      issue.input === undefined
+        ? 'Giá dịch vụ là bắt buộc'
+        : issue.code === 'invalid_type'
+          ? 'Giá dịch vụ phải là số'
+          : undefined,
+  })
     .int('Giá dịch vụ phải là số nguyên (VND)')
     .min(0, 'Giá dịch vụ không được âm')
     .max(100000000, 'Giá dịch vụ tối đa 100.000.000đ'),
 
-  duration_minutes: z.number({ required_error: 'Thời lượng là bắt buộc', invalid_type_error: 'Thời lượng phải là số' })
+  duration_minutes: z.number({
+    error: (issue) =>
+      issue.input === undefined
+        ? 'Thời lượng là bắt buộc'
+        : issue.code === 'invalid_type'
+          ? 'Thời lượng phải là số'
+          : undefined,
+  })
     .int('Thời lượng phải là số nguyên (phút)')
     .min(5, 'Thời lượng tối thiểu 5 phút')
     .max(480, 'Thời lượng tối đa 480 phút (8 giờ)'),
@@ -27,7 +48,7 @@ const shape = {
 
 const createServiceSchema = z.object({
   ...shape,
-  is_active: z.boolean({ invalid_type_error: 'Trạng thái không hợp lệ' }).optional(),
+  is_active: z.boolean({ error: (issue) => issue.code === 'invalid_type' ? 'Trạng thái không hợp lệ' : undefined }).optional(),
 });
 
 const updateServiceSchema = z
@@ -42,7 +63,14 @@ const updateServiceSchema = z
   });
 
 const setActiveSchema = z.object({
-  is_active: z.boolean({ required_error: 'Trạng thái là bắt buộc', invalid_type_error: 'Trạng thái phải là true hoặc false' }),
+  is_active: z.boolean({
+    error: (issue) =>
+      issue.input === undefined
+        ? 'Trạng thái là bắt buộc'
+        : issue.code === 'invalid_type'
+          ? 'Trạng thái phải là true hoặc false'
+          : undefined,
+  }),
 });
 
 export { createServiceSchema, updateServiceSchema, setActiveSchema };

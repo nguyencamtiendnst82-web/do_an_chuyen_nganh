@@ -14,15 +14,15 @@ export const countDaysBetween = (fromStr, toStr) => {
 
 export const bulkAssignSchema = z
   .object({
-    employee_id: z.number({ required_error: 'ID nhân viên là bắt buộc' }).int().positive(),
+    employee_id: z.number({ error: (issue) => issue.input === undefined ? 'ID nhân viên là bắt buộc' : undefined }).int().positive(),
     shift_ids: z
-      .array(z.number().int().positive(), { required_error: 'Danh sách ca làm việc là bắt buộc' })
+      .array(z.number().int().positive(), { error: (issue) => issue.input === undefined ? 'Danh sách ca làm việc là bắt buộc' : undefined })
       .min(1, 'Phải chọn ít nhất một ca làm việc'),
     from: z
-      .string({ required_error: 'Ngày bắt đầu là bắt buộc' })
+      .string({ error: (issue) => issue.input === undefined ? 'Ngày bắt đầu là bắt buộc' : undefined })
       .regex(dateRegex, 'Ngày bắt đầu phải theo định dạng YYYY-MM-DD'),
     to: z
-      .string({ required_error: 'Ngày kết thúc là bắt buộc' })
+      .string({ error: (issue) => issue.input === undefined ? 'Ngày kết thúc là bắt buộc' : undefined })
       .regex(dateRegex, 'Ngày kết thúc phải theo định dạng YYYY-MM-DD'),
     weekdays: z
       .array(z.number().int().min(0).max(6))
@@ -68,4 +68,3 @@ export const dateRangeQuerySchema = z
       path: ['to'],
     }
   );
-

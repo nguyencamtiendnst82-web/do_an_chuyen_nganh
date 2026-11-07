@@ -14,7 +14,7 @@ export const updateEmployeeSchema = z
   .object({
     specialty: z.string().max(150, 'Chuyên môn tối đa 150 ký tự').trim().optional().nullable(),
     experience_years: z
-      .number({ invalid_type_error: 'Số năm kinh nghiệm phải là số' })
+      .number({ error: (issue) => issue.code === 'invalid_type' ? 'Số năm kinh nghiệm phải là số' : undefined })
       .min(0, 'Số năm kinh nghiệm không được nhỏ hơn 0')
       .max(60, 'Số năm kinh nghiệm tối đa 60')
       .optional(),
@@ -25,9 +25,8 @@ export const updateEmployeeSchema = z
       .optional(),
     status: z
       .enum(['active', 'on_leave', 'resigned'], {
-        errorMap: () => ({ message: 'Trạng thái nhân viên phải là active, on_leave hoặc resigned' }),
+        error: () => 'Trạng thái nhân viên phải là active, on_leave hoặc resigned',
       })
       .optional(),
   })
   .strict();
-

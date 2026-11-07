@@ -14,7 +14,7 @@ const errorHandler = (err, req, res, next) => {
 
   // Lỗi validate từ Zod
   if (err.name === 'ZodError') {
-    const formattedErrors = err.errors.map((e) => ({
+    const formattedErrors = err.issues.map((e) => ({
       field: e.path.join('.'),
       message: e.message,
     }));

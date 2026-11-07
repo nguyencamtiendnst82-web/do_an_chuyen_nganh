@@ -12,7 +12,14 @@ import { httpError } from '../utils/params.js';
 const CUSTOMER_ROLE_ID = 3;
 
 const bodySchema = z.object({
-  credential: z.string({ required_error: 'Thiếu thông tin đăng nhập Google', invalid_type_error: 'Thông tin đăng nhập Google không hợp lệ' })
+  credential: z.string({
+    error: (issue) =>
+      issue.input === undefined
+        ? 'Thiếu thông tin đăng nhập Google'
+        : issue.code === 'invalid_type'
+          ? 'Thông tin đăng nhập Google không hợp lệ'
+          : undefined,
+  })
     .min(20, 'Thông tin đăng nhập Google không hợp lệ')
     .max(4096, 'Thông tin đăng nhập Google không hợp lệ'),
 });

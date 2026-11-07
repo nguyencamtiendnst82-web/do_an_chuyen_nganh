@@ -36,15 +36,15 @@ export const compareTime = (t1, t2) => {
 export const createShiftSchema = z
   .object({
     shift_name: z
-      .string({ required_error: 'Tên ca làm việc là bắt buộc' })
+      .string({ error: (issue) => issue.input === undefined ? 'Tên ca làm việc là bắt buộc' : undefined })
       .min(2, 'Tên ca phải có ít nhất 2 ký tự')
       .max(50, 'Tên ca tối đa 50 ký tự')
       .trim(),
     start_time: z
-      .string({ required_error: 'Giờ bắt đầu là bắt buộc' })
+      .string({ error: (issue) => issue.input === undefined ? 'Giờ bắt đầu là bắt buộc' : undefined })
       .refine(validateTime, 'Giờ bắt đầu phải theo định dạng HH:MM và là bội số của 5 phút'),
     end_time: z
-      .string({ required_error: 'Giờ kết thúc là bắt buộc' })
+      .string({ error: (issue) => issue.input === undefined ? 'Giờ kết thúc là bắt buộc' : undefined })
       .refine(validateTime, 'Giờ kết thúc phải theo định dạng HH:MM và là bội số của 5 phút'),
     description: z.string().max(255, 'Mô tả tối đa 255 ký tự').trim().optional().nullable(),
     is_active: z.boolean().optional().default(true),
@@ -85,4 +85,3 @@ export const updateShiftSchema = z
       path: ['end_time'],
     }
   );
-

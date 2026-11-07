@@ -19,15 +19,15 @@ export const normalizeAppointmentInput = (body = {}) => {
 };
 
 export const createAppointmentSchema = z.object({
-  pet_id: z.number({ required_error: 'Vui lòng chọn thú cưng' }).int().positive('Thú cưng không hợp lệ'),
+  pet_id: z.number({ error: (issue) => issue.input === undefined ? 'Vui lòng chọn thú cưng' : undefined }).int().positive('Thú cưng không hợp lệ'),
   service_ids: z
-    .array(z.number().int().positive(), { required_error: 'Vui lòng chọn ít nhất một dịch vụ' })
+    .array(z.number().int().positive(), { error: (issue) => issue.input === undefined ? 'Vui lòng chọn ít nhất một dịch vụ' : undefined })
     .min(1, 'Vui lòng chọn ít nhất một dịch vụ'),
   appointment_date: z
-    .string({ required_error: 'Ngày hẹn là bắt buộc' })
+    .string({ error: (issue) => issue.input === undefined ? 'Ngày hẹn là bắt buộc' : undefined })
     .regex(dateRegex, 'Ngày hẹn phải có định dạng YYYY-MM-DD'),
   start_time: z
-    .string({ required_error: 'Giờ hẹn là bắt buộc' })
+    .string({ error: (issue) => issue.input === undefined ? 'Giờ hẹn là bắt buộc' : undefined })
     .regex(timeRegex, 'Giờ hẹn phải có định dạng HH:MM'),
   employee_id: z.number().int().positive().optional().nullable(),
   customer_notes: z.string().max(1000, 'Ghi chú tối đa 1000 ký tự').optional().nullable(),
@@ -36,17 +36,17 @@ export const createAppointmentSchema = z.object({
 
 export const rescheduleAppointmentSchema = z.object({
   appointment_date: z
-    .string({ required_error: 'Ngày hẹn mới là bắt buộc' })
+    .string({ error: (issue) => issue.input === undefined ? 'Ngày hẹn mới là bắt buộc' : undefined })
     .regex(dateRegex, 'Ngày hẹn phải có định dạng YYYY-MM-DD'),
   start_time: z
-    .string({ required_error: 'Giờ hẹn mới là bắt buộc' })
+    .string({ error: (issue) => issue.input === undefined ? 'Giờ hẹn mới là bắt buộc' : undefined })
     .regex(timeRegex, 'Giờ hẹn phải có định dạng HH:MM'),
   employee_id: z.number().int().positive().optional().nullable(),
 });
 
 export const cancelAppointmentSchema = z.object({
   cancellation_reason: z
-    .string({ required_error: 'Lý do hủy là bắt buộc' })
+    .string({ error: (issue) => issue.input === undefined ? 'Lý do hủy là bắt buộc' : undefined })
     .min(3, 'Lý do hủy phải có ít nhất 3 ký tự')
     .max(500, 'Lý do hủy tối đa 500 ký tự')
     .trim(),
@@ -54,14 +54,14 @@ export const cancelAppointmentSchema = z.object({
 
 export const assignEmployeeSchema = z.object({
   employee_id: z
-    .number({ required_error: 'Vui lòng chọn nhân viên' })
+    .number({ error: (issue) => issue.input === undefined ? 'Vui lòng chọn nhân viên' : undefined })
     .int()
     .positive('Mã nhân viên không hợp lệ'),
 });
 
 export const updateStatusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled'], {
-    errorMap: () => ({ message: 'Trạng thái lịch hẹn không hợp lệ' }),
+    error: () => 'Trạng thái lịch hẹn không hợp lệ',
   }),
   cancellation_reason: z.string().max(500).optional().nullable(),
   staff_notes: z.string().max(1000).optional().nullable(),
@@ -69,9 +69,8 @@ export const updateStatusSchema = z.object({
 
 export const availabilityQuerySchema = z.object({
   date: z
-    .string({ required_error: 'Vui lòng chọn ngày cần tra cứu' })
+    .string({ error: (issue) => issue.input === undefined ? 'Vui lòng chọn ngày cần tra cứu' : undefined })
     .regex(dateRegex, 'Ngày tra cứu phải có định dạng YYYY-MM-DD'),
   serviceIds: z.union([z.string(), z.array(z.coerce.number().int().positive())]),
   employeeId: z.coerce.number().int().positive().optional(),
 });
-
