@@ -56,5 +56,9 @@ const sendMail = async ({ to, subject, text }) => {
   return undefined;
 };
 
-export { sendMail, setMailerForTest };
-export default { sendMail, setMailerForTest };
+/** Địa chỉ gốc để dựng link trong thư: PUBLIC_BASE_URL, hoặc địa chỉ frontend (đi qua proxy /api) */
+const appBaseUrl = () =>
+  (process.env.PUBLIC_BASE_URL || process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
+export { sendMail, setMailerForTest, appBaseUrl };
+export default { sendMail, setMailerForTest, appBaseUrl };

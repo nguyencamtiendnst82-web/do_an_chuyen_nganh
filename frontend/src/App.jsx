@@ -11,6 +11,8 @@ import AdminLayout from './layouts/AdminLayout'
 // Pages – Auth
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
+import ResetPasswordPage from './pages/auth/ResetPasswordPage'
 import ProfilePage from './pages/auth/ProfilePage'
 
 // Pages – Public
@@ -74,6 +76,8 @@ const App = () => {
             <Route path="/employees" element={<EmployeesPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Route>
 
           {/* ── /profile: cho phép cả 3 role, layout theo role ────────── */}

@@ -5,6 +5,7 @@ const router = express.Router();
 import authenticate from '../middlewares/authenticate.js';
 import { uploadAvatarImage, AVATAR_DIR } from '../middlewares/uploadImage.js';
 import { verifyEmail, resendVerification } from '../controllers/emailVerificationController.js';
+import { forgotPassword, resetPassword } from '../controllers/passwordResetController.js';
 import { register, login, logout, getMe, updateMe, changePassword, uploadAvatar, removeAvatar } from '../controllers/authController.js';
 
 // Rate limit cho đăng nhập: 10 lần / 15 phút / IP
@@ -60,6 +61,39 @@ const resendVerificationLimiter = rateLimit({
     process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
 });
 
+// Rate limit "Quên mật khẩu": 10 lần / giờ / IP VÀ 3 lần / giờ / email (chống spam hộp thư người khác)
+const skipInTest = () =>
+  process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true';
+
+const forgotPasswordIpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Bạn yêu cầu quá nhiều lần. Vui lòng thử lại sau.' },
+  skip: skipInTest,
+});
+
+const forgotPasswordEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Khóa theo email; không có email hợp lệ thì để limiter theo IP ở trên lo
+  keyGenerator: (req) => `fp-${String(req.body?.email ?? '').toLowerCase().slice(0, 150)}`,
+  message: { success: false, message: 'Bạn yêu cầu quá nhiều lần cho email này. Vui lòng thử lại sau 1 giờ.' },
+  skip: (req) => skipInTest() || typeof req.body?.email !== 'string',
+});
+
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Bạn thử quá nhiều lần. Vui lòng thử lại sau.' },
+  skip: skipInTest,
+});
+
 // Rate limit đổi mật khẩu: tối đa 5 lần THẤT BẠI / 15 phút / tài khoản
 // (chống kẻ cầm được token tìm mật khẩu cũ bằng cách thử liên tục).
 // Các lần đổi thành công không bị tính. Bỏ qua khi chạy Jest, giống loginLimiter.
@@ -104,6 +138,12 @@ router.get('/verify-email', verifyEmailLimiter, verifyEmail);
 
 // POST /api/auth/resend-verification – Gửi lại thư xác minh (cần đăng nhập)
 router.post('/resend-verification', authenticate, resendVerificationLimiter, resendVerification);
+
+// POST /api/auth/forgot-password – Yêu cầu đặt lại mật khẩu (công khai)
+router.post('/forgot-password', forgotPasswordIpLimiter, forgotPasswordEmailLimiter, forgotPassword);
+
+// POST /api/auth/reset-password – Đặt mật khẩu mới bằng mã trong thư (công khai)
+router.post('/reset-password', resetPasswordLimiter, resetPassword);
 
 // POST /api/auth/logout (yêu cầu đăng nhập)
 router.post('/logout', authenticate, logout);

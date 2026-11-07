@@ -1,17 +1,13 @@
 import crypto from 'node:crypto';
 import userRepository from '../repositories/userRepository.js';
 import logRepository from '../repositories/logRepository.js';
-import { sendMail } from '../utils/mailer.js';
+import { sendMail, appBaseUrl } from '../utils/mailer.js';
 import { httpError, auditContext } from '../utils/params.js';
 
 // Mã xác minh có hiệu lực 24 giờ
 const TOKEN_TTL_HOURS = 24;
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
-
-/** Địa chỉ gốc để dựng link trong thư: PUBLIC_BASE_URL, hoặc địa chỉ frontend (đi qua proxy /api) */
-const baseUrl = () =>
-  (process.env.PUBLIC_BASE_URL || process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 /**
  * Tạo mã xác minh mới (thay mã cũ) rồi gửi thư chứa link.
@@ -24,7 +20,7 @@ const sendVerificationEmail = async (user) => {
   const token = crypto.randomBytes(32).toString('hex');
   await userRepository.setEmailVerifyToken(user.id, hashToken(token), TOKEN_TTL_HOURS);
 
-  const link = `${baseUrl()}/api/auth/verify-email?token=${token}`;
+  const link = `${appBaseUrl()}/api/auth/verify-email?token=${token}`;
   await sendMail({
     to: user.email,
     subject: 'Xác minh email tài khoản Pet Spa',

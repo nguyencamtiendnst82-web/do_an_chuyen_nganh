@@ -255,5 +255,46 @@ const consumeEmailVerifyToken = async (tokenHash) => {
   return result.affectedRows > 0 ? rows[0].id : null;
 };
 
-export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins, setEmailVerifyToken, consumeEmailVerifyToken };
-export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins, setEmailVerifyToken, consumeEmailVerifyToken };
+/**
+ * Lưu mã đặt lại mật khẩu (chỉ lưu băm SHA-256) kèm hạn dùng; mã cũ bị thay thế.
+ * Hạn tính ngay trong SQL (NOW() + phút) để không lệch múi giờ giữa Node và MySQL.
+ */
+const setPasswordResetToken = async (userId, tokenHash, ttlMinutes) => {
+  await pool.query(
+    `UPDATE users
+     SET password_reset_token_hash = ?, password_reset_expires = DATE_ADD(NOW(), INTERVAL ? MINUTE)
+     WHERE id = ?`,
+    [tokenHash, ttlMinutes, userId]
+  );
+};
+
+/** Tìm tài khoản đang active có mã đặt lại mật khẩu còn hạn (chưa dùng mã) */
+const findByPasswordResetToken = async (tokenHash) => {
+  const [rows] = await pool.query(
+    `SELECT * FROM users
+     WHERE password_reset_token_hash = ? AND password_reset_expires > NOW() AND status = 'active'
+     LIMIT 1`,
+    [tokenHash]
+  );
+  return rows[0] || null;
+};
+
+/**
+ * Đặt mật khẩu mới bằng mã, trong MỘT câu lệnh nên mã chỉ dùng được một lần:
+ * - xóa mã, tăng token_version (mọi JWT cũ mất hiệu lực)
+ * - đánh dấu email đã xác minh (người dùng vừa chứng minh đọc được thư gửi tới email đó)
+ * @returns {Promise<boolean>} false nếu mã sai/hết hạn/đã dùng
+ */
+const resetPasswordWithToken = async (tokenHash, newPasswordHash) => {
+  const [result] = await pool.query(
+    `UPDATE users
+     SET password_hash = ?, token_version = token_version + 1, email_verified = 1,
+         password_reset_token_hash = NULL, password_reset_expires = NULL
+     WHERE password_reset_token_hash = ? AND password_reset_expires > NOW() AND status = 'active'`,
+    [newPasswordHash, tokenHash]
+  );
+  return result.affectedRows > 0;
+};
+
+export { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins, setEmailVerifyToken, consumeEmailVerifyToken, setPasswordResetToken, findByPasswordResetToken, resetPasswordWithToken };
+export default { findByEmail, findByPhone, findByEmailOrPhone, findById, create, update, changePassword, updateStatus, findAll, countAll, countActiveAdmins, setEmailVerifyToken, consumeEmailVerifyToken, setPasswordResetToken, findByPasswordResetToken, resetPasswordWithToken };

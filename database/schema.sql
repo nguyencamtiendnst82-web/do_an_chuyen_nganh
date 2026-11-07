@@ -35,6 +35,8 @@ CREATE TABLE `users` (
     `email_verified` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Đã xác minh quyền sở hữu email (1) hay chưa (0)',
     `email_verify_token_hash` CHAR(64) NULL COMMENT 'SHA-256 của mã xác minh email',
     `email_verify_expires` DATETIME NULL COMMENT 'Hạn dùng của mã xác minh email',
+    `password_reset_token_hash` CHAR(64) NULL COMMENT 'SHA-256 của mã đặt lại mật khẩu',
+    `password_reset_expires` DATETIME NULL COMMENT 'Hạn dùng của mã đặt lại mật khẩu',
     `avatar_url` VARCHAR(255) NULL COMMENT 'Đường dẫn ảnh đại diện',
     `address` VARCHAR(255) NULL COMMENT 'Địa chỉ liên hệ',
     `gender` ENUM('male', 'female', 'other') NULL COMMENT 'Giới tính (để nhân viên xưng hô phù hợp)',

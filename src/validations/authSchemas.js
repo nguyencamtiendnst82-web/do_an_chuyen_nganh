@@ -67,5 +67,20 @@ const changePasswordSchema = z.object({
     .regex(passwordRegex, 'Mật khẩu mới phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số'),
 });
 
-export { registerSchema, loginSchema, updateMeSchema, changePasswordSchema };
-export default { registerSchema, loginSchema, updateMeSchema, changePasswordSchema };
+const forgotPasswordSchema = z.object({
+  email: z.string({ error: (issue) => issue.input === undefined ? 'Email là bắt buộc' : undefined })
+    .email('Email không hợp lệ')
+    .max(150, 'Email tối đa 150 ký tự')
+    .toLowerCase(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string({ error: (issue) => issue.input === undefined ? 'Mã đặt lại mật khẩu là bắt buộc' : undefined })
+    .regex(/^[a-f0-9]{64}$/, 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn'),
+
+  new_password: z.string({ error: (issue) => issue.input === undefined ? 'Mật khẩu mới là bắt buộc' : undefined })
+    .regex(passwordRegex, 'Mật khẩu mới phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số'),
+});
+
+export { registerSchema, loginSchema, updateMeSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema };
+export default { registerSchema, loginSchema, updateMeSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema };
