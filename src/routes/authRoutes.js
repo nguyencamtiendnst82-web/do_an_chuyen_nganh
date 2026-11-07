@@ -23,6 +23,20 @@ const loginLimiter = rateLimit({
     process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
 });
 
+// Rate limit đăng ký: 20 lần / giờ / IP (chống tạo tài khoản hàng loạt, dò email/SĐT đã tồn tại)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Bạn đăng ký quá nhiều lần. Vui lòng thử lại sau.',
+  },
+  skip: () =>
+    process.env.NODE_ENV === 'test' && process.env.FORCE_RATE_LIMIT !== 'true',
+});
+
 // Rate limit đổi mật khẩu: tối đa 5 lần THẤT BẠI / 15 phút / tài khoản
 // (chống kẻ cầm được token tìm mật khẩu cũ bằng cách thử liên tục).
 // Các lần đổi thành công không bị tính. Bỏ qua khi chạy Jest, giống loginLimiter.
@@ -57,7 +71,7 @@ router.use(
 );
 
 // POST /api/auth/register
-router.post('/register', register);
+router.post('/register', registerLimiter, register);
 
 // POST /api/auth/login (có rate limit)
 router.post('/login', loginLimiter, login);

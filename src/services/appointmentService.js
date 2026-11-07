@@ -64,6 +64,20 @@ export const assertStaffOwnsAppointment = async (actor, appointment) => {
   }
 };
 
+// Trạng thái còn cho phép đổi lịch / đổi nhân viên (chưa tiếp nhận)
+const RESCHEDULABLE_STATUSES = [APPOINTMENT_STATUS.PENDING, APPOINTMENT_STATUS.CONFIRMED];
+
+/**
+ * Trong transaction: khóa dòng lịch hẹn và bảo đảm trạng thái chưa bị request khác đổi
+ * kể từ lúc đọc. Nếu đã đổi → 409 để client tải lại.
+ */
+const assertStatusUnchanged = async (id, expectedStatus, conn) => {
+  const current = await appointmentRepository.lockStatus(id, conn);
+  if (current !== expectedStatus) {
+    throw httpError(409, 'Lịch hẹn vừa được người khác cập nhật. Vui lòng tải lại trang.');
+  }
+};
+
 export const getTodayStr = () => {
   const now = new Date();
   const y = now.getFullYear();
@@ -546,7 +560,8 @@ export const listAppointments = async (actor, query = {}) => {
     fromDate,
     toDate,
     status: query.status,
-    search: query.search ? query.search.trim() : undefined,
+    // ?search=a&search=b cho ra mảng → bỏ qua thay vì làm sập request (500)
+    search: typeof query.search === 'string' && query.search.trim() ? query.search.trim() : undefined,
     page,
     limit,
   };
@@ -599,10 +614,8 @@ export const rescheduleAppointment = async (actor, rawId, body, req) => {
   // Khách chỉ được đổi lịch khi pending/confirmed và trước 2 giờ
   if (actor.role_name === 'customer') {
     validateCancellation(appointment, 'customer', 'Đổi lịch hẹn');
-  } else if (
-    appointment.status === APPOINTMENT_STATUS.COMPLETED ||
-    appointment.status === APPOINTMENT_STATUS.CANCELLED
-  ) {
+  } else if (!RESCHEDULABLE_STATUSES.includes(appointment.status)) {
+    // Chỉ đổi lịch được khi chưa tiếp nhận (pending/confirmed); đã tiếp nhận/đang làm/xong/hủy thì không
     throw httpError(409, `Không thể đổi lịch hẹn đã ở trạng thái "${appointment.status}".`);
   }
 
@@ -641,6 +654,9 @@ export const rescheduleAppointment = async (actor, rawId, body, req) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+
+    // Khóa dòng lịch hẹn và kiểm tra lại trạng thái (có thể vừa bị hủy/tiếp nhận bởi request khác)
+    await assertStatusUnchanged(id, appointment.status, conn);
 
     if (targetEmployeeId) {
       const emp = await employeeRepository.findById(targetEmployeeId);
@@ -763,7 +779,10 @@ export const cancelAppointment = async (actor, rawId, body, req) => {
     cancellation_reason: parsed.cancellation_reason,
   };
 
-  await appointmentRepository.update(id, newValues);
+  const cancelled = await appointmentRepository.updateIfStatus(id, appointment.status, newValues);
+  if (!cancelled) {
+    throw httpError(409, 'Lịch hẹn vừa được người khác cập nhật. Vui lòng tải lại trang.');
+  }
 
   const audit = auditContext(req);
   await logRepository.insert({
@@ -792,10 +811,8 @@ export const assignEmployee = async (actor, rawId, body, req) => {
   }
   await assertStaffOwnsAppointment(actor, appointment);
 
-  if (
-    appointment.status === APPOINTMENT_STATUS.COMPLETED ||
-    appointment.status === APPOINTMENT_STATUS.CANCELLED
-  ) {
+  // Sau khi tiếp nhận, hồ sơ chăm sóc đã gắn với nhân viên thực hiện nên không đổi người nữa
+  if (!RESCHEDULABLE_STATUSES.includes(appointment.status)) {
     throw httpError(409, `Không thể gán nhân viên cho lịch hẹn đã ở trạng thái "${appointment.status}".`);
   }
 
@@ -827,6 +844,8 @@ export const assignEmployee = async (actor, rawId, body, req) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+
+    await assertStatusUnchanged(id, appointment.status, conn);
 
     const empApts = await appointmentRepository.lockAndGetEmployeeAppointments(
       parsed.employee_id,
@@ -880,7 +899,12 @@ export const confirmAppointment = async (actor, rawId, req) => {
 
   validateTransition(appointment.status, APPOINTMENT_STATUS.CONFIRMED);
 
-  await appointmentRepository.update(id, { status: APPOINTMENT_STATUS.CONFIRMED });
+  const confirmed = await appointmentRepository.updateIfStatus(id, appointment.status, {
+    status: APPOINTMENT_STATUS.CONFIRMED,
+  });
+  if (!confirmed) {
+    throw httpError(409, 'Lịch hẹn vừa được người khác cập nhật. Vui lòng tải lại trang.');
+  }
 
   const audit = auditContext(req);
   await logRepository.insert({
@@ -932,7 +956,10 @@ export const updateAppointmentStatus = async (actor, rawId, body, req) => {
   if (parsed.cancellation_reason) fields.cancellation_reason = parsed.cancellation_reason;
   if (parsed.staff_notes !== undefined) fields.staff_notes = parsed.staff_notes;
 
-  await appointmentRepository.update(id, fields);
+  const changed = await appointmentRepository.updateIfStatus(id, appointment.status, fields);
+  if (!changed) {
+    throw httpError(409, 'Lịch hẹn vừa được người khác cập nhật. Vui lòng tải lại trang.');
+  }
 
   const audit = auditContext(req);
   await logRepository.insert({

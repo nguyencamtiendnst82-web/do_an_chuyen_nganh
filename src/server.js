@@ -14,6 +14,17 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
+// JWT_SECRET quá ngắn → dễ bị dò. Production: từ chối khởi động; dev: chỉ cảnh báo.
+if (process.env.JWT_SECRET.length < 32) {
+  const msg = '❌ [Server] JWT_SECRET quá ngắn (cần tối thiểu 32 ký tự ngẫu nhiên).';
+  if (process.env.NODE_ENV === 'production') {
+    console.error(msg);
+    process.exit(1);
+  } else {
+    console.warn(msg.replace('❌', '⚠️') + ' Hãy đổi trước khi triển khai thật.');
+  }
+}
+
 // Khởi động server
 const startServer = async () => {
   // Kiểm tra kết nối CSDL khi khởi động
@@ -43,4 +54,3 @@ const startServer = async () => {
 };
 
 startServer();
-

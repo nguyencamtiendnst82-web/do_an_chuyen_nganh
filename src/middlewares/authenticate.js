@@ -25,7 +25,8 @@ const authenticate = async (req, res, next) => {
     // Xác minh chữ ký và hạn token
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Ghim thuật toán để loại token ký bằng thuật toán khác (vd. alg=none)
+      decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
         return sendError(res, 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 401);

@@ -300,6 +300,45 @@ export const update = async (id, fields, conn = null) => {
 };
 
 /**
+ * Cập nhật CÓ ĐIỀU KIỆN trạng thái hiện tại (compare-and-set):
+ * chỉ ghi khi lịch vẫn đang ở `expectedStatus`, tránh hai request song song
+ * (vd. hủy và xác nhận cùng lúc) ghi đè lên nhau.
+ * @returns {Promise<boolean>} true nếu đã cập nhật, false nếu trạng thái đã bị người khác đổi
+ */
+export const updateIfStatus = async (id, expectedStatus, fields, conn = null) => {
+  const db = conn || pool;
+  const allowed = ['status', 'cancellation_reason', 'staff_notes'];
+  const setClauses = [];
+  const values = [];
+
+  for (const field of allowed) {
+    if (fields[field] !== undefined) {
+      setClauses.push(`\`${field}\` = ?`);
+      values.push(fields[field]);
+    }
+  }
+  if (setClauses.length === 0) return false;
+
+  values.push(id, expectedStatus);
+  const [result] = await db.query(
+    `UPDATE appointments SET ${setClauses.join(', ')} WHERE id = ? AND status = ?`,
+    values
+  );
+  return result.affectedRows > 0;
+};
+
+/**
+ * Khóa dòng lịch hẹn và trả về trạng thái mới nhất (dùng trong transaction)
+ */
+export const lockStatus = async (id, conn) => {
+  const [rows] = await conn.query(
+    'SELECT status FROM appointments WHERE id = ? FOR UPDATE',
+    [id]
+  );
+  return rows[0]?.status ?? null;
+};
+
+/**
  * Danh sách lịch hẹn có phân trang, lọc và tìm kiếm
  */
 export const findAll = async ({
@@ -459,7 +498,8 @@ export default {
   getAppointmentsOnDate,
   countAppointmentsForEmployeeOnDate,
   update,
+  updateIfStatus,
+  lockStatus,
   findAll,
   countAll,
 };
-

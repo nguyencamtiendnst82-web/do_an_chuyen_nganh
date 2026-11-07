@@ -10,6 +10,14 @@ import { sendError } from './utils/response.js';
 
 const app = express();
 
+// Khi chạy sau reverse proxy / tunnel (Nginx, Cloudflare, ngrok...), đặt TRUST_PROXY=1 (số lớp proxy)
+// để req.ip là IP thật của khách; nếu không, mọi người dùng chung một IP và dùng chung giới hạn đăng nhập.
+// Mặc định KHÔNG tin proxy (tránh bị giả mạo header X-Forwarded-For khi chạy trực tiếp).
+if (process.env.TRUST_PROXY) {
+  const n = Number(process.env.TRUST_PROXY);
+  app.set('trust proxy', Number.isInteger(n) ? n : process.env.TRUST_PROXY);
+}
+
 // Bảo mật HTTP Headers
 app.use(helmet());
 
@@ -48,4 +56,3 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 export default app;
-

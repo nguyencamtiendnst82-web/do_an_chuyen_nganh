@@ -12,6 +12,9 @@ import { profileExtraSchema } from '../validations/profileSchemas.js';
 // Hằng số role_id (đồng bộ với seed.sql)
 const CUSTOMER_ROLE_ID = 3;
 
+// Băm giả (cost 10, giống mật khẩu thật) để so sánh khi email/SĐT không tồn tại
+const DUMMY_HASH = bcrypt.hashSync('khong-ai-dung-mat-khau-nay', 10);
+
 /**
  * Ký JWT cho user
  * - tv (token version): tăng lên mỗi khi đổi mật khẩu → mọi token cũ tự mất hiệu lực
@@ -108,9 +111,13 @@ const login = async (body, req) => {
   const genericError = new Error('Email/số điện thoại hoặc mật khẩu không đúng.');
   genericError.statusCode = 401;
 
-  if (!user) throw genericError;
+  // So mật khẩu TRƯỚC khi nói gì về trạng thái tài khoản: người không có mật khẩu đúng
+  // không biết được tài khoản có tồn tại / bị khóa hay không. Khi không tìm thấy user vẫn
+  // chạy bcrypt với băm giả để thời gian phản hồi không lộ email/SĐT có tồn tại.
+  const isMatch = await bcrypt.compare(parsed.password, user ? user.password_hash : DUMMY_HASH);
+  if (!user || !isMatch) throw genericError;
 
-  // Từ chối tài khoản không active TRƯỚC KHI so mật khẩu
+  // Mật khẩu đúng nhưng tài khoản không active → báo rõ cho chính chủ
   if (user.status === 'locked') {
     const err = new Error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
     err.statusCode = 403;
@@ -121,10 +128,6 @@ const login = async (body, req) => {
     err.statusCode = 403;
     throw err;
   }
-
-  // So sánh mật khẩu
-  const isMatch = await bcrypt.compare(parsed.password, user.password_hash);
-  if (!isMatch) throw genericError;
 
   // Ký token
   const token = signToken(user.id, await tokenVersionRepository.get(user.id));
