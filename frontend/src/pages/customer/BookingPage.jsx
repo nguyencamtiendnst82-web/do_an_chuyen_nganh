@@ -37,6 +37,7 @@ const BookingPage = () => {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const hasPhone = Boolean(user?.phone && user.phone.trim())
+  const emailVerified = user?.email_verified !== false // undefined (server cũ) coi như đã xác minh
 
   useEffect(() => {
     let cancelled = false
@@ -135,6 +136,12 @@ const BookingPage = () => {
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800" role="alert">
           Bạn cần cập nhật <strong>số điện thoại</strong> trước khi đặt lịch để spa liên hệ khi cần.{' '}
           <Link to="/profile" className="font-medium underline">Cập nhật hồ sơ</Link>
+        </div>
+      )}
+      {!emailVerified && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800" role="alert">
+          Bạn cần <strong>xác minh email</strong> trước khi đặt lịch. Hãy bấm vào liên kết trong thư đã gửi tới{' '}
+          <strong>{user?.email}</strong>, hoặc dùng nút &quot;Gửi lại thư xác minh&quot; ở đầu trang.
         </div>
       )}
       {loadError && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">{loadError}</div>}
@@ -273,7 +280,7 @@ const BookingPage = () => {
           <button type="button" onClick={() => { setSubmitError(''); setStep((s) => s + 1) }} disabled={!canNext}
             className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-50">Tiếp tục</button>
         ) : (
-          <button type="button" onClick={submit} disabled={submitting || !hasPhone}
+          <button type="button" onClick={submit} disabled={submitting || !hasPhone || !emailVerified}
             className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-50">
             {submitting ? 'Đang đặt lịch...' : 'Đặt lịch'}
           </button>

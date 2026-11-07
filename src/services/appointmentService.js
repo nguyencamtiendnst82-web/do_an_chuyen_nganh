@@ -226,6 +226,18 @@ export const getAvailability = async (query = {}) => {
  * Đặt lịch hẹn mới kèm Transaction & SELECT ... FOR UPDATE chống đua
  */
 export const createAppointment = async (actor, rawBody, req) => {
+  // Khách tự đặt lịch phải đã xác minh email (chống đặt lịch ảo bằng email không có thật).
+  // Nhân viên/admin đặt hộ khách tại quầy thì không bị chặn vì đã gặp trực tiếp khách.
+  if (actor.role_name === 'customer') {
+    const self = await userRepository.findById(actor.id);
+    if (!self?.email_verified) {
+      throw httpError(
+        403,
+        'Vui lòng xác minh email trước khi đặt lịch. Hãy kiểm tra hộp thư và bấm vào liên kết xác minh, hoặc gửi lại thư xác minh ở đầu trang.'
+      );
+    }
+  }
+
   const normalized = normalizeAppointmentInput(rawBody);
   const parsed = createAppointmentSchema.parse(normalized);
 

@@ -4,7 +4,7 @@ const app = appModule.app || appModule;
 import { pool } from '../src/config/db.js';
 import { setMailerForTest } from '../src/utils/mailer.js';
 import { setGoogleVerifierForTest } from '../src/utils/googleVerifier.js';
-import { authHeader, uniqueStamp } from './helpers/users.js';
+import { authHeader, uniqueStamp, createUser } from './helpers/users.js';
 
 // Bắt thư "gửi đi" thay vì gửi thật; key = email người nhận
 const sentMails = new Map();
@@ -192,5 +192,24 @@ describe('Chống chiếm trước tài khoản qua liên kết Google', () => {
       .send({ credential: cred(`sub${stamp}`, `test_ev_${stamp}@gmail.com`) });
     expect(res.status).toBe(200);
     expect(res.body.data.user.email_verified).toBe(true);
+  });
+});
+
+describe('Đặt lịch yêu cầu email đã xác minh', () => {
+  test('V11. Khách chưa xác minh email đặt lịch → 403; xác minh xong thì qua cửa này (body rỗng → 422)', async () => {
+    const u = await registerUser();
+
+    const blocked = await request(app).post('/api/appointments').set(authHeader(u)).send({});
+    expect(blocked.status).toBe(403);
+
+    await request(app).get('/api/auth/verify-email').query({ token: lastTokenFor(u.email) });
+    const passed = await request(app).post('/api/appointments').set(authHeader(u)).send({});
+    expect(passed.status).toBe(422);
+  });
+
+  test('V12. Staff đặt hộ khách tại quầy không bị chặn bởi xác minh email (body rỗng → 422, không phải 403)', async () => {
+    const staff = await createUser(app, { role: 'staff', prefix: 'test_ev' });
+    const res = await request(app).post('/api/appointments').set(authHeader(staff)).send({});
+    expect(res.status).toBe(422);
   });
 });

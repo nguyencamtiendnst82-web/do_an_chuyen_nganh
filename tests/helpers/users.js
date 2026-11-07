@@ -15,7 +15,7 @@ export const uniqueStamp = () => {
  * Tạo trực tiếp một user trong DB (đúng vai trò) rồi đăng nhập để lấy token.
  * Email bắt đầu bằng `${prefix}_` để file test tự dọn sau khi chạy xong.
  */
-export const createUser = async (app, { role = 'customer', prefix = 'test_h', verified = role !== 'customer' } = {}) => {
+export const createUser = async (app, { role = 'customer', prefix = 'test_h', verified = true } = {}) => {
   const stamp = uniqueStamp();
   const email = `${prefix}_${stamp}@example.com`;
   const phone = `03${stamp.slice(-8)}`;
