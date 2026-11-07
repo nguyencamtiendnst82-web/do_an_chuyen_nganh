@@ -1,136 +1,210 @@
-# Website Quản Lý và Vận Hành Dịch Vụ Spa Thú Cưng (Pet Spa System)
+# Pet Spa System
 
-Hệ thống quản lý và vận hành toàn diện cho dịch vụ Spa thú cưng, phục vụ ba đối tượng: **Quản trị viên (Admin)**, **Nhân viên (Staff)** và **Khách hàng (Customer)**.
+Website quản lý và vận hành dịch vụ spa thú cưng, phục vụ ba vai trò: **Admin**, **Staff** (nhân viên) và **Customer** (khách hàng).
 
----
+## Tính năng chính
 
-## 🛠️ Công Nghệ Sử Dụng
+- Đăng ký, đăng nhập, đăng nhập Google, quản lý hồ sơ và mật khẩu.
+- Quản lý hồ sơ thú cưng và danh mục dịch vụ.
+- Tra cứu khung giờ, đặt lịch, xác nhận, đổi lịch, hủy lịch và phân công nhân viên.
+- Quản lý ca làm và lịch phân ca.
+- Ghi nhật ký chăm sóc, ảnh trước/sau và sự cố.
+- Lập hóa đơn, ghi nhận thanh toán và theo dõi trạng thái.
+- Ghi nhật ký thao tác hệ thống.
 
-- **Front-end**: React + Vite (JavaScript), Tailwind CSS (responsive mobile-first), React Router DOM, Axios.
-- **Back-end**: Node.js + Express.js (kiến trúc MVC: routes -> controllers -> services -> repositories), chuẩn CommonJS.
-- **Cơ sở dữ liệu**: MySQL 8.0+, driver `mysql2/promise` (connection pool, prepared statements `?`).
-- **Xác thực & Bảo mật**: JWT (access token, thời hạn `8h`), bcrypt (cost 10), helmet, cors, express-rate-limit.
-- **Kiểm thử**: Jest + Supertest.
+## Công nghệ
 
----
+| Phần | Công nghệ |
+| :--- | :--- |
+| Backend | Node.js, Express 4, **ES modules** (`"type": "module"`), MySQL, `mysql2/promise` |
+| Frontend | React, Vite, Tailwind CSS, React Router, Axios |
+| Xác thực và bảo mật | JWT, bcryptjs, Google authentication, helmet, cors, express-rate-limit, Zod |
+| Kiểm thử | Jest, Supertest |
 
-## 🔐 Danh Sách Tài Khoản Demo
+Yêu cầu: Node.js 18 trở lên, MySQL 8+ (schema có ghi chú hỗ trợ MariaDB 10.5+). MySQL phải đang chạy trước khi khởi tạo cơ sở dữ liệu.
 
-Mật khẩu mặc định cho **TẤT CẢ** các tài khoản mẫu dưới đây là: **`Password123@`**
+## Chạy trên terminal
 
-| Vai trò (Role) | Họ và tên | Email đăng nhập | Số điện thoại | Ghi chú |
-| :--- | :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | Nguyễn Quản Trị | `admin@petspa.com` | `0901234567` | Toàn quyền quản trị hệ thống, báo cáo, nhân sự |
-| **Nhân viên (Staff 1)** | Trần Kỹ Thuật Viên 1 | `staff1@petspa.com` | `0912345678` | Chuyên môn Tắm sấy & Trị liệu da lông |
-| **Nhân viên (Staff 2)** | Lê Groomer Chuyên Nghiệp | `staff2@petspa.com` | `0923456789` | Chuyên môn Cắt tỉa tạo kiểu dáng Hàn Quốc |
-| **Khách hàng (Customer 1)** | Phạm Khách Hàng | `khachhang1@gmail.com` | `0934567890` | Sở hữu thú cưng: Bông Xù (Poodle), Milo (Golden) |
-| **Khách hàng (Customer 2)** | Vũ Thị Sen | `khachhang2@gmail.com` | `0945678901` | Sở hữu thú cưng: Miu Miu (Mèo Anh lông ngắn) |
+Mọi lệnh dưới đây chạy trong terminal, ví dụ terminal tích hợp của VS Code.
 
----
+1. Mở thư mục dự án bằng VS Code (`File` → `Open Folder`).
+2. Mở terminal: nhấn `` Ctrl+` `` hoặc menu `Terminal` → `New Terminal`. Dòng nhắc lệnh phải hiện đường dẫn thư mục dự án.
+3. Chọn loại terminal bằng mũi tên cạnh dấu `+` ở panel Terminal: **Command Prompt**, **PowerShell** hoặc **Git Bash** đều dùng được. Các lệnh `npm`, `node`, `git`, `cd` giống nhau ở cả ba.
+4. Backend và frontend chạy ở **hai terminal riêng**: bấm dấu `+` để mở terminal thứ hai. Dừng một tiến trình bằng `Ctrl+C`.
 
-## ⚙️ Cấu Hình Môi Trường (.env)
+Lệnh sao chép file khác nhau theo hệ điều hành (dùng ở bước 2 của mục Cài đặt):
 
-Tạo file `.env` tại thư mục gốc dựa trên `.env.example`:
+| Hệ điều hành | Lệnh sao chép file |
+| :--- | :--- |
+| Windows (cmd hoặc PowerShell) | `copy nguon dich` |
+| macOS, Linux, Git Bash | `cp nguon dich` |
+
+> Trên Windows, nếu PowerShell báo không cho chạy `npm.ps1`, dùng Command Prompt, hoặc gõ `npm.cmd run ...`, hoặc chạy một lần `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`.
+
+## Cài đặt
+
+### 1. Cài thư viện
+
+```bash
+npm install
+cd frontend
+npm install
+cd ..
+```
+
+### 2. Cấu hình môi trường
+
+Tạo hai file cấu hình từ file mẫu.
+
+Windows (cmd hoặc PowerShell):
+
+```bash
+copy .env.example .env
+copy frontend\.env.example frontend\.env
+```
+
+macOS, Linux, Git Bash:
+
+```bash
+cp .env.example .env
+cp frontend/.env.example frontend/.env
+```
+
+Sau đó mở `.env` ở thư mục gốc và điền giá trị. Các biến chính:
 
 ```env
 PORT=5000
 NODE_ENV=development
 
-# Cấu hình kết nối MySQL
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=pet_spa_db
 
-# JWT Bí mật dùng để ký và xác thực token (thời hạn 8h)
 JWT_SECRET=your_jwt_secret_key_here_change_in_production
 JWT_EXPIRES_IN=8h
 
-# CORS Allowed Origin
 CLIENT_URL=http://localhost:5173
+
+# Tùy chọn (.env.example có sẵn Client ID demo)
+GOOGLE_CLIENT_ID=
+APPOINTMENT_BUFFER_MINUTES=15
 ```
 
-> [!IMPORTANT]
-> Thời hạn của token JWT được chuẩn hóa thống nhất là **`JWT_EXPIRES_IN=8h`**.
+- `DB_PASSWORD`: điền mật khẩu MySQL của bạn.
+- `JWT_SECRET`: bắt buộc đổi sang chuỗi bí mật riêng, nhất là khi triển khai thật.
+- `GOOGLE_CLIENT_ID`: nếu để trống thì chỉ đăng nhập Google không hoạt động (server trả lỗi 503 cho chức năng này), các chức năng khác vẫn chạy bình thường. Xem mục "Đăng nhập Google".
+- `APPOINTMENT_BUFFER_MINUTES`: thời gian đệm (phút) giữa hai lượt phục vụ liên tiếp của cùng một nhân viên; mặc định 15 nếu không khai báo.
+- `frontend/.env` chứa `VITE_GOOGLE_CLIENT_ID` (cùng giá trị với `GOOGLE_CLIENT_ID`).
 
----
+Không commit `.env` và `frontend/.env`.
 
-## 🚀 Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
+### 3. Khởi tạo cơ sở dữ liệu
 
-### 1. Cài đặt thư viện Backend
-Tại thư mục gốc dự án:
-```powershell
-npm install
-```
-
-### 2. Khởi tạo Cơ sở dữ liệu & Dữ liệu mẫu (Seed Data)
-Hệ thống cung cấp lệnh tự động đọc DDL `database/schema.sql` và chạy script sinh dữ liệu `backend/scripts/seed.js` (tự động băm mật khẩu `Password123@` và sinh ca làm 30 ngày):
-
-```powershell
+```bash
 npm run init-db
-```
-*(Lệnh sẽ hiển thị cảnh báo xác nhận `y/N` trước khi thực thi xóa và tạo lại CSDL)*.
-
-Nếu chỉ muốn nạp lại dữ liệu mẫu mà không tạo lại bảng:
-```powershell
-npm run seed
+npm run migrate
 ```
 
-### 3. Chạy Server Backend
-```powershell
-# Chế độ phát triển (tự động reload với nodemon):
+- `init-db` đọc `database/schema.sql` (15 bảng), tạo database mới rồi **tự nạp dữ liệu mẫu**. Lệnh hỏi xác nhận (nhập `y`); thêm `-- --yes` để bỏ qua: `npm run init-db -- --yes`.
+- `init-db` **từ chối** nếu database đã tồn tại; script không xóa hay sửa dữ liệu hiện có.
+- Nếu `init-db` lỗi giữa chừng, database vừa tạo được giữ nguyên để kiểm tra. Đổi `DB_NAME` trong `.env` sang tên chưa tồn tại rồi chạy lại.
+- `migrate` chạy tuần tự mọi file `.sql` trong `database/migrations/` (hiện có `001_create_notifications_table.sql`, thêm bảng `notifications`). Sau bước này database có **16 bảng**. Mỗi lần chạy `migrate` thực thi lại toàn bộ file, nên các file migration phải dùng `IF NOT EXISTS` hoặc kiểm tra tương đương.
+- `npm run seed` chỉ nạp dữ liệu mẫu vào database đã có schema và **còn trống**; script từ chối nếu các bảng đã có dữ liệu.
+
+### 4. Chạy ứng dụng
+
+**Terminal 1: backend**
+
+```bash
+# Chế độ phát triển (tự reload với nodemon)
 npm run dev
-
-# Chế độ thông thường:
+# Hoặc chạy thường
 npm start
 ```
-- API Server lắng nghe tại: `http://localhost:5000`
-- Kiểm tra trạng thái hệ thống: `http://localhost:5000/api/health`
 
-### 4. Chạy Kiểm Thử Backend (Jest + Supertest)
-```powershell
+- API: `http://localhost:5000`, kiểm tra tại `http://localhost:5000/api/health`.
+
+**Terminal 2: frontend** (mở terminal mới, vẫn ở thư mục gốc dự án)
+
+```bash
+cd frontend
+npm run dev
+```
+
+- Giao diện: `http://localhost:5173`.
+
+Lệnh frontend khác (chạy trong thư mục `frontend`): `npm run build`, `npm run lint` (oxlint), `npm run preview`.
+
+## Đăng nhập Google
+
+`.env.example` và `frontend/.env.example` đã có sẵn Google Client ID dùng cho demo tại `http://localhost:5173`; sau khi sao chép sang `.env` là dùng được. Nếu ứng dụng Google đang ở chế độ Testing, tài khoản đăng nhập phải nằm trong danh sách Test users.
+
+Muốn dùng Client ID riêng (ví dụ khi triển khai thật):
+
+1. Vào Google Cloud Console, tạo OAuth client ID loại **Web application**.
+2. Thêm origin của ứng dụng (ví dụ `http://localhost:5173`) vào **Authorized JavaScript origins**.
+3. Điền Client ID vào `GOOGLE_CLIENT_ID` (`.env` ở thư mục gốc) và `VITE_GOOGLE_CLIENT_ID` (`frontend/.env`), rồi khởi động lại backend và frontend.
+
+Không đưa Client secret vào bất kỳ file nào; ứng dụng chỉ cần Client ID.
+
+## Dữ liệu mẫu và tài khoản demo
+
+`init-db` và `seed` tạo tài khoản mẫu cho ba vai trò. Mật khẩu mặc định dùng chung được định nghĩa trong `scripts/seed.js`.
+
+- Chỉ dùng cho môi trường phát triển và demo.
+- **Không** chạy `init-db` hoặc `seed` rồi để nguyên tài khoản mẫu trên máy chủ thật; đổi hoặc xóa các tài khoản này trước khi triển khai.
+
+## Kiểm thử
+
+```bash
 npm test
 ```
 
-### 5. Khởi Chạy Frontend (React + Vite)
-Di chuyển vào thư mục `frontend`:
-```powershell
-cd frontend
-npm install
-npm run dev
+- Thư mục `tests/` gồm các bộ unit test (không cần database) và integration test (Supertest) cần MySQL đang chạy.
+- Nên đặt `DB_NAME` riêng cho môi trường test để không lẫn với dữ liệu phát triển.
+- Jest chạy tuần tự (`--runInBand`). Chạy riêng một bộ: `npm test -- tests/auth.test.js`.
+- Khi chạy test (`NODE_ENV=test`), giới hạn số lần đăng nhập bị bỏ qua. Muốn thử riêng chức năng này, đặt `FORCE_RATE_LIMIT=true`.
+
+## Migration cũ
+
+Các file `scripts/migrate-google.js`, `migrate-profile-fields.js`, `migrate-token-version.js`, `migrate-upgrade1.js`, `migrate-invoice-payment-status.js` dành cho **database tạo từ phiên bản schema cũ**. Schema hiện tại đã gồm các thay đổi đó, nên cài mới **không cần** chạy chúng. Chạy riêng từng file khi cần nâng cấp, ví dụ:
+
+```bash
+node scripts/migrate-profile-fields.js
 ```
-Giao diện ứng dụng chạy tại: `http://localhost:5173`
 
----
-
-## 📁 Cấu Trúc Mã Nguồn Backend
+## Cấu trúc thư mục
 
 ```
 ├── database/
-│   ├── schema.sql              # Cấu trúc CSDL chuẩn 13 bảng
-│   └── seed.sql                # Dữ liệu danh mục tĩnh
-├── backend/
-│   └── scripts/
-│       ├── seed.js             # Script sinh dữ liệu mẫu động (bcrypt, phân ca 30 ngày)
-│       └── init-db.js          # Script CLI khởi tạo CSDL an toàn có xác nhận
+│   ├── schema.sql              # Schema 15 bảng
+│   └── migrations/             # Migration SQL (001: bảng notifications)
+├── scripts/
+│   ├── init-db.js              # Khởi tạo database mới, từ chối nếu đã tồn tại
+│   ├── seed.js                 # Dữ liệu mẫu
+│   ├── migrate.js              # Chạy các file trong database/migrations
+│   └── migrate-*.js            # Migration cũ cho database phiên bản trước
 ├── src/
-│   ├── app.js                  # Cấu hình Express, helmet, cors, morgan, router, errorHandler
-│   ├── server.js               # Khởi động server, kiểm tra kết nối DB, lắng nghe PORT
-│   ├── config/
-│   │   └── db.js               # MySQL connection pool (mysql2/promise)
-│   ├── routes/
-│   │   ├── index.js            # Gắn các route /api
-│   │   └── healthRoutes.js     # GET /api/health
-│   ├── controllers/            # Tầng điều khiển (phân hệ tiếp theo)
-│   ├── services/               # Tầng xử lý nghiệp vụ
+│   ├── app.js, server.js       # Cấu hình Express và khởi động server
+│   ├── config/                 # Kết nối MySQL (pool)
+│   ├── routes/                 # Định nghĩa route /api
+│   ├── controllers/            # Tầng điều khiển
+│   ├── services/               # Tầng nghiệp vụ
 │   ├── repositories/           # Tầng truy vấn CSDL
-│   ├── middlewares/
-│   │   └── errorHandler.js     # Bắt lỗi tập trung chuẩn { success, message, errors }
-│   └── utils/
-│       └── response.js         # Helper chuẩn hóa phản hồi API
-├── tests/
-│   └── health.test.js          # Kiểm thử tự động API health check
-└── frontend/                   # Ứng dụng client React + Vite + Tailwind CSS
+│   ├── validations/            # Kiểm tra dữ liệu đầu vào (Zod)
+│   ├── middlewares/            # Xác thực, phân quyền, xử lý lỗi
+│   └── utils/                  # Hàm dùng chung
+├── tests/                      # Jest và Supertest
+├── uploads/                    # Tệp tải lên (không commit)
+└── frontend/                   # React SPA: khu vực public, customer, staff, admin
 ```
 
+## Nhóm API
+
+`/api/health`, `/api/auth`, `/api/auth/google`, `/api/users`, `/api/customers`, `/api/pets`, `/api/services`, `/api/employees`, `/api/shifts`, `/api/employee-shifts`, `/api/appointments`, cùng các API vận hành (nhật ký chăm sóc, ảnh chăm sóc, sự cố) và API hóa đơn, thanh toán.
+
+## Cơ sở dữ liệu
+
+15 bảng trong `database/schema.sql`: `roles`, `users`, `pets`, `services`, `employees`, `shifts`, `employee_shifts`, `appointments`, `appointment_details`, `pet_care_history`, `invoices`, `invoice_details`, `payments`, `incidents`, `system_logs`. Migration `001` thêm bảng `notifications`, tổng cộng 16 bảng.
