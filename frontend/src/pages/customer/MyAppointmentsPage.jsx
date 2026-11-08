@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import axiosClient from '../../api/axiosClient'
 import StatusBadge from '../../components/StatusBadge'
 import AppointmentDetailModal from '../../components/AppointmentDetailModal'
@@ -29,7 +29,21 @@ const MyAppointmentsPage = () => {
   const [detailId, setDetailId] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [reschedTarget, setReschedTarget] = useState(null)
-  const [invoiceModalId, setInvoiceModalId] = useState(null)
+  // ?invoice=<id> (từ thông báo): mở thẳng hóa đơn
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [invoiceModalId, setInvoiceModalId] = useState(() => {
+    const id = Number(searchParams.get('invoice'))
+    return Number.isInteger(id) && id > 0 ? id : null
+  })
+  // Đang ở sẵn trang này mà bấm thông báo: URL đổi nhưng trang không tải lại → phải theo dõi tham số
+  const invoiceParam = Number(searchParams.get('invoice'))
+  useEffect(() => {
+    if (Number.isInteger(invoiceParam) && invoiceParam > 0) setInvoiceModalId(invoiceParam)
+  }, [invoiceParam])
+  const closeInvoice = () => {
+    setInvoiceModalId(null)
+    if (searchParams.has('invoice')) setSearchParams({}, { replace: true })
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -157,7 +171,7 @@ const MyAppointmentsPage = () => {
       {detailId && <AppointmentDetailModal id={detailId} onClose={() => setDetailId(null)} onChanged={load} />}
       {cancelTarget && <CancelModal appointment={cancelTarget} onClose={() => setCancelTarget(null)} onDone={afterChange} />}
       {reschedTarget && <RescheduleModal appointment={reschedTarget} onClose={() => setReschedTarget(null)} onDone={afterChange} />}
-      {invoiceModalId && <InvoiceDetailModal invoiceId={invoiceModalId} onClose={() => setInvoiceModalId(null)} onUpdated={load} />}
+      {invoiceModalId && <InvoiceDetailModal invoiceId={invoiceModalId} onClose={closeInvoice} onUpdated={load} />}
     </div>
   )
 }

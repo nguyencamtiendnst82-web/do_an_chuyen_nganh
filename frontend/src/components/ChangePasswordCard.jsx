@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import axiosClient from '../api/axiosClient'
 import PasswordField from './PasswordField'
@@ -104,16 +104,15 @@ const ChangePasswordCard = () => {
   const canSubmit = !loading && form.old_password && strength.valid && confirmTouched && confirmMatches
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6">
-      <div className="border-b border-gray-100 pb-3 mb-4">
-        <h3 className="text-sm font-semibold text-gray-800">Đổi mật khẩu</h3>
-        <p className="text-xs text-gray-500 mt-1">
-          Dùng mật khẩu dài, không trùng với mật khẩu ở các dịch vụ khác và không chứa email hay số điện thoại của bạn.
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-200" noValidate>
+      <div className="px-6 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900">Đổi mật khẩu</h3>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Dùng mật khẩu dài, không trùng với dịch vụ khác và không chứa email hay số điện thoại của bạn.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        
+      <div className="p-6 space-y-5">
         {errors._global && (
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">
             {errors._global}
@@ -128,58 +127,67 @@ const ChangePasswordCard = () => {
           </div>
         )}
 
-        <PasswordField
-          label="Mật khẩu hiện tại"
-          name="old_password"
-          value={form.old_password}
-          onChange={handleChange}
-          error={errors.old_password}
-          autoComplete="new-password"
-          noAutofill
-          disabled={loading}
-        />
-
-        <PasswordField
-          label="Mật khẩu mới"
-          name="new_password"
-          value={form.new_password}
-          onChange={handleChange}
-          error={errors.new_password}
-          autoComplete="new-password"
-          noAutofill
-          disabled={loading}
-        >
-          <PasswordStrength password={form.new_password} />
-        </PasswordField>
-
-        <PasswordField
-          label="Xác nhận mật khẩu mới"
-          name="confirm_new_password"
-          value={form.confirm_new_password}
-          onChange={handleChange}
-          error={errors.confirm_new_password}
-          autoComplete="new-password"
-          noAutofill
-          disabled={loading}
-        >
-          {confirmTouched && !errors.confirm_new_password && (
-            <p className={`mt-1 text-xs ${confirmMatches ? 'text-green-600' : 'text-red-600'}`}>
-              {confirmMatches ? '✓ Mật khẩu khớp' : 'Mật khẩu chưa khớp'}
-            </p>
-          )}
-        </PasswordField>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="bg-gray-800 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
-          </button>
+        <div>
+          <PasswordField
+            label="Mật khẩu hiện tại"
+            name="old_password"
+            value={form.old_password}
+            onChange={handleChange}
+            error={errors.old_password}
+            autoComplete="new-password"
+            noAutofill
+            disabled={loading}
+          />
+          <div className="mt-1 text-right">
+            <Link to="/forgot-password" className="text-xs text-pink-600 hover:text-pink-700 font-medium">
+              Quên mật khẩu hiện tại?
+            </Link>
+          </div>
         </div>
-      </form>
-    </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+          <PasswordField
+            label="Mật khẩu mới"
+            name="new_password"
+            value={form.new_password}
+            onChange={handleChange}
+            error={errors.new_password}
+            autoComplete="new-password"
+            noAutofill
+            disabled={loading}
+          >
+            <PasswordStrength password={form.new_password} />
+          </PasswordField>
+
+          <PasswordField
+            label="Xác nhận mật khẩu mới"
+            name="confirm_new_password"
+            value={form.confirm_new_password}
+            onChange={handleChange}
+            error={errors.confirm_new_password}
+            autoComplete="new-password"
+            noAutofill
+            disabled={loading}
+          >
+            {confirmTouched && !errors.confirm_new_password && (
+              <p className={`mt-1 text-xs ${confirmMatches ? 'text-green-600' : 'text-red-600'}`}>
+                {confirmMatches ? '✓ Mật khẩu khớp' : 'Mật khẩu chưa khớp'}
+              </p>
+            )}
+          </PasswordField>
+        </div>
+      </div>
+
+      <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/60 rounded-b-2xl flex justify-end">
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="bg-pink-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
+        </button>
+      </div>
+    </form>
   )
 }
 

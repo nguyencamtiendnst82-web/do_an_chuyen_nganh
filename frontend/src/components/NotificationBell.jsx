@@ -100,7 +100,11 @@ const NotificationBell = ({ tone = 'pink' }) => {
       setUnread((c) => Math.max(0, c - 1))
       notificationApi.markRead(n.id).catch(() => {})
     }
-    const path = resolvePath(n.payload?.link, user.role_name)
+    // Thông báo hóa đơn của khách: mở thẳng hóa đơn (kể cả thông báo cũ đã tạo trước đây)
+    const invoiceId = n.payload?.invoice_id
+    const path = invoiceId && user.role_name === 'customer'
+      ? `/appointments?invoice=${invoiceId}`
+      : resolvePath(n.payload?.link, user.role_name)
     if (path) {
       setOpen(false)
       navigate(path)

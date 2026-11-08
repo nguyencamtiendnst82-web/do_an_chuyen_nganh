@@ -214,221 +214,212 @@ const ProfilePage = () => {
   // Ảnh đang hiển thị: ưu tiên ảnh vừa chọn (xem trước), nếu không thì ảnh đang lưu
   const displayedAvatar = avatarPreview || user?.avatar_url
 
+  const inputClass = (name) =>
+    `w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 py-6">
-      {/* Header */}
+    <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 space-y-6">
+      {/* Tiêu đề trang */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hồ sơ cá nhân</h1>
-        <p className="text-sm text-gray-500 mt-1">Quản lý thông tin tài khoản của bạn</p>
+        <p className="text-sm text-gray-500 mt-1">Quản lý thông tin và bảo mật tài khoản của bạn</p>
       </div>
 
-      {/* Profile card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        {/* Avatar + Info */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-2xl font-bold overflow-hidden shrink-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Cột trái: danh tính + ảnh đại diện */}
+        <aside className="bg-white rounded-2xl border border-gray-200 p-6 text-center lg:sticky lg:top-24">
+          <div className="w-28 h-28 mx-auto rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-4xl font-bold overflow-hidden ring-4 ring-white shadow">
             {displayedAvatar
-              ? <img src={displayedAvatar} alt="Ảnh đại diện" className="w-16 h-16 rounded-full object-cover" />
+              ? <img src={displayedAvatar} alt="Ảnh đại diện" className="w-28 h-28 object-cover" />
               : user?.full_name?.[0]?.toUpperCase()
             }
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{user?.full_name}</h2>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${roleColor}`}>
-              {user?.role_display_name || user?.role_name}
+
+          <h2 className="mt-4 text-lg font-semibold text-gray-900 break-words">{user?.full_name}</h2>
+          <span className={`inline-block mt-1 text-xs font-medium px-2.5 py-0.5 rounded-full ${roleColor}`}>
+            {user?.role_display_name || user?.role_name}
+          </span>
+
+          <p className="mt-3 text-sm text-gray-500 break-all">{user?.email}</p>
+          {user?.email_verified === true && (
+            <span className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+              ✓ Email đã xác minh
             </span>
-          </div>
-        </div>
-
-        {/* Ảnh đại diện: tải lên từ máy */}
-        <div className="mb-6 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-800 border-b border-gray-100 pb-2">Ảnh đại diện</h3>
-
-          {avatarError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-              {avatarError}
-            </div>
           )}
-          {avatarSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
-              {avatarSuccess}
-            </div>
+          {user?.email_verified === false && (
+            <span className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+              Email chưa xác minh
+            </span>
           )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleAvatarSelect}
-            className="hidden"
-            id="avatar-input"
-          />
-
-          <div className="flex flex-wrap items-center gap-2">
-            <label
-              htmlFor="avatar-input"
-              className="cursor-pointer border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              Chọn ảnh
-            </label>
-
-            {avatarFile && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleAvatarUpload}
-                  disabled={avatarLoading}
-                  className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                >
-                  {avatarLoading ? 'Đang tải lên...' : 'Tải lên'}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetAvatarSelection}
-                  disabled={avatarLoading}
-                  className="text-gray-600 px-3 py-2 text-sm hover:underline disabled:opacity-60"
-                >
-                  Hủy
-                </button>
-              </>
-            )}
-
-            {!avatarFile && user?.avatar_url && (
-              <button
-                type="button"
-                onClick={handleAvatarRemove}
-                disabled={avatarLoading}
-                className="text-red-600 px-3 py-2 text-sm hover:underline disabled:opacity-60"
-              >
-                {avatarLoading ? 'Đang xử lý...' : 'Gỡ ảnh'}
-              </button>
-            )}
-          </div>
-
-          <p className="text-xs text-gray-400">
-            {avatarFile ? `Đã chọn: ${avatarFile.name}. ` : ''}
-            Định dạng JPG, PNG hoặc WEBP, tối đa 2MB.
-          </p>
-        </div>
-
-        {/* Profile form */}
-        <form onSubmit={handleProfileSubmit} className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-800 border-b border-gray-100 pb-2">Thông tin cơ bản</h3>
-
-          {profileErrors._global && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-              {profileErrors._global}
-            </div>
-          )}
-          {profileSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
-              {profileSuccess}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { name: 'full_name', label: 'Họ và tên', type: 'text' },
-              { name: 'phone', label: 'Số điện thoại', type: 'tel' },
-            ].map(({ name, label, type }) => (
-              <div key={name}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                <input
-                  name={name}
-                  type={type}
-                  value={profileForm[name]}
-                  onChange={handleProfileChange}
-                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-                />
-                {profileErrors[name] && <p className="mt-1 text-xs text-red-600">{profileErrors[name]}</p>}
+          {/* Ảnh đại diện: tải lên từ máy */}
+          <div className="mt-6 pt-5 border-t border-gray-100 space-y-3">
+            {avatarError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 text-left" role="alert">
+                {avatarError}
               </div>
-            ))}
-          </div>
+            )}
+            {avatarSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 text-left" role="status">
+                {avatarSuccess}
+              </div>
+            )}
 
-          {/* Email (read-only) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
-              type="email"
-              value={user?.email || ''}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarSelect}
+              className="hidden"
+              id="avatar-input"
             />
-            <p className="mt-1 text-xs text-gray-400">Email không thể thay đổi</p>
-            {user?.email_verified === true && (
-              <p className="mt-1 text-xs text-green-600">✓ Email đã được xác minh</p>
-            )}
-            {user?.email_verified === false && (
-              <p className="mt-1 text-xs text-amber-700">
-                Email chưa được xác minh — dùng dải thông báo ở đầu trang để gửi lại thư xác minh.
-              </p>
-            )}
-          </div>
 
-          {/* Giới tính + năm sinh: để hệ thống biết cách xưng hô */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
-              <select
-                id="gender"
-                name="gender"
-                value={profileForm.gender}
-                onChange={handleProfileChange}
-                className={`w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors.gender ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <label
+                htmlFor="avatar-input"
+                className="cursor-pointer border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
               >
-                {GENDER_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              {profileErrors.gender && <p className="mt-1 text-xs text-red-600">{profileErrors.gender}</p>}
-            </div>
-            <div>
-              <label htmlFor="birth_year" className="block text-sm font-medium text-gray-700 mb-1">Năm sinh</label>
-              <input
-                id="birth_year"
-                name="birth_year"
-                type="number"
-                inputMode="numeric"
-                min={1900}
-                max={CURRENT_YEAR - 5}
-                value={profileForm.birth_year}
-                onChange={handleProfileChange}
-                placeholder="VD: 1998"
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${profileErrors.birth_year ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-              />
-              {profileErrors.birth_year && <p className="mt-1 text-xs text-red-600">{profileErrors.birth_year}</p>}
-            </div>
-          </div>
-                    <p className="-mt-2 text-xs text-gray-400">
-            Không bắt buộc. Thông tin này giúp nhân viên Pet Spa xưng hô với bạn cho phù hợp khi tiếp đón.
-          </p>
+                {user?.avatar_url || avatarFile ? 'Đổi ảnh' : 'Chọn ảnh'}
+              </label>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-            <textarea
-              name="address"
-              rows={2}
-              value={profileForm.address}
-              onChange={handleProfileChange}
-              placeholder="Địa chỉ liên hệ"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
-            />
-          </div>
+              {avatarFile && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleAvatarUpload}
+                    disabled={avatarLoading}
+                    className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {avatarLoading ? 'Đang tải lên...' : 'Lưu ảnh'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetAvatarSelection}
+                    disabled={avatarLoading}
+                    className="text-gray-600 px-3 py-2 text-sm hover:underline disabled:opacity-60"
+                  >
+                    Hủy
+                  </button>
+                </>
+              )}
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={profileLoading}
-              className="bg-pink-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-            >
-              {profileLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
+              {!avatarFile && user?.avatar_url && (
+                <button
+                  type="button"
+                  onClick={handleAvatarRemove}
+                  disabled={avatarLoading}
+                  className="text-red-600 px-3 py-2 text-sm hover:underline disabled:opacity-60"
+                >
+                  {avatarLoading ? 'Đang xử lý...' : 'Gỡ ảnh'}
+                </button>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-400">
+              {avatarFile ? `Đã chọn: ${avatarFile.name}. ` : ''}
+              JPG, PNG hoặc WEBP, tối đa 2MB.
+            </p>
           </div>
-        </form>
+        </aside>
+
+        {/* Cột phải: thông tin + đổi mật khẩu */}
+        <div className="lg:col-span-2 space-y-6">
+          <form onSubmit={handleProfileSubmit} className="bg-white rounded-2xl border border-gray-200" noValidate>
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900">Thông tin cá nhân</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Số điện thoại dùng để nhân viên liên hệ khi cần.</p>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {profileErrors._global && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">
+                  {profileErrors._global}
+                </div>
+              )}
+              {profileSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700" role="status">
+                  {profileSuccess}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                  <input id="full_name" name="full_name" type="text" value={profileForm.full_name}
+                    onChange={handleProfileChange} className={inputClass('full_name')} />
+                  {profileErrors.full_name && <p className="mt-1 text-xs text-red-600">{profileErrors.full_name}</p>}
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <input id="phone" name="phone" type="tel" value={profileForm.phone}
+                    onChange={handleProfileChange} className={inputClass('phone')} />
+                  {profileErrors.phone && <p className="mt-1 text-xs text-red-600">{profileErrors.phone}</p>}
+                </div>
+              </div>
+
+              {/* Email (chỉ đọc) */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={user?.email || ''}
+                  readOnly
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Email là tên đăng nhập nên không thể thay đổi.
+                  {user?.email_verified === false && ' Hãy dùng dải thông báo ở đầu trang để gửi lại thư xác minh.'}
+                </p>
+              </div>
+
+              {/* Giới tính + năm sinh: để nhân viên biết cách xưng hô */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                  <select id="gender" name="gender" value={profileForm.gender} onChange={handleProfileChange}
+                    className={`${inputClass('gender')} bg-white`}>
+                    {GENDER_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  {profileErrors.gender && <p className="mt-1 text-xs text-red-600">{profileErrors.gender}</p>}
+                </div>
+                <div>
+                  <label htmlFor="birth_year" className="block text-sm font-medium text-gray-700 mb-1">Năm sinh</label>
+                  <input id="birth_year" name="birth_year" type="number" inputMode="numeric"
+                    min={1900} max={CURRENT_YEAR - 5} value={profileForm.birth_year}
+                    onChange={handleProfileChange} placeholder="VD: 1998" className={inputClass('birth_year')} />
+                  {profileErrors.birth_year && <p className="mt-1 text-xs text-red-600">{profileErrors.birth_year}</p>}
+                </div>
+              </div>
+              <p className="-mt-3 text-xs text-gray-400">
+                Không bắt buộc. Thông tin này giúp nhân viên Pet Spa xưng hô với bạn cho phù hợp khi tiếp đón.
+              </p>
+
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                <textarea id="address" name="address" rows={2} value={profileForm.address}
+                  onChange={handleProfileChange} placeholder="Địa chỉ liên hệ"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none" />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/60 rounded-b-2xl flex justify-end">
+              <button
+                type="submit"
+                disabled={profileLoading}
+                className="bg-pink-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {profileLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </form>
+
+          {/* Đổi mật khẩu */}
+          <ChangePasswordCard />
+        </div>
       </div>
-
-      {/* Đổi mật khẩu */}
-      <ChangePasswordCard />
     </div>
   )
 }

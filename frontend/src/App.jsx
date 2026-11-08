@@ -65,6 +65,15 @@ const ProfileRoute = () => {
   )
 }
 
+/**
+ * EmployeesLayout: trang /employees ai cũng xem được, nhưng khung giao diện theo người xem:
+ * khách hàng đã đăng nhập → CustomerLayout (có đủ menu điều hướng); còn lại → PublicLayout.
+ */
+const EmployeesLayout = () => {
+  const { user } = useAuth()
+  return user?.role_name === 'customer' ? <CustomerLayout /> : <PublicLayout />
+}
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -73,11 +82,14 @@ const App = () => {
           {/* ── Public routes (không cần đăng nhập) ─────────────────── */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/employees" element={<EmployeesPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+          </Route>
+
+          <Route element={<EmployeesLayout />}>
+            <Route path="/employees" element={<EmployeesPage />} />
           </Route>
 
           {/* ── /profile: cho phép cả 3 role, layout theo role ────────── */}
@@ -95,7 +107,6 @@ const App = () => {
               <Route path="/appointments" element={<MyAppointmentsPage />} />
               <Route path="/care-book" element={<CareBookPage />} />
               <Route path="/services" element={<ServiceCatalogPage />} />
-              <Route path="/employees" element={<EmployeesPage />} />
             </Route>
           </Route>
 
