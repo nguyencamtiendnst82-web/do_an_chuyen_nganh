@@ -2,6 +2,7 @@ import incidentRepository from '../repositories/incidentRepository.js';
 import appointmentRepository from '../repositories/appointmentRepository.js';
 import petRepository from '../repositories/petRepository.js';
 import logRepository from '../repositories/logRepository.js';
+import { notifyIncident } from './notificationService.js';
 import { assertStaffOwnsAppointment } from './appointmentService.js';
 import {
   incidentCreateSchema,
@@ -46,7 +47,9 @@ export const createIncident = async (actor, body, req) => {
     },
   });
 
-  return { incident: await incidentRepository.findById(id) };
+  const incident = await incidentRepository.findById(id);
+  await notifyIncident('reported', incident, actor);
+  return { incident };
 };
 
 /** GET /api/incidents : nhân viên chỉ thấy sự cố do mình báo, admin thấy tất cả */
@@ -116,7 +119,9 @@ export const updateIncident = async (actor, rawId, body, req) => {
     },
   });
 
-  return { incident: await incidentRepository.findById(id) };
+  const incident = await incidentRepository.findById(id);
+  if (nextStatus === 'resolved' && old.status !== 'resolved') await notifyIncident('resolved', incident, actor);
+  return { incident };
 };
 
 export default { createIncident, listIncidents, getIncident, updateIncident };

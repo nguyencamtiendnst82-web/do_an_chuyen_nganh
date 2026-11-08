@@ -11,7 +11,7 @@ const axiosClient = axios.create({
 // Request interceptor: tự động gắn Authorization: Bearer <token>
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = sessionStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -35,7 +35,7 @@ axiosClient.interceptors.response.use(
 
       if (!isWhitelisted) {
         // Token hết hạn hoặc không hợp lệ → xóa và redirect
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         window.location.href = '/login'
       }
       // Nếu là whitelist (login/register) → để lỗi đi qua bình thường

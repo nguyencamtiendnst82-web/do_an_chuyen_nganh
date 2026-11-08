@@ -16,6 +16,7 @@ import employeeShiftRoutes from './employeeShiftRoutes.js';
 import appointmentRoutes from './appointmentRoutes.js';
 import operationsRoutes from './operationsRoutes.js'
 import invoiceRoutes from './invoiceRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
 
 // Gắn các routes phân hệ
 router.use('/', healthRoutes);
@@ -31,5 +32,6 @@ router.use('/employee-shifts', employeeShiftRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use(operationsRoutes);
 router.use(invoiceRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

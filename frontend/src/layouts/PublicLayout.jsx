@@ -1,6 +1,7 @@
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import UserMenu from '../components/UserMenu'
+import NotificationBell from '../components/NotificationBell'
 
 /**
  * PublicLayout: Header đơn giản với logo và link đăng nhập/đăng ký
@@ -30,7 +31,10 @@ const PublicLayout = () => {
               Đội ngũ
             </Link>
             {user ? (
-              <UserMenu />
+              <>
+                <NotificationBell />
+                <UserMenu />
+              </>
             ) : (
               <>
                 <Link

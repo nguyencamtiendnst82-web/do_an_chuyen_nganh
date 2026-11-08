@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import UserMenu from '../components/UserMenu'
+import NotificationBell from '../components/NotificationBell'
 import EmailVerificationNotice from '../components/EmailVerificationNotice'
 
 /**
@@ -63,6 +64,7 @@ const CustomerLayout = () => {
               </svg>
             </button>
 
+            <NotificationBell />
             <UserMenu />
           </div>
         </div>

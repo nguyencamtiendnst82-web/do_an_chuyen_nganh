@@ -6,6 +6,7 @@ import employeeRepository from '../repositories/employeeRepository.js';
 import careRepository from '../repositories/careRepository.js';
 import serviceRepository from '../repositories/serviceRepository.js';
 import logRepository from '../repositories/logRepository.js';
+import { notifyAppointment } from './notificationService.js';
 import {
   createAppointmentSchema,
   rescheduleAppointmentSchema,
@@ -486,6 +487,7 @@ export const createAppointment = async (actor, rawBody, req) => {
 
       const created = await appointmentRepository.findById(appointmentId);
       const details = await appointmentRepository.findDetailsByAppointmentId(appointmentId);
+      await notifyAppointment('created', created, actor);
       return { ...created, details };
     } catch (err) {
       await conn.rollback();
@@ -808,7 +810,9 @@ export const cancelAppointment = async (actor, rawId, body, req) => {
     user_agent: audit.user_agent,
   });
 
-  return appointmentRepository.findById(id);
+  const result = await appointmentRepository.findById(id);
+  await notifyAppointment('cancelled', result, actor);
+  return result;
 };
 
 /**
@@ -888,7 +892,9 @@ export const assignEmployee = async (actor, rawId, body, req) => {
       user_agent: audit.user_agent,
     });
 
-    return appointmentRepository.findById(id);
+    const result = await appointmentRepository.findById(id);
+    await notifyAppointment('assigned', result, actor);
+    return result;
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -930,7 +936,9 @@ export const confirmAppointment = async (actor, rawId, req) => {
     user_agent: audit.user_agent,
   });
 
-  return appointmentRepository.findById(id);
+  const result = await appointmentRepository.findById(id);
+  await notifyAppointment('confirmed', result, actor);
+  return result;
 };
 
 /**
@@ -989,7 +997,12 @@ export const updateAppointmentStatus = async (actor, rawId, body, req) => {
     user_agent: audit.user_agent,
   });
 
-  return appointmentRepository.findById(id);
+  const result = await appointmentRepository.findById(id);
+  if (parsed.status !== appointment.status) {
+    if (parsed.status === APPOINTMENT_STATUS.CONFIRMED) await notifyAppointment('confirmed', result, actor);
+    if (parsed.status === APPOINTMENT_STATUS.CANCELLED) await notifyAppointment('cancelled', result, actor);
+  }
+  return result;
 };
 
 export default {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import NotificationBell from '../components/NotificationBell'
 
 /**
  * AdminLayout: Sidebar thu gọn được trên mobile cho quản trị viên
@@ -58,6 +59,7 @@ const AdminLayout = () => {
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
               <p className="text-xs text-purple-600 truncate">Quản trị viên</p>
             </div>
+            <NotificationBell tone="blue" />
           </div>
         </div>
 

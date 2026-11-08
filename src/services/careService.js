@@ -3,6 +3,7 @@ import appointmentRepository from '../repositories/appointmentRepository.js';
 import careRepository from '../repositories/careRepository.js';
 import petRepository from '../repositories/petRepository.js';
 import logRepository from '../repositories/logRepository.js';
+import { notifyAppointment } from './notificationService.js';
 import { assertStaffOwnsAppointment } from './appointmentService.js';
 import { isRealImageFile } from '../middlewares/uploadImage.js';
 import { careImages } from '../middlewares/uploadCare.js';
@@ -108,7 +109,9 @@ export const checkIn = async (actor, rawId, body, file, req) => {
       },
     });
 
-    return withRecord(appointment.id);
+    const result = await withRecord(appointment.id);
+    await notifyAppointment('checked_in', result.appointment, actor);
+    return result;
   } catch (err) {
     if (!committed) await careImages.discard(file); // không để lại file rác khi lỗi
     throw err;
@@ -136,7 +139,9 @@ export const startService = async (actor, rawId, req) => {
     new_values: { status: APPOINTMENT_STATUS.IN_PROGRESS },
   });
 
-  return withRecord(appointment.id);
+  const result = await withRecord(appointment.id);
+  await notifyAppointment('started', result.appointment, actor);
+  return result;
 };
 
 /**
@@ -190,7 +195,9 @@ export const completeService = async (actor, rawId, body, file, req) => {
       },
     });
 
-    return withRecord(appointment.id);
+    const result = await withRecord(appointment.id);
+    await notifyAppointment('completed', result.appointment, actor);
+    return result;
   } catch (err) {
     if (!committed) await careImages.discard(file);
     throw err;

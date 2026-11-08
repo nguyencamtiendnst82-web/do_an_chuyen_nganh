@@ -12,10 +12,10 @@ export const AuthProvider = ({ children }) => {
   // loading = true trong lúc xác minh token ban đầu (tránh ProtectedRoute flash)
   const [loading, setLoading] = useState(true)
 
-  // Khi app mount: đọc token từ localStorage, xác minh với backend
+  // Khi app mount: đọc token từ sessionStorage (mỗi tab một phiên đăng nhập riêng), xác minh với backend
   useEffect(() => {
     const initAuth = async () => {
-      const savedToken = localStorage.getItem('token')
+      const savedToken = sessionStorage.getItem('token')
       if (!savedToken) {
         setLoading(false)
         return
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
         setUser(res.data.data.user)
       } catch {
         // Token hết hạn hoặc bị khóa → xóa
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
       } finally {
         setLoading(false)
       }
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credential, password) => {
     const res = await axiosClient.post('/auth/login', { credential, password })
     const { token: newToken, user: newUser } = res.data.data
-    localStorage.setItem('token', newToken)
+    sessionStorage.setItem('token', newToken)
     setToken(newToken)
     setUser(newUser)
     return { user: newUser, token: newToken }
@@ -57,14 +57,14 @@ export const AuthProvider = ({ children }) => {
    * Lưu phiên đăng nhập khi server đã trả sẵn token + user (đăng nhập bằng Google)
    */
   const loginWithToken = (newToken, newUser) => {
-    localStorage.setItem('token', newToken)
+    sessionStorage.setItem('token', newToken)
     setToken(newToken)
     setUser(newUser)
     return { user: newUser, token: newToken }
   }
 
   /**
-   * Đăng xuất: POST /api/auth/logout → xóa localStorage → clear state
+   * Đăng xuất: POST /api/auth/logout → xóa sessionStorage → clear state
    */
   const logout = async () => {
     try {
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     } catch {
       // Bỏ qua lỗi (token hết hạn cũng vẫn logout được)
     } finally {
-      localStorage.removeItem('token')
+      sessionStorage.removeItem('token')
       setToken(null)
       setUser(null)
     }

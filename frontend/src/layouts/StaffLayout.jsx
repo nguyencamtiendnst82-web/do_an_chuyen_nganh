@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import NotificationBell from '../components/NotificationBell'
 
 /**
  * StaffLayout: Sidebar thu gọn được trên mobile cho nhân viên
@@ -56,6 +57,7 @@ const StaffLayout = () => {
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
+            <NotificationBell tone="blue" />
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import { pool } from '../config/db.js';
 import invoiceRepository from '../repositories/invoiceRepository.js';
 import employeeRepository from '../repositories/employeeRepository.js';
 import logRepository from '../repositories/logRepository.js';
+import { notifyInvoice } from './notificationService.js';
 import {
   createInvoiceSchema,
   createPaymentSchema,
@@ -163,6 +164,13 @@ const createForAppointment = async (actor, rawAppointmentId, body = {}, req = {}
     },
   });
 
+  await notifyInvoice('created', {
+    customerId: createdInvoice.customer_id,
+    invoiceId,
+    invoiceCode: createdInvoice.invoice_code,
+    amount: createdInvoice.total_amount,
+  }, actor);
+
   return { invoice: createdInvoice };
 };
 
@@ -284,6 +292,14 @@ const recordPayment = async (actor, rawInvoiceId, body = {}, req = {}) => {
   const updatedInvoice = await invoiceRepository.findById(invoiceId);
   updatedInvoice.details = await invoiceRepository.findDetailsByInvoiceId(invoiceId);
   updatedInvoice.payments = await invoiceRepository.findPaymentsByInvoiceId(invoiceId);
+
+  await notifyInvoice('payment', {
+    customerId: updatedInvoice.customer_id,
+    invoiceId,
+    invoiceCode: updatedInvoice.invoice_code,
+    amount: parsed.amount,
+    paid: newStatus === 'paid',
+  }, actor);
 
   return {
     message: newStatus === 'paid' ? 'Thanh toán hóa đơn hoàn tất.' : 'Ghi nhận thanh toán một phần thành công.',
