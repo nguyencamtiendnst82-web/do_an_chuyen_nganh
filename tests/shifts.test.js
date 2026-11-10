@@ -76,6 +76,10 @@ describe('Quản lý ca làm việc và phân ca (/api/shifts, /api/employee-shi
         await pool.query(`DELETE FROM shifts WHERE id IN (${shiftIds.join(',')})`);
       }
     }
+    // Các ca do test S5 / S-trùng-tên tạo ra (không lưu id) → dọn theo tên để không làm rối danh mục ca thật
+    await pool.query(
+      `DELETE FROM shifts WHERE shift_name LIKE 'Ca Trùng Tên %' OR shift_name = 'Ca Trưa Thử'`
+    );
     await pool.query(`DELETE FROM pets WHERE id = ?`, [petId]);
     await pool.query(`DELETE FROM employees WHERE id IN (?, ?)`, [employeeId1, employeeId2]);
     await pool.query(

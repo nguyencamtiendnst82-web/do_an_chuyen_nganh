@@ -27,6 +27,16 @@ const listServices = async (user, query = {}) => {
   return { services };
 };
 
+/** Danh sách công khai cho trang chủ (không cần đăng nhập): chỉ dịch vụ đang bật, chỉ các trường hiển thị */
+const listPublicServices = async () => {
+  const services = await serviceRepository.findAll({ is_active: true });
+  return {
+    services: services.slice(0, 8).map(({ id, name, description, price, duration_minutes, image_url }) => ({
+      id, name, description, price, duration_minutes, image_url,
+    })),
+  };
+};
+
 const getService = async (user, id) => {
   const service = await serviceRepository.findById(id);
   // Khách hàng không được biết đến sự tồn tại của dịch vụ đã ẩn
@@ -154,5 +164,5 @@ const removeServiceImage = async (id, req) => {
   return { service: await serviceRepository.findById(id) };
 };
 
-export { listServices, getService, createService, updateService, setServiceActive, setServiceImage, removeServiceImage };
-export default { listServices, getService, createService, updateService, setServiceActive, setServiceImage, removeServiceImage };
+export { listServices, listPublicServices, getService, createService, updateService, setServiceActive, setServiceImage, removeServiceImage };
+export default { listServices, listPublicServices, getService, createService, updateService, setServiceActive, setServiceImage, removeServiceImage };

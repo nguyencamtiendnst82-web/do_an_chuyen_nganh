@@ -3,15 +3,7 @@ import shiftApi from '../../api/shiftApi';
 import { CardSkeleton } from '../../components/Skeleton';
 import { useToast } from '../../components/Feedback';
 import { errorMessage } from '../../utils/format';
-
-/**
- * Format string YYYY-MM-DD -> DD/MM/YYYY
- */
-const formatDateVN = (dateStr) => {
-  if (!dateStr) return '';
-  const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
-};
+import { addDays, formatDateVN, localYmd } from '../../utils/date';
 
 const WEEKDAY_NAMES = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
 
@@ -43,7 +35,7 @@ const MyShiftsPage = () => {
     loadMyShifts();
   }, [loadMyShifts]);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = localYmd();
 
   // Gom nhóm các ca làm theo ngày (work_date)
   const groupedByDate = shifts.reduce((acc, shift) => {
@@ -54,6 +46,8 @@ const MyShiftsPage = () => {
   }, {});
 
   const dates = Object.keys(groupedByDate).sort();
+  const tomorrowStr = addDays(todayStr, 1);
+  const todayShifts = groupedByDate[todayStr] || [];
 
   return (
     <div className="space-y-6">
@@ -71,6 +65,24 @@ const MyShiftsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Tóm tắt hôm nay */}
+      {!loading && shifts.length > 0 && (
+        <div className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 ${
+          todayShifts.length ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+        }`}>
+          <span className="text-sm font-semibold">
+            {todayShifts.length ? 'Hôm nay bạn làm:' : 'Hôm nay bạn không có ca.'}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {todayShifts.map((s) => (
+              <span key={s.id} className="bg-white/15 rounded-lg px-3 py-1 text-sm font-medium">
+                {s.shift_name} · {s.start_time?.slice(0, 5)}–{s.end_time?.slice(0, 5)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,6 +124,11 @@ const MyShiftsPage = () => {
                     {isToday && (
                       <span className="px-2 py-0.5 text-xs font-bold bg-blue-600 text-white rounded-full">
                         Hôm nay
+                      </span>
+                    )}
+                    {dateStr === tomorrowStr && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                        Ngày mai
                       </span>
                     )}
                   </div>

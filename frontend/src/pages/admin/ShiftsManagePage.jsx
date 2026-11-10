@@ -5,6 +5,7 @@ import Modal from '../../components/Modal';
 import { TableSkeleton } from '../../components/Skeleton';
 import { useToast, useConfirm } from '../../components/Feedback';
 import { errorMessage, mapFieldErrors } from '../../utils/format';
+import { addDays, formatDateVN, getMonday, localYmd, weekdayOf } from '../../utils/date';
 
 const WEEKDAYS = [
   { val: 1, label: 'Thứ 2' },
@@ -29,35 +30,6 @@ const inputClass = (hasError) =>
     hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
   }`;
 
-/**
- * Format string YYYY-MM-DD -> DD/MM/YYYY
- */
-const formatDateVN = (dateStr) => {
-  if (!dateStr) return '';
-  const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
-};
-
-/**
- * Lấy ngày đầu tuần (Thứ 2) từ một ngày cho trước
- */
-const getMonday = (d) => {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  date.setDate(date.getDate() + diff);
-  return date.toISOString().slice(0, 10);
-};
-
-/**
- * Cộng thêm số ngày vào YYYY-MM-DD
- */
-const addDays = (dateStr, days) => {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-};
-
 const ShiftsManagePage = () => {
   const toast = useToast();
   const confirm = useConfirm();
@@ -68,17 +40,18 @@ const ShiftsManagePage = () => {
   const [loading, setLoading] = useState(true);
 
   // State cho Tab Lịch tuần
-  const [currentMonday, setCurrentMonday] = useState(getMonday(new Date()));
+  const [currentMonday, setCurrentMonday] = useState(getMonday());
   const [scheduleData, setScheduleData] = useState({ shifts: [], records: [] });
   const [filterEmployeeId, setFilterEmployeeId] = useState('');
+  const [showEmptyShifts, setShowEmptyShifts] = useState(false); // hiện cả ca chưa có ai trong tuần
 
   // Modal phân ca hàng loạt
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkForm, setBulkForm] = useState({
     employee_id: '',
     shift_ids: [],
-    from: new Date().toISOString().slice(0, 10),
-    to: addDays(new Date().toISOString().slice(0, 10), 6),
+    from: localYmd(),
+    to: addDays(localYmd(), 6),
     weekdays: [1, 2, 3, 4, 5, 6, 0],
   });
   const [bulkErrors, setBulkErrors] = useState({});
@@ -136,10 +109,36 @@ const ShiftsManagePage = () => {
     }
   }, [activeTab, loadSchedule]);
 
+  // Bấm "+" trong một ô (ca × ngày): mở sẵn form phân ca cho đúng ca và ngày đó
+  const handleQuickAssign = (shift, dateStr) => {
+    setBulkResult(null);
+    setBulkErrors({});
+    setBulkForm({
+      employee_id: filterEmployeeId || employees[0]?.id || '',
+      shift_ids: [shift.id],
+      from: dateStr,
+      to: dateStr,
+      weekdays: [weekdayOf(dateStr)],
+    });
+    setShowBulkModal(true);
+  };
+
+  // Số liệu tóm tắt của tuần đang xem
+  const weekRecords = scheduleData.records || [];
+  // Bảng tuần chỉ liệt kê ca ĐANG BẬT; ca chưa có ai trong tuần thu gọn lại (bật công tắc để phân ca vào đó)
+  const activeShifts = shifts.filter((s) => s.is_active);
+  const usedShiftIds = new Set(weekRecords.map((r) => r.shift_id));
+  const visibleShifts = activeShifts.filter((s) => showEmptyShifts || usedShiftIds.has(s.id));
+  const hiddenEmptyCount = activeShifts.length - activeShifts.filter((s) => usedShiftIds.has(s.id)).length;
+  const scheduledEmployeeIds = new Set(weekRecords.map((r) => r.employee_id));
+  const unscheduledEmployees = filterEmployeeId
+    ? []
+    : employees.filter((e) => !scheduledEmployeeIds.has(e.id));
+
   // Điều hướng tuần
   const handlePrevWeek = () => setCurrentMonday(addDays(currentMonday, -7));
   const handleNextWeek = () => setCurrentMonday(addDays(currentMonday, 7));
-  const handleCurrentWeek = () => setCurrentMonday(getMonday(new Date()));
+  const handleCurrentWeek = () => setCurrentMonday(getMonday());
 
   // Xóa một lượt phân ca
   const handleDeleteAssignment = async (record) => {
@@ -289,7 +288,7 @@ const ShiftsManagePage = () => {
       dateStr,
       label: weekdayObj.label,
       displayDate: formatDateVN(dateStr),
-      isToday: dateStr === new Date().toISOString().slice(0, 10),
+      isToday: dateStr === localYmd(),
     };
   });
 
@@ -368,6 +367,33 @@ const ShiftsManagePage = () => {
       {/* NỘI DUNG TAB 1: LỊCH PHÂN CA TUẦN */}
       {activeTab === 'schedule' && (
         <div className="space-y-4">
+          {/* Tóm tắt tuần */}
+          {!loading && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <p className="text-xs text-gray-500">Lượt phân công trong tuần</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">{weekRecords.length}</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <p className="text-xs text-gray-500">Nhân viên đã có ca</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">
+                  {scheduledEmployeeIds.size}
+                  <span className="text-sm font-normal text-gray-400"> / {employees.length}</span>
+                </p>
+              </div>
+              <div className={`rounded-xl border p-4 ${unscheduledEmployees.length ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}>
+                <p className="text-xs text-gray-500">Chưa có ca nào trong tuần</p>
+                {unscheduledEmployees.length ? (
+                  <p className="mt-1 text-sm font-medium text-amber-800">
+                    {unscheduledEmployees.map((e) => e.full_name).join(', ')}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm font-medium text-green-700">✓ Ai cũng đã được phân ca</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Thanh công cụ điều hướng tuần & lọc nhân viên */}
           <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
@@ -415,16 +441,34 @@ const ShiftsManagePage = () => {
             </div>
           </div>
 
+          {activeShifts.length > 0 && (hiddenEmptyCount > 0 || showEmptyShifts) && (
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
+              <input
+                type="checkbox"
+                checked={showEmptyShifts}
+                onChange={(e) => setShowEmptyShifts(e.target.checked)}
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              Hiện cả ca chưa có ai trong tuần{hiddenEmptyCount > 0 ? ` (${hiddenEmptyCount})` : ''}
+            </label>
+          )}
+
           {loading ? (
             <TableSkeleton rows={5} />
           ) : (
             <>
+              {visibleShifts.length === 0 && (
+                <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+                  Tuần này chưa có ai được phân ca. Bật "Hiện cả ca chưa có ai" hoặc dùng nút "Phân ca hàng loạt" để bắt đầu.
+                </div>
+              )}
+
               {/* Bảng trên màn hình Desktop */}
               <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200 text-gray-800 text-xs uppercase tracking-wider">
-                      <th className="p-3 border-r border-gray-200 w-44">Khung ca làm việc</th>
+                      <th className="p-3 border-r border-gray-200 w-44 sticky left-0 bg-gray-50 z-10">Khung ca làm việc</th>
                       {weekDaysList.map((day) => (
                         <th
                           key={day.dateStr}
@@ -439,9 +483,9 @@ const ShiftsManagePage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 text-sm">
-                    {shifts.map((shift) => (
+                    {visibleShifts.map((shift) => (
                       <tr key={shift.id} className="hover:bg-gray-50/50">
-                        <td className="p-3 border-r border-gray-200 bg-gray-50/30">
+                        <td className="p-3 border-r border-gray-200 bg-gray-50 sticky left-0 z-10">
                           <div className="font-semibold text-gray-900">{shift.shift_name}</div>
                           <div className="text-xs text-purple-700 font-medium">
                             {shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)}
@@ -461,7 +505,7 @@ const ShiftsManagePage = () => {
                           return (
                             <td
                               key={day.dateStr}
-                              className={`p-2 border-r border-gray-200 last:border-r-0 align-top ${
+                              className={`group/cell p-2 border-r border-gray-200 last:border-r-0 align-top ${
                                 day.isToday ? 'bg-purple-50/20' : ''
                               }`}
                             >
@@ -482,6 +526,18 @@ const ShiftsManagePage = () => {
                                     </button>
                                   </div>
                                 ))}
+                                {shift.is_active && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuickAssign(shift, day.dateStr)}
+                                    className={`w-full rounded border border-dashed border-gray-300 text-gray-400 text-xs py-1 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-colors ${
+                                      assigned.length ? 'opacity-0 group-hover/cell:opacity-100 focus:opacity-100' : ''
+                                    }`}
+                                    aria-label={`Phân ca ${shift.shift_name} ngày ${day.displayDate}`}
+                                  >
+                                    + Thêm
+                                  </button>
+                                )}
                               </div>
                             </td>
                           );
@@ -517,7 +573,7 @@ const ShiftsManagePage = () => {
                         )}
                       </div>
 
-                      {shifts.map((shift) => {
+                      {visibleShifts.map((shift) => {
                         const assignedInShift = dayRecords.filter((r) => r.shift_id === shift.id);
 
                         return (
@@ -564,8 +620,8 @@ const ShiftsManagePage = () => {
 
       {/* NỘI DUNG TAB 2: CA LÀM MẪU */}
       {activeTab === 'templates' && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full text-left text-sm text-gray-600">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm text-gray-600">
             <thead className="bg-gray-50 text-gray-900 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 font-semibold">Tên ca làm việc</th>

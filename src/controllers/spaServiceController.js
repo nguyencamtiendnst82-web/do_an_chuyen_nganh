@@ -11,6 +11,16 @@ const list = async (req, res, next) => {
   }
 };
 
+const listPublic = async (req, res, next) => {
+  try {
+    const data = await spaService.listPublicServices();
+    res.set('Cache-Control', 'public, max-age=60');
+    return sendSuccess(res, 'Lấy danh sách dịch vụ thành công.', data);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getOne = async (req, res, next) => {
   try {
     const data = await spaService.getService(req.user, parseId(req.params.id, 'Mã dịch vụ'));
@@ -65,5 +75,5 @@ const removeImage = async (req, res, next) => {
   }
 };
 
-export { list, getOne, create, update, setActive, uploadImage, removeImage };
-export default { list, getOne, create, update, setActive, uploadImage, removeImage };
+export { list, listPublic, getOne, create, update, setActive, uploadImage, removeImage };
+export default { list, listPublic, getOne, create, update, setActive, uploadImage, removeImage };

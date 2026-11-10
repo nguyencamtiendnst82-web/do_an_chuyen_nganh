@@ -9,9 +9,12 @@ export const insertMany = async (rows) => {
 
 /** ID các quản trị viên đang hoạt động */
 export const findActiveAdminIds = async () => {
+  // Khi chạy test (NODE_ENV=test) chỉ báo cho admin do chính bộ test tạo (email test_...),
+  // để các lần chạy `npm test` không đổ thông báo rác vào tài khoản admin thật trong DB dev.
+  const onlyTestAdmins = process.env.NODE_ENV === 'test' ? `AND u.email LIKE 'test\\_%'` : '';
   const [rows] = await pool.query(
     `SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id
-     WHERE r.role_name = 'admin' AND u.status = 'active'`
+     WHERE r.role_name = 'admin' AND u.status = 'active' ${onlyTestAdmins}`
   );
   return rows.map((r) => r.id);
 };

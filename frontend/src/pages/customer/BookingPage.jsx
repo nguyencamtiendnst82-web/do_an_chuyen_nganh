@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import axiosClient from '../../api/axiosClient'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/Feedback'
@@ -19,6 +19,8 @@ const BookingPage = () => {
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const presetServiceId = Number(searchParams.get('service')) // từ trang chủ: ?service=<id>
 
   const [step, setStep] = useState(1)
   const [pets, setPets] = useState([])
@@ -48,7 +50,9 @@ const BookingPage = () => {
       .then(([p, s]) => {
         if (cancelled) return
         setPets(p.data.data.pets)
-        setServices(s.data.data.services.filter((x) => x.is_active))
+        const active = s.data.data.services.filter((x) => x.is_active)
+        setServices(active)
+        if (presetServiceId && active.some((x) => x.id === presetServiceId)) setServiceIds([presetServiceId])
       })
       .catch((err) => { if (!cancelled) setLoadError(errorMessage(err, 'Không tải được dữ liệu đặt lịch.')) })
       .finally(() => { if (!cancelled) setLoading(false) })

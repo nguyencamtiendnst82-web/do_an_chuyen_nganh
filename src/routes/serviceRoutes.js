@@ -3,13 +3,16 @@ import authenticate from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/roles.js';
 import { serviceImages } from '../middlewares/uploadMedia.js';
 import {
-  list, getOne, create, update, setActive, uploadImage, removeImage,
+  list, listPublic, getOne, create, update, setActive, uploadImage, removeImage,
 } from '../controllers/spaServiceController.js';
 
 const router = express.Router();
 
 // Ảnh dịch vụ phục vụ công khai (hiển thị được cả ở trang chủ / thẻ <img>)
 router.use('/images', serviceImages.serve());
+
+// Danh sách dịch vụ đang bật cho trang chủ: công khai, không cần đăng nhập
+router.get('/public', listPublic);
 
 // Mọi vai trò đã đăng nhập đều xem được (khách chỉ thấy dịch vụ đang bật)
 router.use(authenticate);
