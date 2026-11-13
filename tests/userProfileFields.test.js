@@ -87,6 +87,22 @@ describe('Admin: giới tính và năm sinh của nhân viên', () => {
     expect(res.body.data.user.birth_year).toBe(1990);
   });
 
+  test('U4b. Admin KHÔNG được sửa hồ sơ khách hàng → 403 (khóa/đặt lại mật khẩu vẫn được)', async () => {
+    const [[role]] = await pool.query("SELECT id FROM roles WHERE role_name = 'customer'");
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const [ins] = await pool.query(
+      `INSERT INTO users (role_id, full_name, email, phone, password_hash) VALUES (?, ?, ?, ?, ?)`,
+      [role.id, 'Khách Hồ Sơ', `test_us_kh_${stamp}@example.com`, `09${String(stamp).slice(-8)}`, 'x']
+    );
+    const res = await request(app)
+      .put(`/api/users/${ins.insertId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ full_name: 'Admin Sửa Trái Phép' });
+    expect(res.status).toBe(403);
+    const [[row]] = await pool.query('SELECT full_name FROM users WHERE id = ?', [ins.insertId]);
+    expect(row.full_name).toBe('Khách Hồ Sơ');
+  });
+
   test('U5. Danh sách người dùng có giới tính và năm sinh', async () => {
     await createEmployee(employeePayload({ gender: 'male', birth_year: 1993 }));
     const res = await request(app)

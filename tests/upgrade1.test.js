@@ -164,7 +164,7 @@ describe('Ảnh thú cưng', () => {
     expect(none.status).toBe(422);
   });
 
-  test('N10. Khách khác không tải/xóa ảnh thú người khác được (404); staff thì được', async () => {
+  test('N10. Khách khác không tải/xóa ảnh thú người khác được (404); staff cũng không được (403)', async () => {
     const id = (await createPet(ownerA, newPet())).body.data.pet.id;
 
     const other = await request(app).post(`/api/pets/${id}/photo`).set(authHeader(ownerB))
@@ -172,9 +172,10 @@ describe('Ảnh thú cưng', () => {
     expect(other.status).toBe(404);
     expect((await request(app).delete(`/api/pets/${id}/photo`).set(authHeader(ownerB))).status).toBe(404);
 
-    const ok = await request(app).post(`/api/pets/${id}/photo`).set(authHeader(staff))
+    const byStaff = await request(app).post(`/api/pets/${id}/photo`).set(authHeader(staff))
       .attach('photo', PNG_1X1, { filename: 'a.png', contentType: 'image/png' });
-    expect(ok.status).toBe(200);
+    expect(byStaff.status).toBe(403);
+    expect((await request(app).delete(`/api/pets/${id}/photo`).set(authHeader(staff))).status).toBe(403);
   });
 
   test('N11. Không có token → 401', async () => {

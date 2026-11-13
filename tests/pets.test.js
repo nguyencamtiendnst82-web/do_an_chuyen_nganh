@@ -153,30 +153,31 @@ describe('Thú cưng: staff và admin', () => {
     expect(search.body.data.pets.every((p) => p.owner_phone === ownerA.phone)).toBe(true);
   });
 
-  test('PT12. Staff thêm thú cho khách bằng customer_id → 201, chủ đúng khách', async () => {
-    const res = await createPet(staff, newPet({ customer_id: ownerB.id }));
-    expect(res.status).toBe(201);
-    expect(res.body.data.pet.customer_id).toBe(ownerB.id);
+  test('PT12. Staff và admin KHÔNG được thêm thú cưng (kể cả hộ khách) → 403', async () => {
+    expect((await createPet(staff, newPet({ customer_id: ownerB.id }))).status).toBe(403);
+    expect((await createPet(admin, newPet({ customer_id: ownerB.id }))).status).toBe(403);
   });
 
-  test('PT13. Staff thiếu customer_id hoặc chọn người không phải khách → 422 gắn customer_id', async () => {
-    const missing = await createPet(staff, newPet());
-    expect(missing.status).toBe(422);
-    expect(missing.body.errors[0].field).toBe('customer_id');
-
-    const wrong = await createPet(admin, newPet({ customer_id: staff.id }));
-    expect(wrong.status).toBe(422);
-    expect(wrong.body.errors[0].field).toBe('customer_id');
-  });
-
-  test('PT14. Admin sửa được thú của khách', async () => {
+  test('PT13. Staff và admin KHÔNG được sửa / ẩn thú cưng của khách → 403, dữ liệu giữ nguyên', async () => {
     const created = await createPet(ownerA, newPet());
-    const res = await request(app)
-      .put(`/api/pets/${created.body.data.pet.id}`)
-      .set(authHeader(admin))
-      .send({ special_notes: 'Admin cập nhật' });
+    const id = created.body.data.pet.id;
+
+    for (const actor of [staff, admin]) {
+      const put = await request(app).put(`/api/pets/${id}`).set(authHeader(actor)).send({ special_notes: 'Bị sửa trái phép' });
+      expect(put.status).toBe(403);
+      expect((await request(app).delete(`/api/pets/${id}`).set(authHeader(actor))).status).toBe(403);
+    }
+
+    const after = await request(app).get(`/api/pets/${id}`).set(authHeader(ownerA));
+    expect(after.body.data.pet.special_notes).not.toBe('Bị sửa trái phép');
+    expect(after.body.data.pet.status).toBe('active');
+  });
+
+  test('PT14. Admin vẫn XEM được thú của khách', async () => {
+    const created = await createPet(ownerA, newPet());
+    const res = await request(app).get(`/api/pets/${created.body.data.pet.id}`).set(authHeader(admin));
     expect(res.status).toBe(200);
-    expect(res.body.data.pet.special_notes).toBe('Admin cập nhật');
+    expect(res.body.data.pet.owner_phone).toBe(ownerA.phone);
   });
 });
 

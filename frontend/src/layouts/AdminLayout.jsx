@@ -18,6 +18,8 @@ const AdminLayout = () => {
 
   const navLinks = [
     { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
+    { to: '/admin/reports', label: 'Báo cáo doanh thu', icon: '📈' },
+    { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: '📋' },
     { to: '/admin/users', label: 'Tài khoản & nhân viên', icon: '👥' },
     { to: '/admin/appointments', label: 'Lịch hẹn', icon: '📅' },
     { to: '/admin/incidents', label: 'Sự cố', icon: '⚠️' },

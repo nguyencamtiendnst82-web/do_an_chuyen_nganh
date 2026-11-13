@@ -17,6 +17,9 @@ import appointmentRoutes from './appointmentRoutes.js';
 import operationsRoutes from './operationsRoutes.js'
 import invoiceRoutes from './invoiceRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
+import reportRoutes from './reportRoutes.js';
+import dashboardRoutes from './dashboardRoutes.js';
+import logRoutes from './logRoutes.js';
 
 // Gắn các routes phân hệ
 router.use('/', healthRoutes);
@@ -33,5 +36,8 @@ router.use('/appointments', appointmentRoutes);
 router.use(operationsRoutes);
 router.use(invoiceRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/reports', reportRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/logs', logRoutes);
 
 export default router;

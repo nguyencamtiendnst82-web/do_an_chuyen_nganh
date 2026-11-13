@@ -8,6 +8,20 @@ const pad = (n) => String(n).padStart(2, '0')
 /** Ngày hôm nay (giờ máy người dùng) dạng YYYY-MM-DD */
 export const localYmd = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
+/** Ngày theo múi giờ nghiệp vụ Việt Nam dạng YYYY-MM-DD */
+export const vietnamYmd = (d = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    calendar: 'gregory',
+    numberingSystem: 'latn',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d)
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
 const parts = (ymd) => ymd.split('-').map(Number)
 
 /** Cộng/trừ số ngày vào YYYY-MM-DD (không phụ thuộc múi giờ) */

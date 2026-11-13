@@ -24,6 +24,7 @@ const pool = {
 
 jest.unstable_mockModule('../src/config/db.js', () => ({ pool }));
 const { default: seedDatabase } = await import('../scripts/seed.js');
+const { default: seedDemo } = await import('../scripts/seed-demo.js');
 
 describe('DB setup safety helpers', () => {
   test('refuses to initialize an existing database without executing DDL', async () => {
@@ -190,5 +191,55 @@ describe('seedDatabase refuses populated databases', () => {
     expect(connection.rollback).toHaveBeenCalledTimes(1);
     expect(connection.commit).not.toHaveBeenCalled();
     errorSpy.mockRestore();
+  });
+});
+
+describe('seedDemo refuses populated databases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    connection.query.mockReset();
+    connection.beginTransaction.mockReset().mockResolvedValue(undefined);
+    connection.commit.mockReset();
+    connection.rollback.mockReset().mockResolvedValue(undefined);
+    connection.release.mockReset();
+    pool.getConnection.mockReset().mockResolvedValue(connection);
+  });
+
+  test('rolls back and performs no inserts if data already exists', async () => {
+    connection.query
+      .mockResolvedValueOnce([[{ database_name: 'pet_spa_db' }], []])
+      .mockResolvedValueOnce([REQUIRED_SEED_TABLES.map((table_name) => ({ table_name })), []])
+      .mockResolvedValueOnce([[{ 1: 1 }], []]);
+
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(seedDemo()).rejects.toThrow(/không rỗng/i);
+
+    expect(connection.rollback).toHaveBeenCalledTimes(1);
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.query.mock.calls.some(([sql]) => /^\s*INSERT\b/i.test(sql))).toBe(false);
+    expect(connection.release).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+
+  test('commits demo data when the schema is complete and empty', async () => {
+    connection.query.mockImplementation(async (sql) => {
+      if (/^SELECT DATABASE\(\)/i.test(sql)) {
+        return [[{ database_name: 'pet_spa_db' }], []];
+      }
+      if (/INFORMATION_SCHEMA\.TABLES/i.test(sql)) {
+        return [REQUIRED_SEED_TABLES.map((table_name) => ({ table_name })), []];
+      }
+      return [[], []];
+    });
+
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    await expect(seedDemo()).resolves.toBe(true);
+
+    expect(connection.beginTransaction).toHaveBeenCalledTimes(1);
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(connection.query.mock.calls.some(([sql]) => /^\s*INSERT\b/i.test(sql))).toBe(true);
+    expect(connection.release).toHaveBeenCalledTimes(1);
+    logSpy.mockRestore();
   });
 });

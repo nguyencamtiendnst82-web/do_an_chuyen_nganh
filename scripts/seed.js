@@ -1,6 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import bcrypt from 'bcryptjs';
 import { pool } from '../src/config/db.js';
+import { getVietnamDate } from '../src/utils/businessDate.js';
 import { assertSeedDatabaseIsEmpty } from './dbSafety.js';
 
 const formatDate = (date) => {
@@ -92,7 +93,8 @@ const seedDatabase = async () => {
 
     // 9. Phân ca tự động cho 30 ngày (bỏ Chủ nhật) cho cả 2 nhân viên
     console.log('📅 [Seed] Đang tự động sinh ca làm việc (Employee Shifts) cho 30 ngày...');
-    const today = new Date();
+    const [year, month, day] = getVietnamDate().split('-').map(Number);
+    const today = new Date(year, month - 1, day);
     today.setHours(0, 0, 0, 0);
 
     // Tính ngày cho 3 lịch hẹn mẫu: Hôm qua, Hôm nay, Ngày mai

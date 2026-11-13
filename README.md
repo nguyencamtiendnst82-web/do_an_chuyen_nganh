@@ -126,6 +126,7 @@ npm run migrate
 - Nếu `init-db` lỗi giữa chừng, database vừa tạo được giữ nguyên để kiểm tra. Đổi `DB_NAME` trong `.env` sang tên chưa tồn tại rồi chạy lại.
 - `migrate` chạy tuần tự mọi file `.sql` trong `database/migrations/` (hiện có `001_create_notifications_table.sql`, thêm bảng `notifications`). Sau bước này database có **16 bảng**. Mỗi lần chạy `migrate` thực thi lại toàn bộ file, nên các file migration phải dùng `IF NOT EXISTS` hoặc kiểm tra tương đương.
 - `npm run seed` chỉ nạp dữ liệu mẫu vào database đã có schema và **còn trống**; script từ chối nếu các bảng đã có dữ liệu.
+- `node scripts/seed-demo.js` cũng chỉ chạy khi database đã có đủ schema và các bảng nghiệp vụ còn trống. Script từ chối database có dữ liệu và rollback nếu nạp demo gặp lỗi; không dùng script này để cập nhật dữ liệu demo hiện có.
 
 ### 4. Chạy ứng dụng
 

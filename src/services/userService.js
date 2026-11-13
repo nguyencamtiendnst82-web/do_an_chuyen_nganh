@@ -163,6 +163,13 @@ const updateUser = async (targetId, body, req) => {
     throw err;
   }
 
+  // Hồ sơ khách hàng chỉ do chính khách chỉnh sửa; admin chỉ được xem (vẫn khóa/mở khóa, đặt lại mật khẩu được)
+  if (target.role_name === 'customer') {
+    const err = new Error('Quản trị viên chỉ được xem hồ sơ khách hàng, không được chỉnh sửa. Khách hàng tự cập nhật hồ sơ của mình.');
+    err.statusCode = 403;
+    throw err;
+  }
+
   // Kiểm tra phone trùng với người khác
   if (parsed.phone) {
     const existingByPhone = await userRepository.findByPhone(parsed.phone);

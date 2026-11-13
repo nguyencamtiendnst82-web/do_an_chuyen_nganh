@@ -31,12 +31,15 @@ import PetsManagePage from './pages/staff/PetsManagePage'
 import MyShiftsPage from './pages/staff/MyShiftsPage'
 import AppointmentsManagePage from './pages/staff/AppointmentsManagePage'
 import IncidentsPage from './pages/staff/IncidentsPage'
+import StaffKanbanPage from './pages/staff/StaffKanbanPage'
 
 // Pages – Admin
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ServicesAdminPage from './pages/admin/ServicesAdminPage'
 import UsersManagePage from './pages/admin/UsersManagePage'
 import ShiftsManagePage from './pages/admin/ShiftsManagePage'
+import ReportsPage from './pages/admin/ReportsPage'
+import LogsPage from './pages/admin/LogsPage'
 
 // Pages – Public & Shared
 import EmployeesPage from './pages/public/EmployeesPage'
@@ -114,6 +117,7 @@ const App = () => {
           <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
             <Route element={<StaffLayout />}>
               <Route path="/staff" element={<StaffDashboard />} />
+              <Route path="/staff/today" element={<StaffKanbanPage />} />
               <Route path="/staff/appointments" element={<AppointmentsManagePage />} />
               <Route path="/staff/incidents" element={<IncidentsPage />} />
               <Route path="/staff/pets" element={<PetsManagePage />} />
@@ -126,6 +130,8 @@ const App = () => {
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route element={<AdminLayout />}>
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/reports" element={<ReportsPage />} />
+              <Route path="/admin/logs" element={<LogsPage />} />
               <Route path="/admin/users" element={<UsersManagePage />} />
               <Route path="/admin/appointments" element={<AppointmentsManagePage />} />
               <Route path="/admin/incidents" element={<IncidentsPage />} />

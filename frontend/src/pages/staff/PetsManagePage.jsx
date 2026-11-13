@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import axiosClient from '../../api/axiosClient'
-import PetFormModal from '../../components/PetFormModal'
 import PetAvatar from '../../components/PetAvatar'
 import { ListSkeleton } from '../../components/Skeleton'
-import { useToast } from '../../components/Feedback'
 import {
   SPECIES_LABEL, GENDER_LABEL, formatAge, formatBirthMonth, errorMessage,
 } from '../../utils/format'
@@ -21,11 +19,10 @@ const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-whit
 /**
  * PetsManagePage: tra cứu hồ sơ thú cưng của mọi khách hàng (nhân viên + admin)
  * - Tìm theo tên thú cưng, tên chủ hoặc số điện thoại chủ; lọc theo loài, trạng thái; sắp xếp
- * - Thêm thú cưng HỘ khách (chọn khách bằng ô tìm kiếm) và sửa hồ sơ khi tiếp nhận
+ * - CHỈ XEM: nhân viên/admin không thêm, sửa hay ẩn hồ sơ; chủ nuôi tự cập nhật hồ sơ thú cưng của mình
  * - Bảng trên máy tính, dạng thẻ trên điện thoại
  */
 const PetsManagePage = () => {
-  const toast = useToast()
   const [pets, setPets] = useState([])
   const [pagination, setPagination] = useState({ total: 0, page: 1, total_pages: 1 })
   const [search, setSearch] = useState('')
@@ -35,7 +32,6 @@ const PetsManagePage = () => {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [editing, setEditing] = useState(null) // null = đóng; {} = thêm hộ khách; pet = sửa
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -58,14 +54,6 @@ const PetsManagePage = () => {
     return () => clearTimeout(timer)
   }, [load])
 
-  const handleSaved = (pet, warning) => {
-    const wasNew = !editing?.id
-    setEditing(null)
-    toast.success(wasNew ? `Đã thêm thú cưng ${pet.name} cho ${pet.owner_name}.` : `Đã cập nhật hồ sơ của ${pet.name}.`)
-    if (warning) toast.error(warning)
-    load()
-  }
-
   const resetPage = (setter) => (e) => { setter(e.target.value); setPage(1) }
 
   return (
@@ -73,12 +61,8 @@ const PetsManagePage = () => {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Hồ sơ thú cưng</h1>
-          <p className="text-sm text-gray-500 mt-1">Tra cứu thú cưng của tất cả khách hàng.</p>
+          <p className="text-sm text-gray-500 mt-1">Tra cứu thú cưng của tất cả khách hàng. Chế độ chỉ xem: chủ nuôi tự cập nhật hồ sơ của mình.</p>
         </div>
-        <button type="button" onClick={() => setEditing({})}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
-          + Thêm thú cưng cho khách
-        </button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -119,7 +103,6 @@ const PetsManagePage = () => {
                   <th className="px-4 py-3 font-medium">Chủ nuôi</th>
                   <th className="px-4 py-3 font-medium whitespace-nowrap">Tuổi / Cân nặng</th>
                   <th className="px-4 py-3 font-medium">Lưu ý</th>
-                  <th className="px-4 py-3 font-medium text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -147,9 +130,6 @@ const PetsManagePage = () => {
                     <td className="px-4 py-3 max-w-xs">
                       <p className="text-xs text-gray-600 line-clamp-2">{p.special_notes || '—'}</p>
                     </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button type="button" onClick={() => setEditing(p)} className="text-blue-700 hover:underline">Sửa</button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -166,7 +146,6 @@ const PetsManagePage = () => {
                     <p className="font-semibold text-gray-900 truncate">{p.name}</p>
                     <p className="text-xs text-gray-500">{SPECIES_LABEL[p.species]}{p.breed ? ` · ${p.breed}` : ''} · {GENDER_LABEL[p.gender]}</p>
                   </div>
-                  <button type="button" onClick={() => setEditing(p)} className="text-sm text-blue-700 border border-blue-200 rounded-lg px-3 py-1.5">Sửa</button>
                 </div>
                 <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div><dt className="text-gray-400">Chủ nuôi</dt><dd className="text-gray-700 font-medium">{p.owner_name}<span className="block font-normal text-gray-500">{p.owner_phone}</span></dd></div>
@@ -190,9 +169,6 @@ const PetsManagePage = () => {
         </div>
       </div>
 
-      {editing && (
-        <PetFormModal pet={editing.id ? editing : null} needsOwner onClose={() => setEditing(null)} onSaved={handleSaved} />
-      )}
     </div>
   )
 }

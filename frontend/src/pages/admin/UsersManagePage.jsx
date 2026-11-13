@@ -376,14 +376,16 @@ const UsersManagePage = () => {
 
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(u)}
-                            className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                            title="Sửa thông tin"
-                          >
-                            ✏️
-                          </button>
+                          {u.role_name !== 'customer' && (
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(u)}
+                              className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="Sửa thông tin"
+                            >
+                              ✏️
+                            </button>
+                          )}
 
                           <button
                             type="button"
@@ -474,13 +476,15 @@ const UsersManagePage = () => {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(u)}
-                      className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                    >
-                      ✏️ Sửa
-                    </button>
+                    {u.role_name !== 'customer' && (
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(u)}
+                        className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                      >
+                        ✏️ Sửa
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

@@ -1,5 +1,4 @@
 import petRepository from '../repositories/petRepository.js';
-import userRepository from '../repositories/userRepository.js';
 import logRepository from '../repositories/logRepository.js';
 import { createPetSchema, updatePetSchema } from '../validations/petSchemas.js';
 import { httpError, fieldError, auditContext } from '../utils/params.js';
@@ -9,12 +8,18 @@ import { petPhotos } from '../middlewares/uploadMedia.js';
 /**
  * Nghiệp vụ hồ sơ thú cưng.
  * - Customer chỉ thao tác trên thú của CHÍNH MÌNH. Thú của người khác trả 404 (không lộ sự tồn tại).
- * - Staff/admin xem và sửa được tất cả.
+ * - Staff/admin CHỈ XEM (đọc được tất cả); mọi thao tác ghi (thêm, sửa, ẩn, ảnh) chỉ dành cho chủ thú cưng.
  * - Không xóa cứng: "xóa" = ẩn hồ sơ (status = inactive) để giữ lịch sử chăm sóc/lịch hẹn.
  */
 const isCustomer = (user) => user.role_name === 'customer';
 
 const NOT_FOUND = 'Không tìm thấy thú cưng.';
+const READ_ONLY = 'Chỉ chủ thú cưng mới được thay đổi hồ sơ thú cưng. Nhân viên và quản trị viên chỉ được xem.';
+
+/** Chặn nhân viên/admin ghi vào hồ sơ thú cưng của khách */
+const requireOwnerRole = (user) => {
+  if (!isCustomer(user)) throw httpError(403, READ_ONLY);
+};
 
 /** 'YYYY-MM' → 'YYYY-MM-01' để lưu vào cột DATE (null giữ nguyên) */
 const toBirthDate = (ym) => (typeof ym === 'string' ? `${ym}-01` : ym);
@@ -65,19 +70,9 @@ const listPets = async (user, query = {}) => {
 const getPet = async (user, id) => ({ pet: await loadAccessiblePet(user, id) });
 
 const createPet = async (user, body, req) => {
+  requireOwnerRole(user);
   const parsed = createPetSchema.parse(body);
-
-  let ownerId;
-  if (isCustomer(user)) {
-    ownerId = user.id; // KHÔNG nhận customer_id từ khách hàng
-  } else {
-    if (!parsed.customer_id) throw fieldError('customer_id', 'Vui lòng chọn khách hàng là chủ của thú cưng.');
-    const owner = await userRepository.findById(parsed.customer_id);
-    if (!owner || owner.role_name !== 'customer' || owner.status !== 'active') {
-      throw fieldError('customer_id', 'Khách hàng không tồn tại hoặc không hoạt động.');
-    }
-    ownerId = owner.id;
-  }
+  const ownerId = user.id; // KHÔNG nhận customer_id từ client: thú cưng luôn thuộc về chính khách đang đăng nhập
 
   const id = await petRepository.create({
     customer_id: ownerId,
@@ -103,6 +98,7 @@ const createPet = async (user, body, req) => {
 };
 
 const updatePet = async (user, id, body, req) => {
+  requireOwnerRole(user);
   const parsed = updatePetSchema.parse(body);
   const old = await loadAccessiblePet(user, id);
 
@@ -137,6 +133,7 @@ const updatePet = async (user, id, body, req) => {
 
 /** "Xóa" thú cưng = ẩn hồ sơ (soft delete) */
 const archivePet = async (user, id, req) => {
+  requireOwnerRole(user);
   const old = await loadAccessiblePet(user, id);
 
   if (old.status !== 'inactive') {
@@ -161,6 +158,7 @@ const archivePet = async (user, id, req) => {
 /** Tải / thay ảnh thú cưng. `file` là file multer đã lưu tạm trên đĩa. */
 const setPetPhoto = async (user, id, file, req) => {
   try {
+    requireOwnerRole(user);
     if (!file) throw fieldError('photo', 'Vui lòng chọn một ảnh để tải lên.');
     const old = await loadAccessiblePet(user, id);
 
@@ -186,6 +184,7 @@ const setPetPhoto = async (user, id, file, req) => {
 };
 
 const removePetPhoto = async (user, id, req) => {
+  requireOwnerRole(user);
   const old = await loadAccessiblePet(user, id);
   if (old.avatar_url) {
     await petRepository.setAvatar(id, null);
