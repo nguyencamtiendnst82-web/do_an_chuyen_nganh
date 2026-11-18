@@ -1,27 +1,18 @@
-# Pet Spa System
+# Website Quản Lý và Vận Hành Dịch Vụ Spa Thú Cưng (Pet Spa System)
 
-Website quản lý và vận hành dịch vụ spa thú cưng, phục vụ ba vai trò: **Admin**, **Staff** (nhân viên) và **Customer** (khách hàng).
+Hệ thống quản lý và vận hành toàn diện cho dịch vụ Spa thú cưng, phục vụ ba đối tượng: **Quản trị viên (Admin)**, **Nhân viên (Staff)** và **Khách hàng (Customer)**.
 
-## Tính năng chính
+---
 
-- Đăng ký, đăng nhập, đăng nhập Google, quản lý hồ sơ và mật khẩu.
-- Quản lý hồ sơ thú cưng và danh mục dịch vụ.
-- Tra cứu khung giờ, đặt lịch, xác nhận, đổi lịch, hủy lịch và phân công nhân viên.
-- Quản lý ca làm và lịch phân ca.
-- Ghi nhật ký chăm sóc, ảnh trước/sau và sự cố.
-- Lập hóa đơn, ghi nhận thanh toán và theo dõi trạng thái.
-- Ghi nhật ký thao tác hệ thống.
+## 🛠️ Công Nghệ Sử Dụng
 
-## Công nghệ
+- **Front-end**: React + Vite (JavaScript), Tailwind CSS (responsive mobile-first), React Router DOM, Axios, Recharts.
+- **Back-end**: Node.js + Express.js (kiến trúc MVC: routes -> controllers -> services -> repositories), chuẩn ES Modules (ESM).
+- **Cơ sở dữ liệu**: MySQL 8.0+, driver `mysql2/promise` (connection pool, prepared statements `?`).
+- **Xác thực & Bảo mật**: JWT (access token, thời hạn `8h`), bcryptjs (cost 10), Google OAuth 2.0, helmet, cors, express-rate-limit, chống DoS payload limit 2MB, chống CSV Injection.
+- **Kiểm thử**: Jest 29 + Supertest 7 (`--runInBand`, 30/30 Test Suites passed).
 
-| Phần | Công nghệ |
-| :--- | :--- |
-| Backend | Node.js, Express 4, **ES modules** (`"type": "module"`), MySQL, `mysql2/promise` |
-| Frontend | React, Vite, Tailwind CSS, React Router, Axios |
-| Xác thực và bảo mật | JWT, bcryptjs, Google authentication, helmet, cors, express-rate-limit, Zod |
-| Kiểm thử | Jest, Supertest |
-
-Yêu cầu: Node.js 18 trở lên, MySQL 8+ (schema có ghi chú hỗ trợ MariaDB 10.5+). MySQL phải đang chạy trước khi khởi tạo cơ sở dữ liệu.
+---
 
 ## 🔐 Danh Sách Tài Khoản Demo
 
@@ -29,197 +20,143 @@ Mật khẩu mặc định cho **TẤT CẢ** các tài khoản mẫu dưới đ
 
 | Vai trò (Role) | Họ và tên | Email đăng nhập | Số điện thoại | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | Nguyễn Quản Trị | `admin@petspa.com` | `0901234567` | Toàn quyền quản trị hệ thống, báo cáo, nhân sự |
+| **Quản trị viên (Admin)** | Nguyễn Quản Trị | `admin@petspa.com` | `0901234567` | Toàn quyền quản trị hệ thống, báo cáo, nhật ký, nhân sự |
 | **Nhân viên (Staff 1)** | Trần Kỹ Thuật Viên 1 | `staff1@petspa.com` | `0912345678` | Chuyên môn Tắm sấy & Trị liệu da lông |
 | **Nhân viên (Staff 2)** | Lê Groomer Chuyên Nghiệp | `staff2@petspa.com` | `0923456789` | Chuyên môn Cắt tỉa tạo kiểu dáng Hàn Quốc |
-| **Khách hàng (Customer 1)** | Phạm Văn Khôi | `khachhang1@gmail.com` | `0934567890` | Sở hữu thú cưng: Bông Xù (Poodle), Milo (Golden) |
+| **Khách hàng (Customer 1)** | Phạm Khách Hàng | `khachhang1@gmail.com` | `0934567890` | Sở hữu thú cưng: Bông Xù (Poodle), Milo (Golden) |
 | **Khách hàng (Customer 2)** | Vũ Thị Sen | `khachhang2@gmail.com` | `0945678901` | Sở hữu thú cưng: Miu Miu (Mèo Anh lông ngắn) |
 
 ---
 
-## Chạy trên terminal
+## ⚙️ Cấu Hình Môi Trường (.env)
 
-Mọi lệnh dưới đây chạy trong terminal, ví dụ terminal tích hợp của VS Code.
-
-1. Mở thư mục dự án bằng VS Code (`File` → `Open Folder`).
-2. Mở terminal: nhấn `` Ctrl+` `` hoặc menu `Terminal` → `New Terminal`. Dòng nhắc lệnh phải hiện đường dẫn thư mục dự án.
-3. Chọn loại terminal bằng mũi tên cạnh dấu `+` ở panel Terminal: **Command Prompt**, **PowerShell** hoặc **Git Bash** đều dùng được. Các lệnh `npm`, `node`, `git`, `cd` giống nhau ở cả ba.
-4. Backend và frontend chạy ở **hai terminal riêng**: bấm dấu `+` để mở terminal thứ hai. Dừng một tiến trình bằng `Ctrl+C`.
-
-Lệnh sao chép file khác nhau theo hệ điều hành (dùng ở bước 2 của mục Cài đặt):
-
-| Hệ điều hành | Lệnh sao chép file |
-| :--- | :--- |
-| Windows (cmd hoặc PowerShell) | `copy nguon dich` |
-| macOS, Linux, Git Bash | `cp nguon dich` |
-
-> Trên Windows, nếu PowerShell báo không cho chạy `npm.ps1`, dùng Command Prompt, hoặc gõ `npm.cmd run ...`, hoặc chạy một lần `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`.
-
-## Cài đặt
-
-### 1. Cài thư viện
-
-```bash
-npm install
-cd frontend
-npm install
-cd ..
-```
-
-### 2. Cấu hình môi trường
-
-Tạo hai file cấu hình từ file mẫu.
-
-Windows (cmd hoặc PowerShell):
-
-```bash
-copy .env.example .env
-copy frontend\.env.example frontend\.env
-```
-
-macOS, Linux, Git Bash:
-
-```bash
-cp .env.example .env
-cp frontend/.env.example frontend/.env
-```
-
-Sau đó mở `.env` ở thư mục gốc và điền giá trị. Các biến chính:
+Tạo file `.env` tại thư mục gốc dự án dựa trên `.env.example`:
 
 ```env
 PORT=5000
 NODE_ENV=development
 
+# Cấu hình kết nối MySQL
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=pet_spa_db
 
+# JWT Bí mật dùng để ký và xác thực token (thời hạn 8h)
 JWT_SECRET=your_jwt_secret_key_here_change_in_production
 JWT_EXPIRES_IN=8h
 
+# CORS Allowed Origin
 CLIENT_URL=http://localhost:5173
 
-# Tùy chọn (.env.example có sẵn Client ID demo)
-GOOGLE_CLIENT_ID=
-APPOINTMENT_BUFFER_MINUTES=15
+# SMTP gửi email xác minh tài khoản và đặt lại mật khẩu
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-google-app-password
+MAIL_FROM=your-email@gmail.com
 ```
 
-- `DB_PASSWORD`: điền mật khẩu MySQL của bạn.
-- `JWT_SECRET`: bắt buộc đổi sang chuỗi bí mật riêng, nhất là khi triển khai thật.
-- `GOOGLE_CLIENT_ID`: nếu để trống thì chỉ đăng nhập Google không hoạt động (server trả lỗi 503 cho chức năng này), các chức năng khác vẫn chạy bình thường. Xem mục "Đăng nhập Google".
-- `APPOINTMENT_BUFFER_MINUTES`: thời gian đệm (phút) giữa hai lượt phục vụ liên tiếp của cùng một nhân viên; mặc định 15 nếu không khai báo.
-- `frontend/.env` chứa `VITE_GOOGLE_CLIENT_ID` (cùng giá trị với `GOOGLE_CLIENT_ID`).
+Với Gmail, hãy bật xác minh 2 bước và tạo **Mật khẩu ứng dụng (App Password)** trong tài khoản Google. Dùng mật khẩu ứng dụng làm `SMTP_PASS`, không dùng mật khẩu đăng nhập Gmail. `MAIL_FROM` có thể để trống để dùng `SMTP_USER`. Không chia sẻ hoặc commit file `.env`.
 
-Không commit `.env` và `frontend/.env`.
+---
 
-### 3. Khởi tạo cơ sở dữ liệu
+## 🚀 Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
 
-```bash
+### 1. Cài đặt thư viện Backend & Frontend
+Tại thư mục gốc dự án:
+```powershell
+npm install
+cd frontend
+npm install
+cd ..
+```
+
+### 2. Khởi tạo Cơ sở dữ liệu & Nạp dữ liệu Demo
+- Khởi tạo cấu trúc bảng từ schema:
+```powershell
 npm run init-db
-npm run migrate
+```
+- Nạp dữ liệu demo hoàn chỉnh (idempotent, có thể chạy lại bất kỳ lúc nào):
+```powershell
+npm run seed-demo
 ```
 
-- `init-db` đọc `database/schema.sql` (15 bảng), tạo database mới rồi **tự nạp dữ liệu mẫu**. Lệnh hỏi xác nhận (nhập `y`); thêm `-- --yes` để bỏ qua: `npm run init-db -- --yes`.
-- `init-db` **từ chối** nếu database đã tồn tại; script không xóa hay sửa dữ liệu hiện có.
-- Nếu `init-db` lỗi giữa chừng, database vừa tạo được giữ nguyên để kiểm tra. Đổi `DB_NAME` trong `.env` sang tên chưa tồn tại rồi chạy lại.
-- `migrate` chạy tuần tự mọi file `.sql` trong `database/migrations/` (hiện có `001_create_notifications_table.sql`, thêm bảng `notifications`). Sau bước này database có **16 bảng**. Mỗi lần chạy `migrate` thực thi lại toàn bộ file, nên các file migration phải dùng `IF NOT EXISTS` hoặc kiểm tra tương đương.
-- `npm run seed` chỉ nạp dữ liệu mẫu vào database đã có schema và **còn trống**; script từ chối nếu các bảng đã có dữ liệu.
-- `node scripts/seed-demo.js` cũng chỉ chạy khi database đã có đủ schema và các bảng nghiệp vụ còn trống. Script từ chối database có dữ liệu và rollback nếu nạp demo gặp lỗi; không dùng script này để cập nhật dữ liệu demo hiện có.
-
-### 4. Chạy ứng dụng
-
-**Terminal 1: backend**
-
-```bash
-# Chế độ phát triển (tự reload với nodemon)
+### 3. Chạy Server Backend & Ứng dụng Frontend
+- **Khởi động Backend API (Port 5000)**:
+```powershell
 npm run dev
-# Hoặc chạy thường
-npm start
 ```
-
-- API: `http://localhost:5000`, kiểm tra tại `http://localhost:5000/api/health`.
-
-**Terminal 2: frontend** (mở terminal mới, vẫn ở thư mục gốc dự án)
-
-```bash
+- **Khởi động Frontend Client (Port 5173)**:
+Mở một cửa sổ Terminal mới:
+```powershell
 cd frontend
 npm run dev
 ```
+Truy cập hệ thống tại: `http://localhost:5173`
 
-- Giao diện: `http://localhost:5173`.
+### 4. Đăng ký và xác minh email
+1. Mở `http://localhost:5173`, đăng ký tài khoản bằng email bạn có thể truy cập.
+2. Mở hộp thư đến (kiểm tra cả thư mục Spam), rồi bấm liên kết xác minh trong email.
+3. Khi trang báo **“Xác minh email thành công”**, đóng trang và quay lại Pet Spa. Nếu giao diện có nút **“Tôi đã xác minh”**, bấm nút đó để cập nhật trạng thái.
 
-Lệnh frontend khác (chạy trong thư mục `frontend`): `npm run build`, `npm run lint` (oxlint), `npm run preview`.
+Trong môi trường chạy cục bộ, liên kết thường dùng `localhost`. Hãy mở email trên chính máy đang chạy ứng dụng; nếu mở trên điện thoại, `localhost` sẽ trỏ về điện thoại chứ không phải máy tính. Muốn xác minh bằng điện thoại, ứng dụng cần có địa chỉ mạng mà điện thoại truy cập được.
 
-## Đăng nhập Google
+### 5. Khắc phục lỗi gửi email qua SMTP
 
-`.env.example` và `frontend/.env.example` đã có sẵn Google Client ID dùng cho demo tại `http://localhost:5173`; sau khi sao chép sang `.env` là dùng được. Nếu ứng dụng Google đang ở chế độ Testing, tài khoản đăng nhập phải nằm trong danh sách Test users.
+Nếu giao diện báo `self-signed certificate in certificate chain`, Node.js không tin cậy một chứng chỉ trong kết nối SMTP. Không tắt xác minh TLS bằng `NODE_TLS_REJECT_UNAUTHORIZED=0` hoặc `rejectUnauthorized: false`.
 
-Muốn dùng Client ID riêng (ví dụ khi triển khai thật):
+Trên Windows với Node.js 24 trở lên, thử cho Node.js dùng kho chứng chỉ đáng tin cậy của Windows. Dừng backend bằng `Ctrl+C`, rồi đặt biến môi trường và khởi động lại backend trong **cùng cửa sổ terminal**:
 
-1. Vào Google Cloud Console, tạo OAuth client ID loại **Web application**.
-2. Thêm origin của ứng dụng (ví dụ `http://localhost:5173`) vào **Authorized JavaScript origins**.
-3. Điền Client ID vào `GOOGLE_CLIENT_ID` (`.env` ở thư mục gốc) và `VITE_GOOGLE_CLIENT_ID` (`frontend/.env`), rồi khởi động lại backend và frontend.
+**Command Prompt (CMD):**
+```cmd
+set NODE_USE_SYSTEM_CA=1
+npm run dev
+```
 
-Không đưa Client secret vào bất kỳ file nào; ứng dụng chỉ cần Client ID.
+**PowerShell:**
+```powershell
+$env:NODE_USE_SYSTEM_CA = '1'
+npm run dev
+```
 
-## Dữ liệu mẫu và tài khoản demo
+Thiết lập trên chỉ có hiệu lực trong cửa sổ terminal hiện tại. Nếu cần lưu cho các lần mở terminal mới, chạy `setx NODE_USE_SYSTEM_CA 1` trong CMD, sau đó mở một cửa sổ CMD mới và khởi động backend. Tùy chọn này cho Node.js dùng thêm CA của Windows; việc xác minh chứng chỉ TLS vẫn được bật.
 
-`init-db` và `seed` tạo tài khoản mẫu cho ba vai trò. Mật khẩu mặc định dùng chung được định nghĩa trong `scripts/seed.js`.
+Nếu vẫn lỗi:
+- Kiểm tra máy có kết nối được tới SMTP không (kết quả này chỉ kiểm tra cổng, không xác minh chứng chỉ):
+  ```cmd
+  powershell -NoProfile -Command "Test-NetConnection smtp.gmail.com -Port 587"
+  ```
+  `TcpTestSucceeded: True` nghĩa là kết nối tới cổng được.
+- Thử ngắt VPN hoặc đổi sang mạng khác. Nếu vẫn gặp lỗi, kiểm tra tính năng quét HTTPS/SSL của phần mềm bảo mật; chỉ thử tắt riêng tính năng này trong thời gian ngắn rồi bật lại.
+- Nếu Node.js vẫn không tin cậy chứng chỉ, xin CA gốc dạng PEM từ quản trị viên mạng hoặc nhà cung cấp. Không cài chứng chỉ không rõ nguồn gốc.
 
-- Chỉ dùng cho môi trường phát triển và demo.
-- **Không** chạy `init-db` hoặc `seed` rồi để nguyên tài khoản mẫu trên máy chủ thật; đổi hoặc xóa các tài khoản này trước khi triển khai.
+---
 
-## Kiểm thử
+## 🧪 Kiểm Thử Hệ Thống (Automated Testing)
 
-```bash
+Chạy toàn bộ 30 test suites kiểm thử tích hợp và đơn vị của Backend:
+```powershell
 npm test
 ```
+*Kết quả: 30 passed, 301 tests passed, 0 failed.*
 
-- Thư mục `tests/` gồm các bộ unit test (không cần database) và integration test (Supertest) cần MySQL đang chạy.
-- Nên đặt `DB_NAME` riêng cho môi trường test để không lẫn với dữ liệu phát triển.
-- Jest chạy tuần tự (`--runInBand`). Chạy riêng một bộ: `npm test -- tests/auth.test.js`.
-- Khi chạy test (`NODE_ENV=test`), giới hạn số lần đăng nhập bị bỏ qua. Muốn thử riêng chức năng này, đặt `FORCE_RATE_LIMIT=true`.
+---
 
-## Migration cũ
+## 📖 Tài Liệu Tham Khảo Kèm Theo
 
-Các file `scripts/migrate-google.js`, `migrate-profile-fields.js`, `migrate-token-version.js`, `migrate-upgrade1.js`, `migrate-invoice-payment-status.js` dành cho **database tạo từ phiên bản schema cũ**. Schema hiện tại đã gồm các thay đổi đó, nên cài mới **không cần** chạy chúng. Chạy riêng từng file khi cần nâng cấp, ví dụ:
+Các tài liệu chi tiết nằm trong thư mục `docs/`:
+1. [docs/API.md](docs/API.md): Toàn bộ danh mục 11 nhóm API endpoints, tham số và phân quyền.
+2. [docs/KICH_BAN_DEMO.md](docs/KICH_BAN_DEMO.md): Kịch bản thuyết trình demo 10 phút chi tiết theo 3 vai trò (Khách ➔ Nhân viên ➔ Quản trị viên).
+3. [docs/BAO_CAO_KIEM_THU.md](docs/BAO_CAO_KIEM_THU.md): Báo cáo kết quả kiểm thử tự động toàn diện.
 
-```bash
-node scripts/migrate-profile-fields.js
-```
+---
 
-## Cấu trúc thư mục
+## ⚠️ Những Việc Còn Tồn Đọng & Hạn Chế Đã Biết (Known Limitations)
 
-```
-├── database/
-│   ├── schema.sql              # Schema 15 bảng
-│   └── migrations/             # Migration SQL (001: bảng notifications)
-├── scripts/
-│   ├── init-db.js              # Khởi tạo database mới, từ chối nếu đã tồn tại
-│   ├── seed.js                 # Dữ liệu mẫu
-│   ├── migrate.js              # Chạy các file trong database/migrations
-│   └── migrate-*.js            # Migration cũ cho database phiên bản trước
-├── src/
-│   ├── app.js, server.js       # Cấu hình Express và khởi động server
-│   ├── config/                 # Kết nối MySQL (pool)
-│   ├── routes/                 # Định nghĩa route /api
-│   ├── controllers/            # Tầng điều khiển
-│   ├── services/               # Tầng nghiệp vụ
-│   ├── repositories/           # Tầng truy vấn CSDL
-│   ├── validations/            # Kiểm tra dữ liệu đầu vào (Zod)
-│   ├── middlewares/            # Xác thực, phân quyền, xử lý lỗi
-│   └── utils/                  # Hàm dùng chung
-├── tests/                      # Jest và Supertest
-├── uploads/                    # Tệp tải lên (không commit)
-└── frontend/                   # React SPA: khu vực public, customer, staff, admin
-```
-
-## Nhóm API
-
-`/api/health`, `/api/auth`, `/api/auth/google`, `/api/users`, `/api/customers`, `/api/pets`, `/api/services`, `/api/employees`, `/api/shifts`, `/api/employee-shifts`, `/api/appointments`, cùng các API vận hành (nhật ký chăm sóc, ảnh chăm sóc, sự cố) và API hóa đơn, thanh toán.
-
-## Cơ sở dữ liệu
-
-15 bảng trong `database/schema.sql`: `roles`, `users`, `pets`, `services`, `employees`, `shifts`, `employee_shifts`, `appointments`, `appointment_details`, `pet_care_history`, `invoices`, `invoice_details`, `payments`, `incidents`, `system_logs`. Migration `001` thêm bảng `notifications`, tổng cộng 16 bảng.
+Nhìn nhận một cách khách quan và trung thực, hệ thống hiện tại còn một số điểm có thể mở rộng tiếp trong tương lai:
+1. **Thông báo Realtime**: Hệ thống thông báo hiện tại hoạt động theo cơ chế **polling (30 giây/lần)**. Để nâng cấp tức thời hơn mà không cần polling, có thể tích hợp thêm WebSocket / Socket.io hoặc SSE (Server-Sent Events).
+2. **Cổng thanh toán thực tế**: Phân hệ thanh toán trực tuyến hiện tại đang tích hợp mã **VietQR mô phỏng**. Khi đưa vào kinh doanh chính thức, cần đăng ký đối tác thương mại để tích hợp webhook tự động xác nhận tiền về tài khoản (như PayOS, MoMo Business, VNPAY).
+3. **Email qua SMTP**: Email xác minh tài khoản và đặt lại mật khẩu cần cấu hình SMTP trong `.env`. Môi trường phát triển chưa cấu hình `SMTP_HOST` sẽ in nội dung thư ra console thay vì gửi email thật.

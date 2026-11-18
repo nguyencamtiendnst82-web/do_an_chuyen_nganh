@@ -9,6 +9,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
     "init-db": "node scripts/init-db.js",
     "seed": "node scripts/seed.js",
+    "seed-demo": "node scripts/seed-demo.js",
     "migrate": "node scripts/migrate.js"
   },
   "keywords": [
@@ -31,6 +32,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.12.0",
+    "nodemailer": "^10.6.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
