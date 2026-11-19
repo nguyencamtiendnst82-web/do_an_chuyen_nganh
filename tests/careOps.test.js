@@ -107,15 +107,15 @@ describe('Vận hành tại quầy: tiếp nhận, chăm sóc, sổ tay, sự c�
     expect(await statusOf(id)).toBe('confirmed');
   });
 
-  test('C2. Nhân viên không tiếp nhận được lịch của nhân viên khác -> 403; admin thì được', async () => {
+  test('C2. Nhân viên không tiếp nhận được lịch của nhân viên khác -> 403; admin cũng không (chỉ xem)', async () => {
     const id = await insertAppointment({ employeeId: emp1 });
     const other = await request(app).patch(`/api/appointments/${id}/check-in`).set(authHeader(staff2));
     expect(other.status).toBe(403);
     expect(await statusOf(id)).toBe('confirmed');
 
     const byAdmin = await request(app).patch(`/api/appointments/${id}/check-in`).set(authHeader(admin));
-    expect(byAdmin.status).toBe(200);
-    expect(byAdmin.body.data.appointment.status).toBe('checked_in');
+    expect(byAdmin.status).toBe(403);
+    expect(await statusOf(id)).toBe('confirmed');
   });
 
   test('C3. Tiếp nhận lịch chưa xác nhận (pending) -> 409', async () => {

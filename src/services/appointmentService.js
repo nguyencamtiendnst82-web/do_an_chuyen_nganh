@@ -52,7 +52,7 @@ const conflictsWithBuffer = (startA, endA, startB, endB) =>
 
 /**
  * Nhân viên (staff) chỉ được thao tác trên lịch hẹn được phân cho chính mình.
- * Admin thao tác được mọi lịch. Khách đã bị chặn riêng theo quyền sở hữu.
+ * Admin chỉ xem (đã bị chặn ở tầng route). Khách đã bị chặn riêng theo quyền sở hữu.
  */
 export const assertStaffOwnsAppointment = async (actor, appointment) => {
   if (actor.role_name !== 'staff') return;
@@ -60,7 +60,7 @@ export const assertStaffOwnsAppointment = async (actor, appointment) => {
   if (!emp || appointment.employee_id !== emp.id) {
     throw httpError(
       403,
-      'Bạn chỉ được thao tác trên lịch hẹn được phân cho mình. Vui lòng liên hệ quản lý để chuyển lịch.'
+      'Bạn chỉ được thao tác trên lịch hẹn được phân cho mình. Vui lòng nhờ nhân viên phụ trách chuyển lịch.'
     );
   }
 };

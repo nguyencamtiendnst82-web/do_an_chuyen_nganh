@@ -409,6 +409,7 @@ describe('Admin: Tạo nhân viên mới', () => {
     // Không có password_hash trong danh sách
     res.body.data.users.forEach((u) => {
       expect(u.password_hash).toBeUndefined();
+      expect(u.role_name).not.toBe('admin'); // bảng tài khoản không hiển thị quản trị viên
     });
   });
 });

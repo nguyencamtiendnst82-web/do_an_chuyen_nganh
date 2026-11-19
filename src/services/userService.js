@@ -4,6 +4,8 @@ import userRepository from '../repositories/userRepository.js';
 import employeeRepository from '../repositories/employeeRepository.js';
 import logRepository from '../repositories/logRepository.js';
 import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
+import petRepository from '../repositories/petRepository.js';
+import appointmentRepository from '../repositories/appointmentRepository.js';
 import { createEmployeeSchema, updateUserSchema, updateStatusSchema } from '../validations/userSchemas.js';
 
 // Hằng role_id (đồng bộ seed.sql)
@@ -41,9 +43,11 @@ const safeUser = (user) => ({
 const listUsers = async (query) => {
   const page = Math.max(1, parseInt(query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 10));
-  const { role, status, search } = query;
+  const { status, search } = query;
+  // Bảng tài khoản chỉ gồm nhân viên và khách hàng; không bao giờ hiển thị quản trị viên
+  const role = ['staff', 'customer'].includes(query.role) ? query.role : undefined;
 
-  const filters = { page, limit, role, status, search };
+  const filters = { page, limit, role, status, search, excludeRole: 'admin' };
   const [users, total] = await Promise.all([
     userRepository.findAll(filters),
     userRepository.countAll(filters),
@@ -66,6 +70,18 @@ const listUsers = async (query) => {
  * 2. Tạo bản ghi employees
  * Thực hiện trong 1 TRANSACTION
  */
+/** Admin chỉ được sửa / đặt lại mật khẩu tài khoản NHÂN VIÊN; khách hàng tự quản lý hồ sơ và mật khẩu của mình */
+const assertStaffTarget = (target, action) => {
+  if (target.role_name === 'staff') return;
+  const err = new Error(
+    target.role_name === 'customer'
+      ? `Quản trị viên chỉ được xem hồ sơ khách hàng, không được ${action}. Khách hàng tự quản lý tài khoản của mình.`
+      : `Không thể ${action} tài khoản này.`
+  );
+  err.statusCode = 403;
+  throw err;
+};
+
 const createEmployee = async (body, req) => {
   const parsed = createEmployeeSchema.parse(body);
 
@@ -163,12 +179,9 @@ const updateUser = async (targetId, body, req) => {
     throw err;
   }
 
-  // Hồ sơ khách hàng chỉ do chính khách chỉnh sửa; admin chỉ được xem (vẫn khóa/mở khóa, đặt lại mật khẩu được)
-  if (target.role_name === 'customer') {
-    const err = new Error('Quản trị viên chỉ được xem hồ sơ khách hàng, không được chỉnh sửa. Khách hàng tự cập nhật hồ sơ của mình.');
-    err.statusCode = 403;
-    throw err;
-  }
+  // Hồ sơ khách hàng chỉ do chính khách chỉnh sửa; admin chỉ được xem (vẫn khóa/mở khóa được).
+  // Admin chỉ sửa tài khoản nhân viên.
+  assertStaffTarget(target, 'chỉnh sửa');
 
   // Kiểm tra phone trùng với người khác
   if (parsed.phone) {
@@ -298,6 +311,7 @@ const resetPassword = async (targetId, body, req) => {
     err.statusCode = 404;
     throw err;
   }
+  assertStaffTarget(target, 'đặt lại mật khẩu');
 
   const passwordHash = await bcrypt.hash(password, 10);
   await userRepository.changePassword(targetId, passwordHash);
@@ -316,5 +330,33 @@ const resetPassword = async (targetId, body, req) => {
   return { message: 'Đặt lại mật khẩu thành công.' };
 };
 
-export { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
-export default { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
+/**
+ * Admin xem chi tiết nhân viên / khách hàng (chỉ đọc):
+ * thông tin cơ bản + thú cưng + 10 lịch hẹn gần nhất. Không trả password_hash hay token.
+ */
+const getUserDetail = async (targetId) => {
+  const id = parseInt(targetId, 10);
+  const target = Number.isInteger(id) && id > 0 ? await userRepository.findById(id) : null;
+  if (!target || target.role_name === 'admin') {
+    const err = new Error('Không tìm thấy tài khoản.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const result = { user: safeUser(target), email_verified: !!target.email_verified };
+
+  if (target.role_name === 'customer') {
+    result.pets = await petRepository.findAll({ customerId: id, status: 'all', page: 1, limit: 100 });
+    result.recent_appointments = await appointmentRepository.findAll({ customerId: id, page: 1, limit: 10 });
+  } else {
+    const employee = await employeeRepository.findByUserId(id);
+    result.employee = employee || null;
+    if (employee) {
+      result.recent_appointments = await appointmentRepository.findAll({ employeeId: employee.id, page: 1, limit: 10 });
+    }
+  }
+  return result;
+};
+
+export { getUserDetail, listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
+export default { getUserDetail, listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };

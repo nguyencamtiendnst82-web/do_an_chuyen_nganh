@@ -38,11 +38,12 @@ Lỗi trả về:
 
 | Phương thức | Endpoint | Quyền hạn | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/pets` | Customer / Staff / Admin | Khách xem thú của mình; Nhân viên & Admin xem tất cả |
-| `POST` | `/api/pets` | Customer / Staff / Admin | Thêm mới hồ sơ thú cưng |
+| `GET` | `/api/pets` | Customer / Staff / Admin | Khách xem thú của mình; Nhân viên & Admin xem tất cả (chỉ đọc) |
+| `POST` | `/api/pets` | Customer | Thêm hồ sơ thú cưng của chính mình (Staff/Admin: 403) |
 | `GET` | `/api/pets/:id` | Customer / Staff / Admin | Xem chi tiết thú cưng (chặn IDOR cho khách) |
-| `PUT` | `/api/pets/:id` | Customer / Staff / Admin | Cập nhật thông tin thú cưng |
-| `DELETE` | `/api/pets/:id` | Customer / Admin | Ẩn hồ sơ thú cưng (chặn nếu còn lịch chưa xong) |
+| `PUT` | `/api/pets/:id` | Customer (chủ thú cưng) | Cập nhật thông tin thú cưng (Staff/Admin: 403) |
+| `DELETE` | `/api/pets/:id` | Customer (chủ thú cưng) | Ẩn hồ sơ thú cưng (chặn nếu còn lịch chưa xong; Staff/Admin: 403) |
+| `POST` / `DELETE` | `/api/pets/:id/photo` | Customer (chủ thú cưng) | Tải lên / xóa ảnh thú cưng |
 | `GET` | `/api/pets/:id/care-history` | Authenticated | Xem sổ tay chăm sóc của thú cưng |
 
 ---
@@ -79,13 +80,19 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 | Phương thức | Endpoint | Quyền hạn | Mô tả |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/appointments/availability`| Public / Customer | Tra cứu khung giờ trống hợp lệ (tính thời gian đệm 15p) |
-| `GET` | `/api/appointments` | Customer / Staff / Admin | Xem lịch hẹn (Khách xem của mình, Staff xem lịch được gán) |
-| `POST` | `/api/appointments` | Customer / Staff / Admin | Đặt lịch mới (tự gán nhân viên cân bằng tải) |
-| `PATCH`| `/api/appointments/:id/cancel` | Customer / Staff / Admin | Hủy lịch hẹn (bắt buộc nhập lý do) |
-| `PATCH`| `/api/appointments/:id/status` | Staff / Admin | Xác nhận lịch (`pending` → `confirmed`) |
-| `PATCH`| `/api/appointments/:id/check-in`| Staff / Admin | Tiếp nhận thú cưng (tình trạng ban đầu + ảnh trước) |
-| `PATCH`| `/api/appointments/:id/start` | Staff / Admin | Bắt đầu làm dịch vụ (`checked_in` → `in_progress`) |
-| `PATCH`| `/api/appointments/:id/complete`| Staff / Admin | Hoàn tất dịch vụ (ghi chú chăm sóc + ảnh sau) |
+| `GET` | `/api/appointments` | Customer / Staff / Admin | Xem lịch hẹn (Khách xem của mình; Staff & Admin xem tất cả, lọc `my=true` cho Staff) |
+| `POST` | `/api/appointments` | Customer / Staff | Đặt lịch mới (tự gán nhân viên cân bằng tải). Admin: 403 |
+| `GET` | `/api/appointments/:id` | Customer / Staff / Admin | Chi tiết lịch hẹn (Admin chỉ xem) |
+| `PATCH`| `/api/appointments/:id/reschedule` | Customer / Staff | Đổi lịch. Admin: 403 |
+| `PATCH`| `/api/appointments/:id/cancel` | Customer / Staff | Hủy lịch hẹn (bắt buộc nhập lý do). Admin: 403 |
+| `PATCH`| `/api/appointments/:id/assign` | Staff | Phân công nhân viên. Admin: 403 |
+| `PATCH`| `/api/appointments/:id/confirm` | Staff | Xác nhận lịch (`pending` → `confirmed`). Admin: 403 |
+| `PATCH`| `/api/appointments/:id/status` | Staff | Cập nhật ghi chú nội bộ / trạng thái hợp lệ. Admin: 403 |
+| `PATCH`| `/api/appointments/:id/check-in`| Staff | Tiếp nhận thú cưng (tình trạng ban đầu + ảnh trước). Admin: 403 |
+| `PATCH`| `/api/appointments/:id/start` | Staff | Bắt đầu làm dịch vụ (`checked_in` → `in_progress`). Admin: 403 |
+| `PATCH`| `/api/appointments/:id/complete`| Staff | Hoàn tất dịch vụ (ghi chú chăm sóc + ảnh sau). Admin: 403 |
+
+> Admin (chủ cửa hàng) chỉ **xem** lịch hẹn; nhân viên chỉ thao tác trên lịch được phân công cho mình.
 
 ---
 
@@ -100,14 +107,15 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 
 ---
 
-## 🧾 7. Hóa đơn & Thanh toán (`/api/invoices`, `/api/payments`)
+## 🧾 7. Hóa đơn & Thanh toán (`/api/invoices`)
 
 | Phương thức | Endpoint | Quyền hạn | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/invoices` | Staff / Admin | Lập hóa đơn cho lịch hẹn (tự động tính tiền server-side) |
-| `GET` | `/api/invoices/:id` | Customer / Staff / Admin | Chi tiết hóa đơn (khách chỉ xem hóa đơn của mình) |
+| `POST` | `/api/appointments/:appointmentId/invoice` | Staff / Admin | Lập hóa đơn cho lịch đã hoàn thành (tự tính tiền server-side; Staff chỉ lịch của mình) |
+| `GET` | `/api/invoices` | Customer / Staff / Admin | Danh sách hóa đơn (khách: của mình; Staff: lịch của mình; Admin: tất cả) |
+| `GET` | `/api/invoices/:id` | Customer / Staff / Admin | Chi tiết hóa đơn |
 | `GET` | `/api/invoices/:id/vietqr`| Customer / Staff / Admin | Tạo mã VietQR mô phỏng thanh toán chuyển khoản |
-| `POST` | `/api/payments` | Staff / Admin | Ghi nhận giao dịch thanh toán (tiền mặt/chuyển khoản) |
+| `POST` | `/api/invoices/:id/payments` | Staff / Admin | Ghi nhận giao dịch thanh toán (tiền mặt/chuyển khoản) |
 
 ---
 
@@ -149,3 +157,25 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 | `GET` | `/api/notifications` | Authenticated | Danh sách thông báo cá nhân (phân trang, chưa đọc) |
 | `PATCH`| `/api/notifications/:id/read` | Authenticated | Đánh dấu một thông báo đã đọc |
 | `PATCH`| `/api/notifications/read-all`| Authenticated | Đánh dấu tất cả thông báo là đã đọc |
+
+---
+
+## 👥 12. Tài khoản & Nhân viên (`/api/users`) – chỉ Admin
+
+Bảng tài khoản chỉ gồm **nhân viên** và **khách hàng**; tài khoản quản trị viên không bao giờ được trả về.
+
+| Phương thức | Endpoint | Mô tả |
+| :--- | :--- | :--- |
+| `GET` | `/api/users` | Danh sách (phân trang, `role=staff\|customer`, `status`, `search`) |
+| `GET` | `/api/users/:id` | Chi tiết chỉ đọc: thông tin, thú cưng, 10 lịch hẹn gần nhất (admin: 404) |
+| `POST` | `/api/users` | Tạo tài khoản nhân viên |
+| `PUT` | `/api/users/:id` | Sửa thông tin **nhân viên** (khách hàng: 403) |
+| `PATCH` | `/api/users/:id/status` | Khóa / mở khóa tài khoản |
+| `POST` | `/api/users/:id/reset-password` | Đặt lại mật khẩu **nhân viên** (khách hàng: 403) |
+
+## 🔎 13. Tra cứu khách hàng (`/api/customers`)
+
+| Phương thức | Endpoint | Quyền hạn | Mô tả |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/customers?search=` | Staff / Admin | Tìm khách theo tên/SĐT để đặt lịch hộ (chỉ trường cần thiết) |
+

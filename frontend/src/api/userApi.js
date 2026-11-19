@@ -2,6 +2,7 @@ import axiosClient from './axiosClient';
 
 export const userApi = {
   listUsers: (params) => axiosClient.get('/users', { params }),
+  getUser: (id) => axiosClient.get(`/users/${id}`),
   createEmployee: (data) => axiosClient.post('/users', data),
   updateUser: (id, data) => axiosClient.put(`/users/${id}`, data),
   updateUserStatus: (id, status) => axiosClient.patch(`/users/${id}/status`, { status }),

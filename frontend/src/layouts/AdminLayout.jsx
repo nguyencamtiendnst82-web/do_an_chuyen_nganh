@@ -20,21 +20,20 @@ const AdminLayout = () => {
     { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
     { to: '/admin/reports', label: 'Báo cáo doanh thu', icon: '📈' },
     { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: '📋' },
-    { to: '/admin/users', label: 'Tài khoản & nhân viên', icon: '👥' },
+    { to: '/admin/users', label: 'Nhân viên & khách hàng', icon: '👥' },
     { to: '/admin/appointments', label: 'Lịch hẹn', icon: '📅' },
     { to: '/admin/incidents', label: 'Sự cố', icon: '⚠️' },
     { to: '/admin/shifts', label: 'Ca làm việc', icon: '⏰' },
     { to: '/admin/services', label: 'Dịch vụ', icon: '✂️' },
     { to: '/admin/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
     { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
-    { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
   ]
 
   const Sidebar = ({ mobile = false }) => (
     <aside
       className={`${mobile
           ? 'fixed inset-0 z-40 flex'
-          : 'hidden md:flex flex-col w-64 bg-white border-r border-gray-200 min-h-screen'
+          : 'hidden md:flex flex-col w-64 shrink-0 bg-white border-r border-gray-200 sticky top-0 h-screen self-start overflow-y-auto'
         }`}
     >
       {mobile && (
@@ -109,7 +108,7 @@ const AdminLayout = () => {
       {sidebarOpen && <Sidebar mobile />}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile header */}
         <header className="md:hidden bg-white border-b border-gray-200 h-14 flex items-center px-4 gap-4">
           <button

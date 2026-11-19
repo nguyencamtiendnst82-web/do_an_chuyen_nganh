@@ -389,7 +389,7 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
     // Giờ đặt Staff 2 một lịch từ 09:15 - 10:15 (sau lịch 08:00 - 09:00 + đệm 15 phút) để lấp kín khung giờ cho cả 2 nhân viên
     const resFill = await request(app)
       .post('/api/appointments')
-      .set(authHeader(adminUser))
+      .set(authHeader(staffUser1)) // nhân viên đặt hộ khách (admin không được đặt lịch)
       .send({
         customerId: customerUserB.id,
         petId: petB,
@@ -566,7 +566,25 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
       });
     const aptId = createRes.body.data.id;
 
-    // Khách cố xác nhận lịch -> 403 (chỉ staff/admin)
+    // Admin chỉ xem: mọi thao tác ghi trên lịch hẹn đều bị chặn 403
+    const adminAttempts = await Promise.all([
+      request(app).post('/api/appointments').set(authHeader(adminUser))
+        .send({ customerId: customerUserA.id, petId: petA2, serviceIds: [serviceBathId], appointmentDate: dayAfterTomorrowStr, startTime: '16:00' }),
+      request(app).patch(`/api/appointments/${aptId}/confirm`).set(authHeader(adminUser)),
+      request(app).patch(`/api/appointments/${aptId}/assign`).set(authHeader(adminUser)).send({ employeeId: employeeId1 }),
+      request(app).patch(`/api/appointments/${aptId}/status`).set(authHeader(adminUser)).send({ status: 'confirmed' }),
+      request(app).patch(`/api/appointments/${aptId}/cancel`).set(authHeader(adminUser)).send({ cancellation_reason: 'Admin hủy trái phép' }),
+      request(app).patch(`/api/appointments/${aptId}/reschedule`).set(authHeader(adminUser)).send({ appointmentDate: dayAfterTomorrowStr, startTime: '16:00' }),
+      request(app).patch(`/api/appointments/${aptId}/check-in`).set(authHeader(adminUser)),
+      request(app).patch(`/api/appointments/${aptId}/start`).set(authHeader(adminUser)),
+      request(app).patch(`/api/appointments/${aptId}/complete`).set(authHeader(adminUser)),
+    ]);
+    adminAttempts.forEach((r) => expect(r.status).toBe(403));
+    // Nhưng admin vẫn xem được lịch hẹn
+    const adminView = await request(app).get(`/api/appointments/${aptId}`).set(authHeader(adminUser));
+    expect(adminView.status).toBe(200);
+
+    // Khách cố xác nhận lịch -> 403 (chỉ nhân viên)
     const resCustConfirm = await request(app)
       .patch(`/api/appointments/${aptId}/confirm`)
       .set(authHeader(customerUserA));

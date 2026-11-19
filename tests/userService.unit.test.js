@@ -85,6 +85,7 @@ describe('Unit test userService - listUsers', () => {
       role: 'customer',
       status: 'active',
       search: 'Nguyen',
+      excludeRole: 'admin',
     });
 
     expect(userRepository.countAll).toHaveBeenCalledWith({
@@ -93,6 +94,7 @@ describe('Unit test userService - listUsers', () => {
       role: 'customer',
       status: 'active',
       search: 'Nguyen',
+      excludeRole: 'admin',
     });
 
     expect(result.pagination).toEqual({
@@ -122,6 +124,7 @@ describe('Unit test userService - listUsers', () => {
       role: undefined,
       status: undefined,
       search: undefined,
+      excludeRole: 'admin',
     });
 
     expect(result.pagination).toEqual({
@@ -149,6 +152,7 @@ describe('Unit test userService - listUsers', () => {
       role: undefined,
       status: undefined,
       search: undefined,
+      excludeRole: 'admin',
     });
 
     expect(result.pagination).toEqual({

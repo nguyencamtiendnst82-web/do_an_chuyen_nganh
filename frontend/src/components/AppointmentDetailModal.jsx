@@ -6,7 +6,7 @@ import PetAvatar from './PetAvatar'
 import CareRecordCard from './CareRecordCard'
 import { useToast } from './Feedback'
 import { useAuth } from '../contexts/AuthContext'
-import { formatVND, errorMessage, SPECIES_LABEL } from '../utils/format'
+import { formatVND, errorMessage, SPECIES_LABEL, GENDER_LABEL, formatAge } from '../utils/format'
 import { formatDateLong, hm } from '../utils/appointment'
 import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from '../utils/invoice'
 import CreateInvoiceModal from './CreateInvoiceModal'
@@ -18,6 +18,52 @@ const Row = ({ label, children }) => (
     <dd className="text-gray-900 text-right">{children}</dd>
   </div>
 )
+
+/** Thông tin thú cưng (chỉ đọc) cho nhân viên/admin: tải từ GET /pets/:id */
+const PetInfoBlock = ({ petId }) => {
+  const [pet, setPet] = useState(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    axiosClient.get(`/pets/${petId}`)
+      .then((res) => { if (alive) setPet(res.data.data.pet) })
+      .catch(() => { if (alive) setFailed(true) })
+    return () => { alive = false }
+  }, [petId])
+
+  if (failed) return <p className="text-xs text-gray-500">Không tải được thông tin thú cưng.</p>
+  if (!pet) return <div className="h-16 bg-gray-100 rounded-lg animate-pulse" aria-busy="true" />
+
+  const info = [
+    ['Loài / giống', `${SPECIES_LABEL[pet.species] || ''}${pet.breed ? ` · ${pet.breed}` : ''}`],
+    ['Giới tính', GENDER_LABEL[pet.gender] || 'Chưa rõ'],
+    ['Tuổi', pet.age_months != null ? formatAge(pet.age_months) : 'Chưa rõ'],
+    ['Cân nặng', pet.weight_kg != null ? `${pet.weight_kg} kg` : 'Chưa rõ'],
+  ]
+  return (
+    <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+      <div className="flex items-center gap-3">
+        <PetAvatar pet={pet} size="w-12 h-12" text="text-xl" />
+        <div className="min-w-0">
+          <p className="font-medium text-gray-900 truncate">{pet.name}</p>
+          <p className="text-xs text-gray-500">Chủ nuôi: {pet.owner_name}{pet.owner_phone ? ` · ${pet.owner_phone}` : ''}</p>
+        </div>
+      </div>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        {info.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-2"><dt className="text-gray-500">{k}</dt><dd className="text-gray-900 text-right">{v}</dd></div>
+        ))}
+      </dl>
+      <div>
+        <p className="text-xs font-medium text-gray-600">Lưu ý sức khỏe / tính cách</p>
+        <p className="text-sm text-gray-700 bg-amber-50 rounded-lg px-3 py-2 whitespace-pre-wrap">
+          {pet.special_notes || 'Không có lưu ý.'}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 /**
  * AppointmentDetailModal: chi tiết một lịch hẹn (dịch vụ, giá lúc đặt, nhân viên, ghi chú).
@@ -33,7 +79,9 @@ const AppointmentDetailModal = ({ id, onClose, staffMode = false, renderActions,
   const [savingNotes, setSavingNotes] = useState(false)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false)
-  const canEditNotes = !apt || user?.role_name === 'admin' || apt.employee_user_id === user?.id
+  const isStaffUser = user?.role_name === 'staff'
+  // Chỉ nhân viên phụ trách được sửa ghi chú nội bộ; admin chỉ xem
+  const canEditNotes = !apt || (isStaffUser && apt.employee_user_id === user?.id)
 
   const load = useCallback(async () => {
     try {
@@ -88,6 +136,13 @@ const AppointmentDetailModal = ({ id, onClose, staffMode = false, renderActions,
             {staffMode && <Row label="Khách hàng">{apt.customer_name}{apt.customer_phone ? ` · ${apt.customer_phone}` : ''}</Row>}
             {apt.status === 'cancelled' && apt.cancellation_reason && <Row label="Lý do hủy">{apt.cancellation_reason}</Row>}
           </dl>
+
+          {staffMode && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Thông tin thú cưng</p>
+              <PetInfoBlock petId={apt.pet_id} />
+            </div>
+          )}
 
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Dịch vụ đã đặt</p>
@@ -158,7 +213,7 @@ const AppointmentDetailModal = ({ id, onClose, staffMode = false, renderActions,
                     Xem chi tiết hóa đơn
                   </button>
                 </div>
-              ) : staffMode ? (
+              ) : staffMode && isStaffUser ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold text-amber-900">Lịch hẹn đã hoàn thành nhưng chưa lập hóa đơn.</p>

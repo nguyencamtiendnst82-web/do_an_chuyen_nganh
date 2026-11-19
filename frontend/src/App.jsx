@@ -77,6 +77,15 @@ const EmployeesLayout = () => {
   return user?.role_name === 'customer' ? <CustomerLayout /> : <PublicLayout />
 }
 
+/**
+ * HomeRoute: quản trị viên (chủ cửa hàng) không dùng trang chủ công khai → chuyển thẳng về /admin
+ */
+const HomeRoute = () => {
+  const { user } = useAuth()
+  if (user?.role_name === 'admin') return <Navigate to="/admin" replace />
+  return <HomePage />
+}
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -84,7 +93,7 @@ const App = () => {
         <Routes>
           {/* ── Public routes (không cần đăng nhập) ─────────────────── */}
           <Route element={<PublicLayout />}>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomeRoute />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

@@ -87,7 +87,7 @@ describe('Admin: giới tính và năm sinh của nhân viên', () => {
     expect(res.body.data.user.birth_year).toBe(1990);
   });
 
-  test('U4b. Admin KHÔNG được sửa hồ sơ khách hàng → 403 (khóa/đặt lại mật khẩu vẫn được)', async () => {
+  test('U4b. Admin KHÔNG được sửa hồ sơ khách hàng → 403', async () => {
     const [[role]] = await pool.query("SELECT id FROM roles WHERE role_name = 'customer'");
     const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const [ins] = await pool.query(
@@ -101,6 +101,57 @@ describe('Admin: giới tính và năm sinh của nhân viên', () => {
     expect(res.status).toBe(403);
     const [[row]] = await pool.query('SELECT full_name FROM users WHERE id = ?', [ins.insertId]);
     expect(row.full_name).toBe('Khách Hồ Sơ');
+  });
+
+  const insertCustomer = async (label) => {
+    const [[role]] = await pool.query("SELECT id FROM roles WHERE role_name = 'customer'");
+    const st = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const [ins] = await pool.query(
+      `INSERT INTO users (role_id, full_name, email, phone, password_hash) VALUES (?, ?, ?, ?, ?)`,
+      [role.id, label, `test_us_kh_${st}@example.com`, `08${String(st).slice(-8)}`, 'x']
+    );
+    return ins.insertId;
+  };
+
+  test('U4c. Admin KHÔNG được đặt lại mật khẩu khách hàng → 403, mật khẩu không đổi', async () => {
+    const id = await insertCustomer('Khách Mật Khẩu');
+    const res = await request(app)
+      .post(`/api/users/${id}/reset-password`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ password: 'MatKhauMoi123' });
+    expect(res.status).toBe(403);
+    const [[row]] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [id]);
+    expect(row.password_hash).toBe('x');
+  });
+
+  test('U4d. Admin vẫn đặt lại được mật khẩu nhân viên → 200', async () => {
+    const created = await createEmployee(employeePayload());
+    const res = await request(app)
+      .post(`/api/users/${created.body.data.user.id}/reset-password`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ password: 'MatKhauMoi123' });
+    expect(res.status).toBe(200);
+  });
+
+  test('U4e. Admin xem chi tiết khách hàng → 200, không lộ password_hash; xem admin → 404', async () => {
+    const id = await insertCustomer('Khách Chi Tiết');
+    const res = await request(app).get(`/api/users/${id}`).set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.full_name).toBe('Khách Chi Tiết');
+    expect(res.body.data.user.password_hash).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toMatch(/password_hash/);
+    expect(res.body.data.pets).toBeInstanceOf(Array);
+    expect(res.body.data.recent_appointments).toBeInstanceOf(Array);
+
+    const [[adm]] = await pool.query('SELECT id FROM users WHERE email = ?', [adminEmail]);
+    const asAdmin = await request(app).get(`/api/users/${adm.id}`).set('Authorization', `Bearer ${adminToken}`);
+    expect(asAdmin.status).toBe(404);
+  });
+
+  test('U4f. Danh sách người dùng không bao giờ chứa quản trị viên, kể cả khi lọc role=admin', async () => {
+    const res = await request(app).get('/api/users?role=admin&limit=100').set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.users.every((u) => u.role_name !== 'admin')).toBe(true);
   });
 
   test('U5. Danh sách người dùng có giới tính và năm sinh', async () => {

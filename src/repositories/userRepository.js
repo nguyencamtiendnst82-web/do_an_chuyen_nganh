@@ -138,7 +138,7 @@ const updateStatus = async (id, status) => {
  * Lấy danh sách users có phân trang, lọc và tìm kiếm (dành cho Admin)
  * @param {object} filters - { page, limit, role, status, search }
  */
-const findAll = async ({ page = 1, limit = 10, role, status, search }) => {
+const findAll = async ({ page = 1, limit = 10, role, status, search, excludeRole }) => {
   const offset = (page - 1) * limit;
   const conditions = [];
   const params = [];
@@ -146,6 +146,10 @@ const findAll = async ({ page = 1, limit = 10, role, status, search }) => {
   if (role) {
     conditions.push('r.role_name = ?');
     params.push(role);
+  }
+  if (excludeRole) {
+    conditions.push('r.role_name <> ?');
+    params.push(excludeRole);
   }
   if (status) {
     conditions.push('u.status = ?');
@@ -181,13 +185,17 @@ const findAll = async ({ page = 1, limit = 10, role, status, search }) => {
 /**
  * Đếm tổng số users theo filter (để tính total_pages)
  */
-const countAll = async ({ role, status, search }) => {
+const countAll = async ({ role, status, search, excludeRole }) => {
   const conditions = [];
   const params = [];
 
   if (role) {
     conditions.push('r.role_name = ?');
     params.push(role);
+  }
+  if (excludeRole) {
+    conditions.push('r.role_name <> ?');
+    params.push(excludeRole);
   }
   if (status) {
     conditions.push('u.status = ?');

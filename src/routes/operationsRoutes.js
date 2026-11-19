@@ -15,7 +15,7 @@ import {
 
 /**
  * Vận hành tại quầy (gắn thẳng vào /api, đường dẫn đầy đủ nằm ở từng route):
- *  - PATCH /appointments/:id/check-in | start | complete   (staff/admin, staff chỉ lịch của mình)
+ *  - PATCH /appointments/:id/check-in | start | complete   (chỉ staff, staff chỉ lịch của mình; admin không can thiệp)
  *  - GET   /pets/:petId/care-history                       (khách xem thú của mình; staff/admin xem tất cả)
  *  - /incidents                                            (staff/admin tạo & xem; admin cập nhật)
  *  - GET   /care-photos/:file                              (ảnh công khai, tên file là UUID)
@@ -28,15 +28,15 @@ router.use('/care-photos', careImages.serve());
 router.patch(
   '/appointments/:id/check-in',
   authenticate,
-  authorize('staff', 'admin'),
+  authorize('staff'),
   careImages.receive('photo_before'),
   checkIn
 );
-router.patch('/appointments/:id/start', authenticate, authorize('staff', 'admin'), start);
+router.patch('/appointments/:id/start', authenticate, authorize('staff'), start);
 router.patch(
   '/appointments/:id/complete',
   authenticate,
-  authorize('staff', 'admin'),
+  authorize('staff'),
   careImages.receive('photo_after'),
   complete
 );

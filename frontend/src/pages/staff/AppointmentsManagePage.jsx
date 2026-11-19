@@ -19,16 +19,17 @@ import InvoiceDetailModal from '../../components/InvoiceDetailModal'
 const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
 
 /**
- * AppointmentsManagePage: quản lý lịch hẹn cho nhân viên và admin.
- * Lọc theo ngày / trạng thái / từ khóa; xác nhận, tiếp nhận, bắt đầu, hoàn tất; gán nhân viên; đổi, hủy lịch; đặt hộ khách.
+ * AppointmentsManagePage: quản lý lịch hẹn.
+ * Nhân viên: xác nhận, tiếp nhận, bắt đầu, hoàn tất; gán nhân viên; đổi, hủy lịch; đặt hộ khách.
+ * Admin: chỉ xem (lọc, tìm kiếm, chi tiết, hóa đơn), không chỉnh sửa lịch hẹn.
  */
 const AppointmentsManagePage = () => {
   const { user } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const isStaff = user?.role_name === 'staff'
-  // Nhân viên chỉ thao tác lịch của mình; admin thao tác mọi lịch
-  const canAct = (apt) => !isStaff || apt.employee_user_id === user?.id
+  // Nhân viên chỉ thao tác lịch của mình; admin (chủ cửa hàng) chỉ xem, không can thiệp lịch hẹn
+  const canAct = (apt) => isStaff && apt.employee_user_id === user?.id
 
   const [items, setItems] = useState([])
   const [pagination, setPagination] = useState({ total: 0, page: 1, total_pages: 1 })
@@ -143,7 +144,7 @@ const AppointmentsManagePage = () => {
 
   const renderActions = (apt, reload) => {
     const open = !['completed', 'cancelled'].includes(apt.status)
-    if (!open) return null
+    if (!open || !isStaff) return null
     if (!canAct(apt)) {
       return <p className="text-xs text-gray-500 mr-auto">Lịch này do nhân viên khác phụ trách, bạn chỉ xem được.</p>
     }
@@ -175,8 +176,10 @@ const AppointmentsManagePage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Quản lý lịch hẹn</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination.total} lịch hẹn theo bộ lọc hiện tại.</p>
         </div>
-        <button type="button" onClick={() => setShowBooking(true)}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Đặt lịch hộ khách</button>
+        {isStaff && (
+          <button type="button" onClick={() => setShowBooking(true)}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Đặt lịch hộ khách</button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
@@ -282,7 +285,7 @@ const AppointmentsManagePage = () => {
       )}
       {cancelTarget && <CancelModal appointment={cancelTarget} onClose={() => setCancelTarget(null)} onDone={afterChange} />}
       {reschedTarget && <RescheduleModal appointment={reschedTarget} accent="blue" onClose={() => setReschedTarget(null)} onDone={afterChange} />}
-      {showBooking && <StaffBookingModal onClose={() => setShowBooking(false)} onDone={afterChange} />}
+      {isStaff && showBooking && <StaffBookingModal onClose={() => setShowBooking(false)} onDone={afterChange} />}
       {careTarget && (
         <CareStepModal
           appointment={careTarget.apt}

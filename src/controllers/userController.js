@@ -15,6 +15,19 @@ const listUsers = async (req, res, next) => {
 };
 
 /**
+ * GET /api/users/:id
+ * Xem chi tiết nhân viên / khách hàng (chỉ đọc) – Admin only
+ */
+const getUserDetail = async (req, res, next) => {
+  try {
+    const result = await userService.getUserDetail(req.params.id);
+    return sendSuccess(res, 'Lấy chi tiết tài khoản thành công.', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * POST /api/users
  * Tạo tài khoản nhân viên mới (user role=staff + employee) – Admin only
  */
@@ -68,5 +81,5 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-export { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
-export default { listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
+export { getUserDetail, listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };
+export default { getUserDetail, listUsers, createEmployee, updateUser, updateUserStatus, resetPassword };

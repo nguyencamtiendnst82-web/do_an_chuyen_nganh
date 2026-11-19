@@ -5,6 +5,8 @@ import { TableSkeleton } from '../../components/Skeleton';
 import { useToast, useConfirm } from '../../components/Feedback';
 import { errorMessage, mapFieldErrors } from '../../utils/format';
 import { useAuth } from '../../contexts/AuthContext';
+import { SPECIES_LABEL, GENDER_LABEL, formatAge } from '../../utils/format';
+import { STATUS_LABEL, formatDate, hm } from '../../utils/appointment';
 
 const ROLE_BADGE = {
   admin: { bg: 'bg-purple-100 text-purple-700', label: 'Quản trị viên' },
@@ -36,6 +38,95 @@ const inputClass = (hasError) =>
     hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
   }`;
 
+const Field = ({ label, children }) => (
+  <div className="flex justify-between gap-4 py-1.5 text-sm">
+    <dt className="text-gray-500 shrink-0">{label}</dt>
+    <dd className="text-gray-900 text-right break-words min-w-0">{children || <span className="text-gray-400">—</span>}</dd>
+  </div>
+);
+
+/** Xem chi tiết nhân viên / khách hàng (chỉ đọc): thông tin, thú cưng, lịch hẹn gần đây */
+const UserDetailModal = ({ userId, onClose }) => {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    userApi.getUser(userId)
+      .then((res) => { if (alive) setData(res.data.data); })
+      .catch((err) => { if (alive) setError(errorMessage(err, 'Không tải được chi tiết tài khoản.')); });
+    return () => { alive = false; };
+  }, [userId]);
+
+  const u = data?.user;
+  const appointments = data?.recent_appointments || [];
+
+  return (
+    <Modal title="Chi tiết tài khoản" onClose={onClose}>
+      {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
+      {!data && !error && <div className="h-24 bg-gray-100 rounded-lg animate-pulse" aria-busy="true" />}
+      {u && (
+        <div className="space-y-5">
+          <dl className="divide-y divide-gray-100 border-y border-gray-100">
+            <Field label="Họ tên">{u.full_name}</Field>
+            <Field label="Vai trò">{(ROLE_BADGE[u.role_name] || {}).label}</Field>
+            <Field label="Email">{u.email}{data.email_verified ? ' ✓' : ' (chưa xác minh)'}</Field>
+            <Field label="Số điện thoại">{u.phone}</Field>
+            <Field label="Địa chỉ">{u.address}</Field>
+            <Field label="Giới tính">{u.gender ? (u.gender === 'male' ? 'Nam' : u.gender === 'female' ? 'Nữ' : 'Khác') : ''}</Field>
+            <Field label="Năm sinh">{u.birth_year}</Field>
+            <Field label="Trạng thái">{(STATUS_BADGE[u.status] || {}).label}</Field>
+            <Field label="Ngày tạo">{u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : ''}</Field>
+            {u.role_name === 'staff' && (
+              <>
+                <Field label="Chuyên môn">{u.specialty}</Field>
+                <Field label="Kinh nghiệm">{u.experience_years != null ? `${u.experience_years} năm` : ''}</Field>
+              </>
+            )}
+          </dl>
+
+          {u.role_name === 'customer' && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Thú cưng ({(data.pets || []).length})</p>
+              {(data.pets || []).length === 0 ? (
+                <p className="text-sm text-gray-500">Chưa có thú cưng.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {data.pets.map((p) => (
+                    <li key={p.id} className="text-sm flex justify-between gap-3">
+                      <span className="text-gray-900">{p.name} <span className="text-gray-400">· {SPECIES_LABEL[p.species]}{p.breed ? ` · ${p.breed}` : ''}</span></span>
+                      <span className="text-gray-500 shrink-0">
+                        {GENDER_LABEL[p.gender]}{p.age_months != null ? ` · ${formatAge(p.age_months)}` : ''}{p.status === 'inactive' ? ' · đã ẩn' : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Lịch hẹn gần đây</p>
+            {appointments.length === 0 ? (
+              <p className="text-sm text-gray-500">Chưa có lịch hẹn.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {appointments.map((a) => (
+                  <li key={a.id} className="text-sm flex justify-between gap-3">
+                    <span className="text-gray-900"><span className="font-mono text-xs">{a.appointment_code}</span> · {a.pet_name}</span>
+                    <span className="text-gray-500 shrink-0">{formatDate(a.appointment_date)} {hm(a.start_time)} · {STATUS_LABEL[a.status] || a.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <p className="text-xs text-gray-400">Chế độ chỉ xem. Khách hàng tự quản lý hồ sơ và mật khẩu của mình.</p>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
 const UsersManagePage = () => {
   const { user: currentUser } = useAuth();
   const toast = useToast();
@@ -43,7 +134,8 @@ const UsersManagePage = () => {
 
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, total_pages: 1 });
-  const [roleFilter, setRoleFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('staff'); // 'staff' | 'customer' (không hiển thị quản trị viên)
+  const [detailUserId, setDetailUserId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -231,12 +323,12 @@ const UsersManagePage = () => {
       {/* Tiêu đề & Nút thêm nhân viên */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý Tài khoản & Nhân viên</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý Nhân viên & Khách hàng</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Quản lý danh sách người dùng, nhân viên spa, phân quyền và trạng thái hoạt động.
+            Nhân viên: tạo, sửa, khóa/mở khóa, đặt lại mật khẩu. Khách hàng: chỉ xem thông tin (khách tự quản lý hồ sơ).
           </p>
         </div>
-        <button
+        {roleFilter === 'staff' && <button
           type="button"
           onClick={() => {
             setCreateForm(EMPTY_EMPLOYEE_FORM);
@@ -247,7 +339,25 @@ const UsersManagePage = () => {
         >
           <span>➕</span>
           <span>Thêm nhân viên mới</span>
-        </button>
+        </button>}
+      </div>
+
+      {/* Tab Nhân viên / Khách hàng */}
+      <div className="flex gap-2" role="tablist" aria-label="Loại tài khoản">
+        {[['staff', 'Nhân viên'], ['customer', 'Khách hàng']].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={roleFilter === value}
+            onClick={() => setRoleFilter(value)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              roleFilter === value ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Bộ lọc & Tìm kiếm */}
@@ -264,17 +374,6 @@ const UsersManagePage = () => {
         </div>
 
         <div className="flex gap-2">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-          >
-            <option value="">Tất cả vai trò</option>
-            <option value="admin">Quản trị viên</option>
-            <option value="staff">Nhân viên</option>
-            <option value="customer">Khách hàng</option>
-          </select>
-
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -389,16 +488,27 @@ const UsersManagePage = () => {
 
                           <button
                             type="button"
-                            onClick={() => {
-                              setResettingUser(u);
-                              setNewPassword('');
-                              setResetError('');
-                            }}
-                            className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Đặt lại mật khẩu"
+                            onClick={() => setDetailUserId(u.id)}
+                            className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Xem chi tiết"
                           >
-                            🔑
+                            👁️
                           </button>
+
+                          {u.role_name === 'staff' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setResettingUser(u);
+                                setNewPassword('');
+                                setResetError('');
+                              }}
+                              className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Đặt lại mật khẩu"
+                            >
+                              🔑
+                            </button>
+                          )}
 
                           {!isSelf && (
                             <button
@@ -487,15 +597,24 @@ const UsersManagePage = () => {
                     )}
                     <button
                       type="button"
-                      onClick={() => {
-                        setResettingUser(u);
-                        setNewPassword('');
-                        setResetError('');
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
+                      onClick={() => setDetailUserId(u.id)}
+                      className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
                     >
-                      🔑 Đổi MK
+                      👁️ Chi tiết
                     </button>
+                    {u.role_name === 'staff' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResettingUser(u);
+                          setNewPassword('');
+                          setResetError('');
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
+                      >
+                        🔑 Đổi MK
+                      </button>
+                    )}
                     {!isSelf && (
                       <button
                         type="button"
@@ -885,6 +1004,8 @@ const UsersManagePage = () => {
           </form>
         </Modal>
       )}
+
+      {detailUserId && <UserDetailModal userId={detailUserId} onClose={() => setDetailUserId(null)} />}
     </div>
   );
 };
