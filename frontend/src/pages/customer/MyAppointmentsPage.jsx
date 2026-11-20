@@ -5,6 +5,7 @@ import StatusBadge from '../../components/StatusBadge'
 import AppointmentDetailModal from '../../components/AppointmentDetailModal'
 import CancelModal from '../../components/CancelModal'
 import RescheduleModal from '../../components/RescheduleModal'
+import ChangeRequestBanner from '../../components/ChangeRequestBanner'
 import PetAvatar from '../../components/PetAvatar'
 import { ListSkeleton } from '../../components/Skeleton'
 import { errorMessage } from '../../utils/format'
@@ -127,6 +128,7 @@ const MyAppointmentsPage = () => {
                     </p>
                   </div>
                 </div>
+                {changeable && <ChangeRequestBanner appointmentId={a.id} onChanged={load} />}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
                   <div>
                     {a.status === 'completed' && a.invoice_id && (

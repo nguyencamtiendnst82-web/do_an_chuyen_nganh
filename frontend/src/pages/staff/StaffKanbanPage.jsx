@@ -5,6 +5,7 @@ import { useToast } from '../../components/Feedback'
 import { formatDateVN, vietnamYmd } from '../../utils/date'
 
 const COLUMNS = [
+  { key: 'pending', label: 'Chờ xác nhận', color: 'bg-amber-50 text-amber-700 border-amber-200', actionText: 'Xác nhận' },
   { key: 'confirmed', label: 'Đã xác nhận', color: 'bg-blue-50 text-blue-700 border-blue-200', actionText: 'Tiếp nhận' },
   { key: 'checked_in', label: 'Đã tiếp nhận', color: 'bg-purple-50 text-purple-700 border-purple-200', actionText: 'Bắt đầu làm' },
   { key: 'in_progress', label: 'Đang thực hiện', color: 'bg-pink-50 text-pink-700 border-pink-200', actionText: 'Hoàn tất' },
@@ -27,14 +28,11 @@ const StaffKanbanPage = () => {
     try {
       // Lấy danh sách lịch hôm nay (staff chỉ lấy lịch của mình qua backend filter)
       const today = vietnamYmd()
+      // Chỉ lịch của chính nhân viên đăng nhập (cùng nguồn dữ liệu với trang Lịch hẹn)
       const res = await axiosClient.get('/appointments', {
-        params: {
-          from: today,
-          to: today,
-          limit: 100,
-        },
+        params: { date: today, my: 'true', limit: 100 },
       })
-      setAppointments(res.data.data.items || [])
+      setAppointments(res.data.data.appointments || [])
     } catch (err) {
       setError(err.response?.data?.message || 'Không thể tải lịch hẹn hôm nay.')
     } finally {
@@ -58,9 +56,21 @@ const StaffKanbanPage = () => {
     }
   }
 
+  const handleConfirm = async (apt) => {
+    try {
+      await axiosClient.patch(`/appointments/${apt.id}/confirm`)
+      toast.success(`Đã xác nhận lịch của bé ${apt.pet_name}.`)
+      loadTodayAppointments()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể xác nhận lịch hẹn.')
+    }
+  }
+
   // Click vào thẻ để thực hiện bước tiếp theo
   const handleCardClick = (apt) => {
-    if (apt.status === 'confirmed') {
+    if (apt.status === 'pending') {
+      handleConfirm(apt)
+    } else if (apt.status === 'confirmed') {
       setActiveModal({ appointment: apt, mode: 'checkin' })
     } else if (apt.status === 'checked_in') {
       handleStartService(apt)
@@ -75,7 +85,7 @@ const StaffKanbanPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Điều phối dịch vụ hôm nay (Kanban)</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Ngày: <span className="font-semibold text-gray-700">{formatDateVN(vietnamYmd())}</span>. Bấm vào thẻ để thực hiện bước chăm sóc tiếp theo.
+            Ngày: <span className="font-semibold text-gray-700">{formatDateVN(vietnamYmd())}</span>. Chỉ hiện lịch do bạn phụ trách. Bấm vào thẻ để thực hiện bước tiếp theo.
           </p>
         </div>
         <button
@@ -93,19 +103,19 @@ const StaffKanbanPage = () => {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 animate-pulse">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-96 bg-gray-200 rounded-2xl"></div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 items-start">
           {COLUMNS.map((col) => {
             const columnItems = appointments.filter((a) => a.status === col.key)
             return (
               <div
                 key={col.key}
-                className="bg-gray-100/70 border border-gray-200 rounded-2xl p-4 flex flex-col min-h-[500px]"
+                className="bg-gray-100/70 border border-gray-200 rounded-2xl p-4 flex flex-col min-h-[320px]"
               >
                 {/* Header cột */}
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-200">
@@ -143,6 +153,13 @@ const StaffKanbanPage = () => {
                         <p className="text-xs text-gray-500 capitalize">
                           {apt.pet_species} • {apt.customer_name} ({apt.customer_phone})
                         </p>
+
+                        {apt.invoice_id && col.key === 'completed' && (
+                          <p className="mt-2 text-[11px] font-medium text-emerald-700">🧾 Đã lập hóa đơn</p>
+                        )}
+                        {!apt.invoice_id && col.key === 'completed' && (
+                          <p className="mt-2 text-[11px] font-medium text-amber-700">Chưa lập hóa đơn – vào mục Lịch hẹn để lập</p>
+                        )}
 
                         {apt.customer_notes && (
                           <div className="mt-2 p-2 bg-yellow-50 rounded-lg text-xs text-yellow-800">

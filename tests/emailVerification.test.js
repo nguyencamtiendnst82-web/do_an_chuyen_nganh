@@ -207,9 +207,9 @@ describe('Đặt lịch yêu cầu email đã xác minh', () => {
     expect(passed.status).toBe(422);
   });
 
-  test('V12. Staff đặt hộ khách tại quầy không bị chặn bởi xác minh email (body rỗng → 422, không phải 403)', async () => {
+  test('V12. Nhân viên không đặt hộ khách được → 403', async () => {
     const staff = await createUser(app, { role: 'staff', prefix: 'test_ev' });
     const res = await request(app).post('/api/appointments').set(authHeader(staff)).send({});
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(403);
   });
 });

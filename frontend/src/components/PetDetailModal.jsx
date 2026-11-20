@@ -91,6 +91,15 @@ const PetDetailModal = ({ petId, onClose }) => {
           </div>
 
           <div>
+            <p className="text-sm font-medium text-red-700 mb-1">Dị ứng</p>
+            <p className="text-sm text-gray-700 bg-red-50 rounded-lg px-3 py-2 whitespace-pre-wrap">{pet.allergies || 'Không ghi nhận.'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">Tiêm phòng / tẩy giun</p>
+            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-wrap">{pet.vaccination_notes || 'Chưa có ghi chú.'}</p>
+          </div>
+
+          <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Sổ tay chăm sóc</p>
             {records.length === 0 ? (
               <p className="text-sm text-gray-500">Chưa có lần chăm sóc nào hoàn tất.</p>

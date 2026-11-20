@@ -142,10 +142,10 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
               <div className="h-44 flex items-center justify-center text-sm text-gray-500">
                 Đang tạo mã VietQR...
               </div>
-            ) : vietqrData?.vietqr_url ? (
+            ) : (vietqrData?.qr_url || vietqrData?.vietqr_url) ? (
               <div className="inline-block p-2 bg-white rounded-xl shadow-sm border border-blue-100">
                 <img
-                  src={vietqrData.vietqr_url}
+                  src={vietqrData.qr_url || vietqrData.vietqr_url}
                   alt="VietQR Payment Code"
                   className="w-48 h-48 mx-auto object-contain"
                 />

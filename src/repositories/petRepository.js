@@ -19,7 +19,7 @@ const mapRow = (row) => {
 const SELECT_PET = `
   SELECT p.id, p.customer_id, p.name, p.species, p.breed, p.gender, p.age_months,
          DATE_FORMAT(p.birth_month, '%Y-%m') AS birth_month,
-         p.weight_kg, p.special_notes, p.avatar_url, p.status, p.created_at, p.updated_at,
+         p.weight_kg, p.special_notes, p.allergies, p.vaccination_notes, p.avatar_url, p.status, p.created_at, p.updated_at,
          u.full_name AS owner_name, u.phone AS owner_phone
   FROM pets p
   JOIN users u ON p.customer_id = u.id`;
@@ -80,18 +80,18 @@ const findById = async (id) => {
 };
 
 /** birth_month nhận 'YYYY-MM-01' hoặc null */
-const create = async ({ customer_id, name, species, breed, gender, birth_month, weight_kg, special_notes }) => {
+const create = async ({ customer_id, name, species, breed, gender, birth_month, weight_kg, special_notes, allergies, vaccination_notes }) => {
   const [result] = await pool.query(
-    `INSERT INTO pets (customer_id, name, species, breed, gender, birth_month, weight_kg, special_notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [customer_id, name, species, breed ?? null, gender, birth_month ?? null, weight_kg ?? null, special_notes ?? null]
+    `INSERT INTO pets (customer_id, name, species, breed, gender, birth_month, weight_kg, special_notes, allergies, vaccination_notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [customer_id, name, species, breed ?? null, gender, birth_month ?? null, weight_kg ?? null, special_notes ?? null, allergies ?? null, vaccination_notes ?? null]
   );
   return result.insertId;
 };
 
 const update = async (id, fields) => {
   // Không cho đổi customer_id (chuyển chủ) qua API này; ảnh có endpoint riêng
-  const allowed = ['name', 'species', 'breed', 'gender', 'birth_month', 'weight_kg', 'special_notes', 'status'];
+  const allowed = ['name', 'species', 'breed', 'gender', 'birth_month', 'weight_kg', 'special_notes', 'allergies', 'vaccination_notes', 'status'];
   const sets = [];
   const values = [];
   for (const key of allowed) {

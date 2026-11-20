@@ -12,6 +12,11 @@ import {
   confirm,
   updateStatus,
 } from '../controllers/appointmentController.js';
+import {
+  create as createChangeRequest,
+  list as listChangeRequests,
+  respond as respondChangeRequest,
+} from '../controllers/changeRequestController.js';
 
 const router = express.Router();
 
@@ -22,8 +27,8 @@ router.get('/availability', getAvailability);
 
 // Danh sách lịch hẹn và Đặt lịch hẹn mới
 router.get('/', list);
-// Admin chỉ xem lịch hẹn (như chủ cửa hàng), không tạo/sửa/hủy; khách và nhân viên được đặt lịch
-router.post('/', authorize('customer', 'staff'), create);
+// Chỉ khách tự đặt lịch (trực tuyến hoặc ngay tại quầy bằng tài khoản của mình); nhân viên/admin không đặt hộ
+router.post('/', authorize('customer'), create);
 
 // Chi tiết lịch hẹn
 router.get('/:id', getOne);
@@ -36,6 +41,11 @@ router.patch('/:id/cancel', authorize('customer', 'staff'), cancel);
 router.patch('/:id/assign', authorize('staff'), assign);
 router.patch('/:id/confirm', authorize('staff'), confirm);
 router.patch('/:id/status', authorize('staff'), updateStatus);
+
+// Đề xuất chuyển nhân viên / dời lịch: nhân viên phụ trách đề xuất, khách đồng ý hoặc từ chối
+router.post('/:id/change-requests', authorize('staff'), createChangeRequest);
+router.get('/:id/change-requests', listChangeRequests);
+router.patch('/change-requests/:id/respond', authorize('customer'), respondChangeRequest);
 
 export default router;
 

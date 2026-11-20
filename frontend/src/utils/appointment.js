@@ -7,6 +7,7 @@ export const STATUS_LABEL = {
   in_progress: 'Đang phục vụ',
   completed: 'Đã hoàn tất',
   cancelled: 'Đã hủy',
+  no_show: 'Khách không đến',
 }
 
 export const STATUS_STYLE = {
@@ -16,6 +17,7 @@ export const STATUS_STYLE = {
   in_progress: 'bg-purple-50 text-purple-700 border-purple-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
   cancelled: 'bg-gray-100 text-gray-500 border-gray-200',
+  no_show: 'bg-red-50 text-red-700 border-red-200',
 }
 
 /** Trạng thái kế tiếp trong quy trình + nhãn nút bấm cho nhân viên */

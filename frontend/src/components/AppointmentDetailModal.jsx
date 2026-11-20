@@ -61,6 +61,14 @@ const PetInfoBlock = ({ petId }) => {
           {pet.special_notes || 'Không có lưu ý.'}
         </p>
       </div>
+      <div>
+        <p className="text-xs font-medium text-red-700">Dị ứng</p>
+        <p className="text-sm text-gray-700 bg-red-50 rounded-lg px-3 py-2 whitespace-pre-wrap">{pet.allergies || 'Không ghi nhận.'}</p>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-gray-600">Tiêm phòng / tẩy giun</p>
+        <p className="text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-wrap">{pet.vaccination_notes || 'Chưa có ghi chú.'}</p>
+      </div>
     </div>
   )
 }

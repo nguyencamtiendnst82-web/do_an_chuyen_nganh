@@ -60,6 +60,8 @@ const shape = {
   ),
 
   special_notes: optionalText(2000, 'Ghi chú'),
+  allergies: optionalText(1000, 'Dị ứng'),
+  vaccination_notes: optionalText(1000, 'Ghi chú tiêm phòng'),
 };
 
 const createPetSchema = z.object({
@@ -82,6 +84,8 @@ const updatePetSchema = z
     birth_month: shape.birth_month,
     weight_kg: shape.weight_kg,
     special_notes: shape.special_notes,
+    allergies: shape.allergies,
+    vaccination_notes: shape.vaccination_notes,
     status: z.enum(['active', 'inactive'], { error: () => 'Trạng thái không hợp lệ' }).optional(),
   })
   .refine((obj) => Object.values(obj).some((v) => v !== undefined), {

@@ -3,6 +3,8 @@ import {
   isValidTransition,
   validateTransition,
   validateCancellation,
+  hasAppointmentStarted,
+  getCancelMinHours,
 } from '../src/utils/appointmentState.js';
 
 describe('Kiểm thử máy trạng thái lịch hẹn (Appointment State Machine)', () => {
@@ -127,3 +129,33 @@ describe('Kiểm thử máy trạng thái lịch hẹn (Appointment State Machin
   });
 });
 
+describe('no_show và CANCEL_MIN_HOURS', () => {
+  const apt = { appointment_date: '2026-10-30', start_time: '14:00:00', status: 'confirmed' };
+
+  test('NS1. Chỉ confirmed -> no_show; no_show là trạng thái kết thúc', () => {
+    expect(isValidTransition('confirmed', 'no_show')).toBe(true);
+    expect(isValidTransition('pending', 'no_show')).toBe(false);
+    expect(isValidTransition('in_progress', 'no_show')).toBe(false);
+    expect(() => validateTransition('no_show', 'confirmed')).toThrow(/không đến/);
+  });
+
+  test('NS2. hasAppointmentStarted: trước giờ false, sau giờ true', () => {
+    expect(hasAppointmentStarted(apt, new Date(2026, 9, 30, 14, 14))).toBe(false); // còn trong 15 phút chờ
+    expect(hasAppointmentStarted(apt, new Date(2026, 9, 30, 14, 15))).toBe(true);
+  });
+
+  test('NS3. CANCEL_MIN_HOURS đổi được ngưỡng hủy của khách', () => {
+    const old = process.env.CANCEL_MIN_HOURS;
+    try {
+      process.env.CANCEL_MIN_HOURS = '5';
+      expect(getCancelMinHours()).toBe(5);
+      const now = new Date(2026, 9, 30, 10, 0); // cách 4 giờ
+      expect(() => validateCancellation(apt, 'customer', 'Bận việc đột xuất', now)).toThrow(/tối thiểu 5 giờ/);
+      expect(() => validateCancellation(apt, 'staff', 'Bận việc đột xuất', now)).not.toThrow();
+      process.env.CANCEL_MIN_HOURS = 'abc';
+      expect(getCancelMinHours()).toBe(2);
+    } finally {
+      if (old === undefined) delete process.env.CANCEL_MIN_HOURS; else process.env.CANCEL_MIN_HOURS = old;
+    }
+  });
+});

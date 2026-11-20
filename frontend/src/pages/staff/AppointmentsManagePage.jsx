@@ -6,7 +6,7 @@ import StatusBadge from '../../components/StatusBadge'
 import AppointmentDetailModal from '../../components/AppointmentDetailModal'
 import CancelModal from '../../components/CancelModal'
 import RescheduleModal from '../../components/RescheduleModal'
-import StaffBookingModal from '../../components/StaffBookingModal'
+import ChangeRequestModal from '../../components/ChangeRequestModal'
 import CareStepModal from '../../components/CareStepModal'
 import PetAvatar from '../../components/PetAvatar'
 import { ListSkeleton } from '../../components/Skeleton'
@@ -20,7 +20,7 @@ const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-whit
 
 /**
  * AppointmentsManagePage: quản lý lịch hẹn.
- * Nhân viên: xác nhận, tiếp nhận, bắt đầu, hoàn tất; gán nhân viên; đổi, hủy lịch; đặt hộ khách.
+ * Nhân viên: xác nhận, tiếp nhận, bắt đầu, hoàn tất; gán nhân viên; đổi, hủy lịch (không đặt hộ khách).
  * Admin: chỉ xem (lọc, tìm kiếm, chi tiết, hóa đơn), không chỉnh sửa lịch hẹn.
  */
 const AppointmentsManagePage = () => {
@@ -47,7 +47,7 @@ const AppointmentsManagePage = () => {
   const [careTarget, setCareTarget] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [reschedTarget, setReschedTarget] = useState(null)
-  const [showBooking, setShowBooking] = useState(false)
+  const [changeTarget, setChangeTarget] = useState(null)
   const [employees, setEmployees] = useState([])
   const [assignId, setAssignId] = useState('')
   const [invoiceTarget, setInvoiceTarget] = useState(null)
@@ -140,10 +140,27 @@ const AppointmentsManagePage = () => {
     }
   }
 
-  const afterChange = () => { setCancelTarget(null); setReschedTarget(null); setShowBooking(false); load() }
+  const afterChange = () => { setCancelTarget(null); setReschedTarget(null); load() }
+
+  const markNoShow = async (apt) => {
+    if (!window.confirm(`Đánh dấu khách không đến cho lịch ${apt.appointment_code || '#' + apt.id}?`)) return
+    try {
+      await axiosClient.patch(`/appointments/${apt.id}/status`, { status: 'no_show' })
+      toast.success('Đã đánh dấu khách không đến.')
+      setDetailId(null)
+      load()
+    } catch (err) {
+      toast.error(errorMessage(err, 'Không thể đánh dấu khách không đến.'))
+    }
+  }
+
+  const pastStart = (apt) => {
+    const t = new Date(`${String(apt.appointment_date).slice(0, 10)}T${String(apt.start_time).slice(0, 5)}:00`)
+    return t.getTime() <= Date.now()
+  }
 
   const renderActions = (apt, reload) => {
-    const open = !['completed', 'cancelled'].includes(apt.status)
+    const open = !['completed', 'cancelled', 'no_show'].includes(apt.status)
     if (!open || !isStaff) return null
     if (!canAct(apt)) {
       return <p className="text-xs text-gray-500 mr-auto">Lịch này do nhân viên khác phụ trách, bạn chỉ xem được.</p>
@@ -159,6 +176,12 @@ const AppointmentsManagePage = () => {
           <button type="button" disabled={!assignId} onClick={() => assign(apt, reload)}
             className="px-3 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:opacity-50">Gán</button>
         </div>
+        {apt.status === 'confirmed' && pastStart(apt) && (
+          <button type="button" onClick={() => markNoShow(apt)} className="px-3 py-2 rounded-lg text-sm text-orange-700 bg-orange-50 hover:bg-orange-100">Khách không đến</button>
+        )}
+        {canMove && (
+          <button type="button" onClick={() => { setDetailId(null); setChangeTarget(apt) }} className="px-3 py-2 rounded-lg text-sm text-amber-700 bg-amber-50 hover:bg-amber-100">Báo bận / đề xuất đổi</button>
+        )}
         {canMove && (
           <>
             <button type="button" onClick={() => openReschedule(apt)} className="px-3 py-2 rounded-lg text-sm text-blue-700 bg-blue-50 hover:bg-blue-100">Đổi lịch</button>
@@ -174,41 +197,37 @@ const AppointmentsManagePage = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý lịch hẹn</h1>
-          <p className="text-sm text-gray-500 mt-1">{pagination.total} lịch hẹn theo bộ lọc hiện tại.</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {pagination.total} lịch hẹn{!isStaff && ' · Chế độ xem (quản trị viên không chỉnh sửa lịch hẹn)'}
+          </p>
         </div>
-        {isStaff && (
-          <button type="button" onClick={() => setShowBooking(true)}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Đặt lịch hộ khách</button>
-        )}
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <label htmlFor="f-date" className="block text-xs text-gray-500 mb-1">Ngày</label>
-          <input id="f-date" type="date" value={date} disabled={allDates} onChange={resetPage(setDate)} className={`${selectClass} disabled:bg-gray-100`} />
-        </div>
-        <label className="flex items-center gap-2 text-sm text-gray-700 pb-2">
-          <input type="checkbox" checked={allDates} onChange={(e) => { setAllDates(e.target.checked); setPage(1) }} className="accent-blue-600" />
-          ±30 ngày
-        </label>
-        <div>
-          <label htmlFor="f-status" className="block text-xs text-gray-500 mb-1">Trạng thái</label>
-          <select id="f-status" value={status} onChange={resetPage(setStatus)} className={selectClass}>
-            <option value="">Tất cả</option>
-            {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label htmlFor="f-search" className="block text-xs text-gray-500 mb-1">Tìm kiếm</label>
-          <input id="f-search" type="search" value={search} onChange={resetPage(setSearch)} placeholder="Mã lịch, tên khách, SĐT, tên thú cưng..."
-            className={`${selectClass} w-full`} />
-        </div>
-        {isStaff && (
-          <label className="flex items-center gap-2 text-sm text-gray-700 pb-2">
-            <input type="checkbox" checked={mine} onChange={(e) => { setMine(e.target.checked); setPage(1) }} className="accent-blue-600" />
-            Chỉ lịch của tôi
+      <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <input id="f-date" type="date" value={date} disabled={allDates} onChange={resetPage(setDate)} aria-label="Ngày"
+            className={`${selectClass} disabled:bg-gray-100`} />
+          <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
+            <input type="checkbox" checked={allDates} onChange={(e) => { setAllDates(e.target.checked); setPage(1) }} className="accent-blue-600" />
+            ±30 ngày
           </label>
-        )}
+          <input id="f-search" type="search" value={search} onChange={resetPage(setSearch)} aria-label="Tìm kiếm"
+            placeholder="Tìm mã lịch, khách, SĐT, thú cưng..." className={`${selectClass} flex-1 min-w-[200px]`} />
+          {isStaff && (
+            <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
+              <input type="checkbox" checked={mine} onChange={(e) => { setMine(e.target.checked); setPage(1) }} className="accent-blue-600" />
+              Chỉ lịch của tôi
+            </label>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Lọc theo trạng thái">
+          {[['', 'Tất cả'], ...Object.entries(STATUS_LABEL)].map(([k, v]) => (
+            <button key={k || 'all'} type="button" onClick={() => { setStatus(k); setPage(1) }} aria-pressed={status === k}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${status === k
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>{v}</button>
+          ))}
+        </div>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">{error}</div>}
@@ -218,58 +237,115 @@ const AppointmentsManagePage = () => {
       ) : items.length === 0 ? (
         <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-sm text-gray-500">Không có lịch hẹn nào.</div>
       ) : (
-        <ul className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
-          {items.map((a) => {
-            const next = NEXT_ACTION[a.status]
-            return (
-              <li key={a.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <PetAvatar pet={{ name: a.pet_name, species: a.pet_species, avatar_url: a.pet_avatar }} size="w-11 h-11" text="text-xl" />
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
-                      {a.pet_name} <span className="text-gray-400 font-normal">· {a.customer_name}</span>
-                    </p>
-                    <p className="text-sm text-gray-600">{hm(a.start_time)} – {hm(a.end_time)} · {formatDate(a.appointment_date)}</p>
-                    <p className="text-xs text-gray-500">
-                      <span className="font-mono">{a.appointment_code}</span> · {a.employee_name ? `NV: ${a.employee_name}` : 'Chưa phân công'}
-                    </p>
+        <>
+          {/* Máy tính: bảng gọn */}
+          <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th className="text-left font-medium px-4 py-2.5">Giờ hẹn</th>
+                  <th className="text-left font-medium px-4 py-2.5">Thú cưng / Khách</th>
+                  <th className="text-left font-medium px-4 py-2.5">Nhân viên</th>
+                  <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
+                  <th className="text-right font-medium px-4 py-2.5">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {items.map((a) => {
+                  const next = NEXT_ACTION[a.status]
+                  return (
+                    <tr key={a.id} className="hover:bg-gray-50/70">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <p className="font-medium text-gray-900">{hm(a.start_time)} – {hm(a.end_time)}</p>
+                        <p className="text-xs text-gray-500">{formatDate(a.appointment_date)}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <PetAvatar pet={{ name: a.pet_name, species: a.pet_species, avatar_url: a.pet_avatar }} size="w-9 h-9" text="text-base" />
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{a.pet_name}</p>
+                            <p className="text-xs text-gray-500 truncate">{a.customer_name} · <span className="font-mono">{a.appointment_code}</span></p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{a.employee_name || <span className="text-gray-400">Chưa phân công</span>}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col items-start gap-1">
+                          <StatusBadge status={a.status} />
+                          {a.status === 'completed' && a.invoice_id && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${PAYMENT_STATUS_STYLE[a.invoice_payment_status] || 'bg-gray-100 text-gray-700'}`}>
+                              {PAYMENT_STATUS_LABEL[a.invoice_payment_status] || a.invoice_payment_status}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {next && canAct(a) && (
+                            <button type="button" disabled={busyId === a.id} onClick={() => advance(a)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+                              {busyId === a.id ? '...' : next.label}
+                            </button>
+                          )}
+                          {a.status === 'completed' && !a.invoice_id && canAct(a) && (
+                            <button type="button" onClick={() => openCreateInvoice(a)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700">+ Lập hóa đơn</button>
+                          )}
+                          {a.status === 'completed' && a.invoice_id && (
+                            <button type="button" onClick={() => setInvoiceDetailId(a.invoice_id)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 border border-emerald-200 hover:bg-emerald-50">Hóa đơn</button>
+                          )}
+                          <button type="button" onClick={() => setDetailId(a.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 border border-gray-200 hover:bg-gray-50">Chi tiết</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Điện thoại: thẻ */}
+          <ul className="md:hidden space-y-2">
+            {items.map((a) => {
+              const next = NEXT_ACTION[a.status]
+              return (
+                <li key={a.id} className="bg-white rounded-xl border border-gray-200 p-3 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <PetAvatar pet={{ name: a.pet_name, species: a.pet_species, avatar_url: a.pet_avatar }} size="w-10 h-10" text="text-lg" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-gray-900 truncate">{a.pet_name} <span className="text-gray-400 font-normal">· {a.customer_name}</span></p>
+                        <StatusBadge status={a.status} />
+                      </div>
+                      <p className="text-sm text-gray-600">{hm(a.start_time)} – {hm(a.end_time)} · {formatDate(a.appointment_date)}</p>
+                      <p className="text-xs text-gray-500"><span className="font-mono">{a.appointment_code}</span> · {a.employee_name || 'Chưa phân công'}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
-                  <StatusBadge status={a.status} />
-                  {a.status === 'completed' && a.invoice_id && (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
-                        PAYMENT_STATUS_STYLE[a.invoice_payment_status] || 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {PAYMENT_STATUS_LABEL[a.invoice_payment_status] || a.invoice_payment_status}
-                    </span>
-                  )}
-                  <button type="button" onClick={() => setDetailId(a.id)} className="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Chi tiết</button>
-                  {next && canAct(a) && (
-                    <button type="button" disabled={busyId === a.id} onClick={() => advance(a)}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
-                      {busyId === a.id ? '...' : next.label}
-                    </button>
-                  )}
-                  {a.status === 'completed' && !a.invoice_id && canAct(a) && (
-                    <button type="button" onClick={() => openCreateInvoice(a)}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700">
-                      + Lập hóa đơn
-                    </button>
-                  )}
-                  {a.status === 'completed' && a.invoice_id && (
-                    <button type="button" onClick={() => setInvoiceDetailId(a.invoice_id)}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100">
-                      Hóa đơn
-                    </button>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    {a.status === 'completed' && a.invoice_id && (
+                      <span className={`mr-auto inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${PAYMENT_STATUS_STYLE[a.invoice_payment_status] || 'bg-gray-100 text-gray-700'}`}>
+                        {PAYMENT_STATUS_LABEL[a.invoice_payment_status] || a.invoice_payment_status}
+                      </span>
+                    )}
+                    {next && canAct(a) && (
+                      <button type="button" disabled={busyId === a.id} onClick={() => advance(a)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-600 disabled:opacity-60">{busyId === a.id ? '...' : next.label}</button>
+                    )}
+                    {a.status === 'completed' && !a.invoice_id && canAct(a) && (
+                      <button type="button" onClick={() => openCreateInvoice(a)} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-emerald-600">+ Lập hóa đơn</button>
+                    )}
+                    {a.status === 'completed' && a.invoice_id && (
+                      <button type="button" onClick={() => setInvoiceDetailId(a.invoice_id)} className="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 border border-emerald-200">Hóa đơn</button>
+                    )}
+                    <button type="button" onClick={() => setDetailId(a.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 border border-gray-200">Chi tiết</button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
 
       {pagination.total_pages > 1 && (
@@ -283,9 +359,9 @@ const AppointmentsManagePage = () => {
       {detailId && (
         <AppointmentDetailModal id={detailId} staffMode onClose={() => setDetailId(null)} renderActions={renderActions} onChanged={load} />
       )}
+      {changeTarget && <ChangeRequestModal appointment={changeTarget} onClose={() => setChangeTarget(null)} />}
       {cancelTarget && <CancelModal appointment={cancelTarget} onClose={() => setCancelTarget(null)} onDone={afterChange} />}
       {reschedTarget && <RescheduleModal appointment={reschedTarget} accent="blue" onClose={() => setReschedTarget(null)} onDone={afterChange} />}
-      {isStaff && showBooking && <StaffBookingModal onClose={() => setShowBooking(false)} onDone={afterChange} />}
       {careTarget && (
         <CareStepModal
           appointment={careTarget.apt}

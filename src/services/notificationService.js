@@ -6,6 +6,10 @@ export const NOTIFICATION_TYPES = [
   'appointment_confirmed',
   'appointment_cancelled',
   'appointment_assigned',
+  'appointment_reassigned',
+  'appointment_rescheduled',
+  'change_request',
+  'change_request_result',
   'appointment_checked_in',
   'appointment_started',
   'appointment_completed',
@@ -98,6 +102,26 @@ export const notifyAppointment = async (event, appointment, actor) => {
         message: `Lịch ${appointment.appointment_code} cho ${label}.`,
       }, { excludeUserId: actor?.id });
       break;
+    case 'reassigned':
+      // Đổi nhân viên phụ trách: báo khách để nắm thông tin
+      await send([customerId], 'appointment_reassigned', {
+        ...base, title: 'Đổi nhân viên phụ trách',
+        message: `Lịch ${appointment.appointment_code} (${label}) do ${appointment.employee_name || 'nhân viên khác'} phụ trách.`,
+      }, { excludeUserId: actor?.id });
+      break;
+    case 'rescheduled':
+      if (byCustomer) {
+        await send([...(await adminIds()), staffUserId], 'appointment_rescheduled', {
+          ...base, title: 'Khách đã đổi lịch hẹn',
+          message: `${appointment.customer_name} đổi lịch ${appointment.appointment_code} sang ${label}.`,
+        }, { excludeUserId: actor.id });
+      } else {
+        await send([customerId], 'appointment_rescheduled', {
+          ...base, title: 'Lịch hẹn đã được dời',
+          message: `Lịch ${appointment.appointment_code} được dời sang ${label}. Vui lòng kiểm tra lại thời gian.`,
+        }, { excludeUserId: actor?.id });
+      }
+      break;
     case 'checked_in':
       await send([customerId], 'appointment_checked_in', {
         ...base, title: 'Pet Spa đã tiếp nhận bé',
@@ -118,6 +142,39 @@ export const notifyAppointment = async (event, appointment, actor) => {
       break;
     default:
   }
+};
+
+/**
+ * Đề xuất chuyển nhân viên / dời lịch (cần khách đồng ý).
+ * proposed: báo khách; accepted/declined: báo nhân viên đề xuất + admin.
+ */
+export const notifyChangeRequest = async (event, request, appointment, actor) => {
+  const base = { appointment_id: appointment.id, appointment_code: appointment.appointment_code, link: 'appointments', request_id: request.id };
+  const isHandover = request.request_type === 'handover';
+  const target = isHandover
+    ? `chuyển cho ${request.proposed_employee_name || 'nhân viên khác'} phụ trách`
+    : `dời sang ${String(request.proposed_start_time).slice(0, 5)} ${fmtDate(
+        request.proposed_date instanceof Date
+          ? `${request.proposed_date.getFullYear()}-${String(request.proposed_date.getMonth() + 1).padStart(2, '0')}-${String(request.proposed_date.getDate()).padStart(2, '0')}`
+          : request.proposed_date)}`;
+  if (event === 'proposed') {
+    await send([appointment.customer_id], 'change_request', {
+      ...base,
+      title: isHandover ? 'Spa đề xuất đổi nhân viên phụ trách' : 'Spa đề xuất dời lịch hẹn',
+      message: `Lịch ${appointment.appointment_code} (${appointment.pet_name}) cần ${target}${request.reason ? ` – ${request.reason}` : ''}. Vui lòng xác nhận trong mục Lịch hẹn của tôi.`,
+    }, { excludeUserId: actor?.id });
+    return;
+  }
+  const accepted = event === 'accepted';
+  const recipients = [request.created_by, ...(await adminIds())];
+  await send(recipients, 'change_request_result', {
+    ...base,
+    title: accepted ? 'Khách đã đồng ý đề xuất' : 'Khách không đồng ý đề xuất',
+    message: accepted
+      ? `${appointment.customer_name} đồng ý ${target} (lịch ${appointment.appointment_code}).`
+      : `${appointment.customer_name} không đồng ý ${target} (lịch ${appointment.appointment_code}).${
+        isHandover ? ' Hãy đề xuất dời lịch cho khách.' : ' Nếu không sắp xếp được, hãy hủy lịch và báo khách.'}`,
+  }, { excludeUserId: actor?.id });
 };
 
 /** Hóa đơn mới / thanh toán: báo cho khách của lịch hẹn */

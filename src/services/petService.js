@@ -83,6 +83,8 @@ const createPet = async (user, body, req) => {
     birth_month: toBirthDate(parsed.birth_month),
     weight_kg: roundWeight(parsed.weight_kg),
     special_notes: parsed.special_notes,
+    allergies: parsed.allergies,
+    vaccination_notes: parsed.vaccination_notes,
   });
   const pet = await petRepository.findById(id);
 
@@ -123,7 +125,8 @@ const updatePet = async (user, id, body, req) => {
     entity_id: id,
     old_values: {
       name: old.name, species: old.species, breed: old.breed, gender: old.gender,
-      birth_month: old.birth_month, weight_kg: old.weight_kg, special_notes: old.special_notes, status: old.status,
+      birth_month: old.birth_month, weight_kg: old.weight_kg, special_notes: old.special_notes,
+      allergies: old.allergies, vaccination_notes: old.vaccination_notes, status: old.status,
     },
     new_values: fields,
   });

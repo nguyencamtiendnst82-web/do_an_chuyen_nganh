@@ -67,6 +67,8 @@ CREATE TABLE `pets` (
     `birth_month` DATE NULL COMMENT 'Tháng sinh (lưu ngày 01); tuổi được tự tính từ cột này',
     `weight_kg` DECIMAL(5, 2) NULL COMMENT 'Cân nặng (kg) hỗ trợ tính giá/chọn liều lượng dịch vụ',
     `special_notes` TEXT NULL COMMENT 'Lưu ý sức khỏe, dị ứng thuốc, tính khí, thói quen',
+    `allergies` TEXT NULL COMMENT 'Dị ứng (thức ăn, thuốc, sản phẩm tắm...)',
+    `vaccination_notes` TEXT NULL COMMENT 'Ghi chú tiêm phòng / tẩy giun',
     `avatar_url` VARCHAR(255) NULL COMMENT 'Hình ảnh thú cưng',
     `status` ENUM('active', 'inactive') DEFAULT 'active' COMMENT 'Trạng thái theo dõi',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -148,7 +150,7 @@ CREATE TABLE `appointments` (
     `appointment_date` DATE NOT NULL COMMENT 'Ngày thực hiện hẹn',
     `start_time` TIME NOT NULL COMMENT 'Giờ bắt đầu hẹn',
     `end_time` TIME NOT NULL COMMENT 'Giờ kết thúc dự kiến (tính từ tổng thời lượng dịch vụ)',
-    `status` ENUM('pending', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending' COMMENT 'Quy trình trạng thái lịch hẹn',
+    `status` ENUM('pending', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show') DEFAULT 'pending' COMMENT 'Quy trình trạng thái lịch hẹn',
     `cancellation_reason` VARCHAR(255) NULL COMMENT 'Lý do hủy lịch nếu khách hoặc nhân viên hủy',
     `customer_notes` TEXT NULL COMMENT 'Ghi chú yêu cầu từ phía khách hàng',
     `staff_notes` TEXT NULL COMMENT 'Ghi chú nội bộ của nhân viên tiếp nhận/quản trị',
@@ -290,3 +292,21 @@ CREATE TABLE `system_logs` (
 CREATE INDEX `idx_logs_action` ON `system_logs` (`action`);
 CREATE INDEX `idx_logs_entity` ON `system_logs` (`entity_name`, `entity_id`);
 CREATE INDEX `idx_logs_created_at` ON `system_logs` (`created_at`);
+
+-- Đề xuất chuyển nhân viên / dời lịch cần khách đồng ý
+CREATE TABLE IF NOT EXISTS appointment_change_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  appointment_id INT NOT NULL,
+  request_type ENUM('handover','reschedule') NOT NULL COMMENT 'handover: chuyển nhân viên; reschedule: dời lịch',
+  proposed_employee_id INT NULL,
+  proposed_date DATE NULL,
+  proposed_start_time TIME NULL,
+  reason VARCHAR(255) NULL,
+  status ENUM('pending','accepted','declined','expired','cancelled') NOT NULL DEFAULT 'pending',
+  created_by INT NOT NULL COMMENT 'users.id của nhân viên đề xuất',
+  expires_at DATETIME NOT NULL,
+  responded_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_acr_appointment (appointment_id, status),
+  CONSTRAINT fk_acr_appointment FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='Đề xuất thay đổi lịch hẹn cần khách đồng ý';

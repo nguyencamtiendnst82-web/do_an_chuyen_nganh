@@ -37,7 +37,7 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
         setLoadingQR(true);
         invoiceApi
           .getVietQR(invoiceId)
-          .then((qrRes) => setVietqrUrl(qrRes.data.data.vietqr_url))
+          .then((qrRes) => setVietqrUrl(qrRes.data.data.qr_url || qrRes.data.data.vietqr_url))
           .catch(() => setVietqrUrl(''))
           .finally(() => setLoadingQR(false));
       } else {
@@ -73,13 +73,22 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
     onUpdated?.();
   };
 
+  // In bằng một bản sao hóa đơn gắn thẳng vào <body>; CSS in ẩn (display: none) toàn bộ phần còn lại,
+  // nên chỉ ra đúng 1 trang (không dùng visibility vì phần ẩn vẫn chiếm chỗ và sinh thêm trang trắng).
   const handlePrint = () => {
+    const source = document.getElementById('invoice-print');
+    if (!source) return;
+    const copy = document.createElement('div');
+    copy.id = 'invoice-print-root';
+    copy.innerHTML = source.innerHTML;
+    document.body.appendChild(copy);
+    window.addEventListener('afterprint', () => copy.remove(), { once: true });
     window.print();
   };
 
   return (
     <>
-      <Modal title="Chi tiết hóa đơn" onClose={onClose}>
+      <Modal title="Chi tiết hóa đơn" onClose={onClose} width="max-w-2xl">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4" role="alert">
             {error}
@@ -93,19 +102,24 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
             <div className="h-32 bg-gray-100 rounded-xl animate-pulse" />
           </div>
         ) : invoice ? (
-          <div className="space-y-5 text-sm print:text-black">
-            {/* Header hóa đơn */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-4">
+          <div id="invoice-print" className="space-y-5 text-sm text-gray-900">
+            {/* Tiêu đề: thương hiệu + mã hóa đơn */}
+            <div className="flex flex-wrap items-start justify-between gap-4 pb-4 border-b-2 border-gray-900">
               <div>
-                <span className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Mã hóa đơn</span>
-                <h3 className="text-xl font-bold font-mono text-gray-900">{invoice.invoice_code}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Ngày lập: {formatDate(invoice.created_at)} · Lịch hẹn: <span className="font-mono">{invoice.appointment_code}</span>
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden="true">🐾</span>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900 leading-tight">Pet Spa</p>
+                    <p className="text-[11px] text-gray-500">Dịch vụ chăm sóc & làm đẹp thú cưng</p>
+                  </div>
+                </div>
               </div>
-              <div>
+              <div className="text-right">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500 font-semibold">Hóa đơn dịch vụ</p>
+                <p className="text-base font-bold font-mono text-gray-900 break-all">{invoice.invoice_code}</p>
+                <p className="text-xs text-gray-500">Ngày lập: {formatDate(invoice.created_at)}</p>
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${
+                  className={`inline-flex items-center mt-1.5 px-3 py-0.5 rounded-full text-[11px] font-semibold border ${
                     PAYMENT_STATUS_STYLE[invoice.payment_status] || 'bg-gray-100 text-gray-700'
                   }`}
                 >
@@ -114,103 +128,118 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
               </div>
             </div>
 
-            {/* Thông tin khách hàng & thú cưng */}
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+            {/* Thông tin khách hàng & lịch hẹn */}
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 text-xs">
               <div>
-                <span className="text-xs text-gray-500 block">Khách hàng:</span>
-                <span className="font-semibold text-gray-900">{invoice.customer_name}</span>
+                <dt className="text-gray-500">Khách hàng</dt>
+                <dd className="font-semibold text-gray-900 mt-0.5">{invoice.customer_name}</dd>
               </div>
               <div>
-                <span className="text-xs text-gray-500 block">Thú cưng:</span>
-                <span className="font-semibold text-gray-900">{invoice.pet_name}</span>
+                <dt className="text-gray-500">Thú cưng</dt>
+                <dd className="font-semibold text-gray-900 mt-0.5">{invoice.pet_name}</dd>
               </div>
-            </div>
+              <div>
+                <dt className="text-gray-500">Thanh toán</dt>
+                <dd className="font-semibold text-gray-900 mt-0.5">Ngay khi hoàn tất dịch vụ</dd>
+              </div>
+            </dl>
 
             {/* Bảng chi tiết dịch vụ & phụ phí */}
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Chi tiết khoản thu</h4>
-              <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
-                <div className="bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 grid grid-cols-12">
-                  <div className="col-span-6">Khoản mục</div>
-                  <div className="col-span-2 text-center">SL</div>
-                  <div className="col-span-2 text-right">Đơn giá</div>
-                  <div className="col-span-2 text-right">Thành tiền</div>
-                </div>
-
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase tracking-wide text-[10px]">
+                  <th className="text-left font-semibold px-3 py-2 w-8">#</th>
+                  <th className="text-left font-semibold px-3 py-2">Khoản mục</th>
+                  <th className="text-center font-semibold px-3 py-2">SL</th>
+                  <th className="text-right font-semibold px-3 py-2">Đơn giá</th>
+                  <th className="text-right font-semibold px-3 py-2">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 border-b border-gray-200">
                 {details.map((item, idx) => {
                   const isSurcharge = item.service_id === null;
                   return (
-                    <div key={idx} className="px-3 py-2.5 text-xs grid grid-cols-12 items-center bg-white">
-                      <div className="col-span-6">
+                    <tr key={idx}>
+                      <td className="px-3 py-2.5 text-gray-400">{idx + 1}</td>
+                      <td className="px-3 py-2.5">
                         <span className="font-medium text-gray-900">{item.item_name}</span>
                         {isSurcharge && (
                           <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-medium">
                             Phụ phí
                           </span>
                         )}
-                      </div>
-                      <div className="col-span-2 text-center text-gray-600">{item.quantity}</div>
-                      <div className="col-span-2 text-right text-gray-600">{formatVND(item.unit_price)}</div>
-                      <div className="col-span-2 text-right font-medium text-gray-900">{formatVND(item.total_price)}</div>
-                    </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-center text-gray-600">{item.quantity}</td>
+                      <td className="px-3 py-2.5 text-right text-gray-600 tabular-nums">{formatVND(item.unit_price)}</td>
+                      <td className="px-3 py-2.5 text-right font-medium text-gray-900 tabular-nums">{formatVND(item.total_price)}</td>
+                    </tr>
                   );
                 })}
-              </div>
-            </div>
+              </tbody>
+            </table>
 
-            {/* Tổng hợp tài chính */}
-            <div className="bg-gray-50 rounded-xl p-4 space-y-1.5 border border-gray-200">
-              <div className="flex justify-between text-gray-600">
-                <span>Tạm tính dịch vụ:</span>
-                <span>{formatVND(invoice.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Tổng cộng hóa đơn:</span>
-                <span className="font-semibold text-gray-900">{formatVND(totalAmount)}</span>
-              </div>
-              <div className="flex justify-between text-emerald-600">
-                <span>Đã thanh toán:</span>
-                <span className="font-semibold">{formatVND(totalPaid)}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200">
-                <span>Còn lại phải trả:</span>
-                <span className={remaining > 0 ? 'text-red-600' : 'text-emerald-700'}>
-                  {formatVND(remaining)}
-                </span>
+            {/* Tổng hợp tài chính (căn phải) */}
+            <div className="flex justify-end">
+              <div className="w-full sm:w-72 space-y-1.5 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Tạm tính dịch vụ</span>
+                  <span className="tabular-nums">{formatVND(invoice.subtotal)}</span>
+                </div>
+                {totalAmount !== Number(invoice.subtotal) && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Phụ phí</span>
+                    <span className="tabular-nums">{formatVND(totalAmount - Number(invoice.subtotal))}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-gray-900 pt-1.5 border-t border-gray-300 text-base">
+                  <span>Tổng cộng</span>
+                  <span className="tabular-nums">{formatVND(totalAmount)}</span>
+                </div>
+                <div className="flex justify-between text-emerald-700">
+                  <span>Đã thanh toán</span>
+                  <span className="tabular-nums">− {formatVND(totalPaid)}</span>
+                </div>
+                <div className={`flex justify-between font-bold px-3 py-2 rounded-lg ${remaining > 0 ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                  <span>Còn lại phải trả</span>
+                  <span className="tabular-nums">{formatVND(remaining)}</span>
+                </div>
               </div>
             </div>
 
             {/* Lịch sử thanh toán */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Lịch sử thanh toán</h4>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Lịch sử thanh toán</h4>
               {payments.length === 0 ? (
                 <p className="text-xs text-gray-400 italic bg-gray-50 p-3 rounded-lg text-center border border-dashed border-gray-200">
                   Chưa có giao dịch thanh toán nào được ghi nhận.
                 </p>
               ) : (
-                <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden text-xs">
-                  {payments.map((p, idx) => (
-                    <div key={idx} className="p-3 bg-white flex flex-wrap justify-between items-center gap-2">
-                      <div>
-                        <span className="font-mono font-medium text-gray-800">{p.payment_code}</span>
-                        <div className="text-gray-500 text-[11px] mt-0.5">
-                          {PAYMENT_METHOD_LABEL[p.payment_method] || p.payment_method} · {formatDate(p.payment_time)}
-                        </div>
-                        {p.notes && <p className="text-gray-600 text-[11px] mt-0.5 italic">"{p.notes}"</p>}
-                      </div>
-                      <div className="text-right">
-                        <span className="font-semibold text-emerald-600 text-sm">{formatVND(p.amount)}</span>
-                        <div className="text-[10px] text-gray-400 uppercase">{p.status}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="text-gray-500 text-[10px] uppercase tracking-wide border-b border-gray-200">
+                      <th className="text-left font-semibold py-1.5">Mã giao dịch</th>
+                      <th className="text-left font-semibold py-1.5">Phương thức</th>
+                      <th className="text-left font-semibold py-1.5">Ngày</th>
+                      <th className="text-right font-semibold py-1.5">Số tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {payments.map((p, idx) => (
+                      <tr key={idx}>
+                        <td className="py-2 font-mono text-gray-800">{p.payment_code}{p.notes && <span className="block text-[11px] text-gray-500 italic font-sans">{p.notes}</span>}</td>
+                        <td className="py-2 text-gray-600">{PAYMENT_METHOD_LABEL[p.payment_method] || p.payment_method}</td>
+                        <td className="py-2 text-gray-600">{formatDate(p.payment_time)}</td>
+                        <td className="py-2 text-right font-semibold text-emerald-700 tabular-nums">{formatVND(p.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
 
             {/* Khách hàng: Hiển thị VietQR để quét thanh toán */}
             {!isStaffOrAdmin && remaining > 0 && (
-              <div className="p-4 bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-2xl text-center space-y-3">
+              <div className="print:hidden p-4 bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-2xl text-center space-y-3">
                 <div>
                   <h4 className="text-sm font-bold text-pink-900">Quét mã VietQR để thanh toán</h4>
                   <p className="text-xs text-gray-600 mt-0.5">
@@ -244,14 +273,19 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
               </div>
             )}
 
+            <div className="text-center pt-4 border-t border-dashed border-gray-300">
+              <p className="text-sm font-semibold text-gray-900">Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Pet Spa!</p>
+              <p className="text-xs text-gray-500 mt-0.5">Rất hân hạnh được đồng hành cùng bé yêu của bạn trong những lần chăm sóc tiếp theo 🐾</p>
+            </div>
+
             {/* Actions footer */}
-            <div className="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-gray-200">
+            <div className="print:hidden flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-gray-200">
               <button
                 type="button"
                 onClick={handlePrint}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1.5"
               >
-                🖨 In hóa đơn
+                🖨 In / Lưu PDF
               </button>
 
               <div className="flex gap-2">

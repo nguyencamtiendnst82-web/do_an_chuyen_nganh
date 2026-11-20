@@ -7,18 +7,46 @@ export const APPOINTMENT_STATUS = {
   IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
 };
+
+/** Số giờ tối thiểu trước giờ hẹn mà khách còn được tự hủy/đổi lịch (cấu hình CANCEL_MIN_HOURS, mặc định 2) */
+export const getCancelMinHours = () => {
+  const n = Number(process.env.CANCEL_MIN_HOURS);
+  return Number.isFinite(n) && n >= 0 ? n : 2;
+};
+
+const appointmentDateTime = (appointment) => {
+  const d = appointment.appointment_date;
+  const dateStr = typeof d === 'string'
+    ? d.slice(0, 10)
+    : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = String(appointment.start_time).slice(0, 5).split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, 0);
+};
+
+/** Số phút chờ khách sau giờ hẹn trước khi được đánh dấu "không đến" (NO_SHOW_GRACE_MINUTES, mặc định 15) */
+export const getNoShowGraceMinutes = () => {
+  const n = Number(process.env.NO_SHOW_GRACE_MINUTES);
+  return Number.isFinite(n) && n >= 0 ? n : 15;
+};
+
+/** Đã quá giờ hẹn + thời gian chờ: mới được xác định khách không đến */
+export const hasAppointmentStarted = (appointment, now = new Date()) =>
+  appointmentDateTime(appointment).getTime() + getNoShowGraceMinutes() * 60000 <= now.getTime();
 
 /**
  * Các bước chuyển đổi trạng thái hợp lệ trong hệ thống
  */
 export const ALLOWED_TRANSITIONS = {
   [APPOINTMENT_STATUS.PENDING]: [APPOINTMENT_STATUS.CONFIRMED, APPOINTMENT_STATUS.CANCELLED],
-  [APPOINTMENT_STATUS.CONFIRMED]: [APPOINTMENT_STATUS.CHECKED_IN, APPOINTMENT_STATUS.CANCELLED],
+  [APPOINTMENT_STATUS.CONFIRMED]: [APPOINTMENT_STATUS.CHECKED_IN, APPOINTMENT_STATUS.CANCELLED, APPOINTMENT_STATUS.NO_SHOW],
   [APPOINTMENT_STATUS.CHECKED_IN]: [APPOINTMENT_STATUS.IN_PROGRESS],
   [APPOINTMENT_STATUS.IN_PROGRESS]: [APPOINTMENT_STATUS.COMPLETED],
   [APPOINTMENT_STATUS.COMPLETED]: [], // Trạng thái kết thúc, không thể đổi
   [APPOINTMENT_STATUS.CANCELLED]: [], // Trạng thái kết thúc, không thể đổi
+  [APPOINTMENT_STATUS.NO_SHOW]: [], // Khách không đến, kết thúc
 };
 
 /**
@@ -31,6 +59,7 @@ export const STATUS_LABELS = {
   [APPOINTMENT_STATUS.IN_PROGRESS]: 'Đang phục vụ',
   [APPOINTMENT_STATUS.COMPLETED]: 'Đã hoàn tất',
   [APPOINTMENT_STATUS.CANCELLED]: 'Đã hủy',
+  [APPOINTMENT_STATUS.NO_SHOW]: 'Khách không đến',
 };
 
 /**
@@ -62,6 +91,10 @@ export const validateTransition = (currentStatus, nextStatus) => {
     throw httpError(409, 'Lịch hẹn đã bị hủy, không thể thay đổi trạng thái.');
   }
 
+  if (currentStatus === APPOINTMENT_STATUS.NO_SHOW) {
+    throw httpError(409, 'Lịch hẹn đã đánh dấu khách không đến, không thể thay đổi trạng thái.');
+  }
+
   if (!isValidTransition(currentStatus, nextStatus)) {
     const fromLabel = STATUS_LABELS[currentStatus] || currentStatus;
     const toLabel = STATUS_LABELS[nextStatus] || nextStatus;
@@ -75,7 +108,7 @@ export const validateTransition = (currentStatus, nextStatus) => {
 /**
  * Kiểm tra điều kiện hủy lịch đối với khách hàng:
  * 1. Trạng thái phải là pending hoặc confirmed.
- * 2. Phải trước giờ hẹn tối thiểu 2 giờ (so với thời điểm hiện tại).
+ * 2. Phải trước giờ hẹn tối thiểu CANCEL_MIN_HOURS giờ (mặc định 2) (so với thời điểm hiện tại).
  * 3. Bắt buộc có lý do hủy (3–500 ký tự).
  *
  * @param {object} appointment - { appointment_date, start_time, status }
@@ -100,29 +133,22 @@ export const validateCancellation = (appointment, role, reason, now = new Date()
 
   // Khách hàng: kiểm tra quy tắc trước giờ hẹn tối thiểu 2 giờ
   if (role === 'customer') {
-    const d = appointment.appointment_date;
-    const dateStr = typeof d === 'string'
-    ? d.slice(0, 10)
-    : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const timeStr = appointment.start_time.slice(0, 5);
+    const diffHours = (appointmentDateTime(appointment).getTime() - now.getTime()) / (1000 * 60 * 60);
+    const minHours = getCancelMinHours();
 
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const appointmentDateTime = new Date(year, month - 1, day, hours, minutes, 0);
-
-    const diffMs = appointmentDateTime.getTime() - now.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-
-    if (diffHours < 2) {
+    if (diffHours < minHours) {
       throw httpError(
         403,
-        'Khách hàng chỉ có thể hủy lịch hẹn trước giờ hẹn tối thiểu 2 giờ. Vui lòng liên hệ trực tiếp spa để được hỗ trợ.'
+        `Khách hàng chỉ có thể hủy lịch hẹn trước giờ hẹn tối thiểu ${minHours} giờ. Vui lòng liên hệ trực tiếp spa để được hỗ trợ.`
       );
     }
   }
 };
 
 export default {
+  getCancelMinHours,
+  getNoShowGraceMinutes,
+  hasAppointmentStarted,
   APPOINTMENT_STATUS,
   ALLOWED_TRANSITIONS,
   STATUS_LABELS,

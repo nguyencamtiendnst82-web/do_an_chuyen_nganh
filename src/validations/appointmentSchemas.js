@@ -60,7 +60,7 @@ export const assignEmployeeSchema = z.object({
 });
 
 export const updateStatusSchema = z.object({
-  status: z.enum(['pending', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled'], {
+  status: z.enum(['pending', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show'], {
     error: () => 'Trạng thái lịch hẹn không hợp lệ',
   }),
   cancellation_reason: z.string().max(500).optional().nullable(),

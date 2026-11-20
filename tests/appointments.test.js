@@ -389,9 +389,8 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
     // Giờ đặt Staff 2 một lịch từ 09:15 - 10:15 (sau lịch 08:00 - 09:00 + đệm 15 phút) để lấp kín khung giờ cho cả 2 nhân viên
     const resFill = await request(app)
       .post('/api/appointments')
-      .set(authHeader(staffUser1)) // nhân viên đặt hộ khách (admin không được đặt lịch)
+      .set(authHeader(customerUserB)) // khách B tự đặt cho nhân viên 2
       .send({
-        customerId: customerUserB.id,
         petId: petB,
         serviceIds: [serviceBathId],
         appointmentDate: tomorrowStr,
@@ -565,6 +564,11 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
         employeeId: employeeId2,
       });
     const aptId = createRes.body.data.id;
+
+    // Nhân viên cũng không đặt hộ khách được
+    const staffBook = await request(app).post('/api/appointments').set(authHeader(staffUser1))
+      .send({ customerId: customerUserA.id, petId: petA2, serviceIds: [serviceBathId], appointmentDate: dayAfterTomorrowStr, startTime: '16:00' });
+    expect(staffBook.status).toBe(403);
 
     // Admin chỉ xem: mọi thao tác ghi trên lịch hẹn đều bị chặn 403
     const adminAttempts = await Promise.all([

@@ -173,6 +173,23 @@ describe('Thú cưng: staff và admin', () => {
     expect(after.body.data.pet.status).toBe('active');
   });
 
+  test('PT14b. Dị ứng và tiêm phòng: khách lưu/sửa được, staff và admin xem được', async () => {
+    const created = await createPet(ownerA, newPet({ allergies: 'Dị ứng dầu tắm hương hoa', vaccination_notes: 'Dại 03/2026' }));
+    expect(created.status).toBe(201);
+    const id = created.body.data.pet.id;
+    expect(created.body.data.pet.allergies).toBe('Dị ứng dầu tắm hương hoa');
+
+    const upd = await request(app).put(`/api/pets/${id}`).set(authHeader(ownerA)).send({ vaccination_notes: 'Dại 03/2026, 5 bệnh 01/2026' });
+    expect(upd.status).toBe(200);
+    expect(upd.body.data.pet.vaccination_notes).toContain('5 bệnh');
+
+    for (const viewer of [staff, admin]) {
+      const res = await request(app).get(`/api/pets/${id}`).set(authHeader(viewer));
+      expect(res.status).toBe(200);
+      expect(res.body.data.pet.allergies).toBe('Dị ứng dầu tắm hương hoa');
+    }
+  });
+
   test('PT14. Admin vẫn XEM được thú của khách', async () => {
     const created = await createPet(ownerA, newPet());
     const res = await request(app).get(`/api/pets/${created.body.data.pet.id}`).set(authHeader(admin));

@@ -165,7 +165,7 @@ const countActiveFutureAppointmentsByEmployee = async (employeeId) => {
     `SELECT COUNT(*) AS total
      FROM appointments
      WHERE employee_id = ?
-       AND status NOT IN ('cancelled', 'completed')
+       AND status NOT IN ('cancelled', 'completed', 'no_show')
        AND (appointment_date > CURDATE() OR (appointment_date = CURDATE() AND end_time > CURTIME()))`,
     [employeeId]
   );

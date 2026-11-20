@@ -7,3 +7,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* In hóa đơn: chỉ in bản sao #invoice-print-root, mọi phần khác bị loại khỏi bố cục khi in */
+#invoice-print-root { display: none; }
+@media print {
+  body > *:not(#invoice-print-root) { display: none !important; }
+  #invoice-print-root { display: block; padding: 12mm; font-size: 12px; color: #111; }
+  #invoice-print-root > * + * { margin-top: 14px; }
+  @page { size: A4; margin: 0; }
+}

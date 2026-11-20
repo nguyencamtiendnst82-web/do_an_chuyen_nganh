@@ -240,14 +240,19 @@ const recordPayment = async (actor, rawInvoiceId, body = {}, req = {}) => {
       throw httpError(409, 'Hóa đơn đã được hoàn tiền, không thể nhận thanh toán.');
     }
 
-    const totalPaid = await invoiceRepository.sumSuccessfulPayments(conn, invoiceId);
-    const totalAmount = Number(invoice.total_amount);
-    const remaining = Math.max(0, totalAmount - totalPaid);
+    // Toàn bộ phép so sánh tiền dùng số nguyên (xu) kiểu BigInt, không dùng số thực
+    const totalPaidCents = toCents(await invoiceRepository.sumSuccessfulPayments(conn, invoiceId));
+    const totalCents = toCents(invoice.total_amount);
+    const amountCents = toCents(parsed.amount);
+    if (totalPaidCents === null || totalCents === null || amountCents === null || amountCents <= 0n) {
+      throw httpError(422, 'Số tiền thanh toán không hợp lệ.');
+    }
+    const remainingCents = totalCents > totalPaidCents ? totalCents - totalPaidCents : 0n;
 
-    if (parsed.amount > remaining) {
+    if (amountCents > remainingCents) {
       throw httpError(
         422,
-        `Số tiền thanh toán (${parsed.amount.toLocaleString('vi-VN')} đ) vượt quá số tiền còn lại cần thanh toán (${remaining.toLocaleString('vi-VN')} đ).`
+        `Số tiền thanh toán (${parsed.amount.toLocaleString('vi-VN')} đ) vượt quá số tiền còn lại cần thanh toán (${Number(remainingCents / 100n).toLocaleString('vi-VN')} đ).`
       );
     }
 
@@ -255,15 +260,14 @@ const recordPayment = async (actor, rawInvoiceId, body = {}, req = {}) => {
     paymentId = await invoiceRepository.createPayment(conn, {
       invoice_id: invoiceId,
       payment_code: paymentCode,
-      amount: parsed.amount,
+      amount: centsToString(amountCents),
       payment_method: parsed.payment_method,
       status: 'success',
       processed_by: actor.id,
       notes: parsed.notes || null,
     });
 
-    const newTotalPaid = totalPaid + parsed.amount;
-    newStatus = newTotalPaid >= totalAmount ? 'paid' : 'partially_paid';
+    newStatus = totalPaidCents + amountCents >= totalCents ? 'paid' : 'partially_paid';
     await invoiceRepository.updatePaymentStatus(conn, invoiceId, newStatus);
 
     await conn.commit();
@@ -313,17 +317,18 @@ const getVietQR = async (actor, rawInvoiceId) => {
   if (!invoice) throw httpError(404, 'Không tìm thấy hóa đơn.');
   await assertCanViewInvoice(actor, invoice);
 
-  const totalPaid = await invoiceRepository.sumSuccessfulPayments(pool, invoiceId);
-  const totalAmount = Number(invoice.total_amount);
-  const remaining = Math.max(0, totalAmount - totalPaid);
+  const totalPaidCents = toCents(await invoiceRepository.sumSuccessfulPayments(pool, invoiceId)) ?? 0n;
+  const totalCents = toCents(invoice.total_amount) ?? 0n;
+  const remainingCents = totalCents > totalPaidCents ? totalCents - totalPaidCents : 0n;
+  const remaining = Number(remainingCents / 100n);
 
-  if (remaining <= 0) {
+  if (remainingCents <= 0n) {
     throw httpError(400, 'Hóa đơn đã được thanh toán đầy đủ, không cần tạo mã QR thanh toán.');
   }
 
-  const bankId = 'MB';
-  const accountNo = '0987654321';
-  const accountName = 'PET SPA SYSTEM';
+  const bankId = process.env.VIETQR_BANK_ID || 'MB';
+  const accountNo = process.env.VIETQR_ACCOUNT_NO || '0987654321';
+  const accountName = process.env.VIETQR_ACCOUNT_NAME || 'PET SPA SYSTEM';
   const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${remaining}&addInfo=${encodeURIComponent(invoice.invoice_code)}&accountName=${encodeURIComponent(accountName)}`;
 
   return {

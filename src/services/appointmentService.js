@@ -7,6 +7,15 @@ import careRepository from '../repositories/careRepository.js';
 import serviceRepository from '../repositories/serviceRepository.js';
 import logRepository from '../repositories/logRepository.js';
 import { notifyAppointment } from './notificationService.js';
+
+/** Việc phụ sau khi đã commit (ghi log, thông báo): lỗi chỉ ghi console, không làm hỏng kết quả chính */
+const afterCommit = async (fn) => {
+  try {
+    await fn();
+  } catch (err) {
+    console.error('[afterCommit]', err.message);
+  }
+};
 import {
   createAppointmentSchema,
   rescheduleAppointmentSchema,
@@ -27,6 +36,8 @@ import {
   APPOINTMENT_STATUS,
   validateTransition,
   validateCancellation,
+  hasAppointmentStarted,
+  getNoShowGraceMinutes,
 } from '../utils/appointmentState.js';
 import { countDaysBetween } from '../validations/employeeShiftSchemas.js';
 
@@ -227,28 +238,24 @@ export const getAvailability = async (query = {}) => {
  * Đặt lịch hẹn mới kèm Transaction & SELECT ... FOR UPDATE chống đua
  */
 export const createAppointment = async (actor, rawBody, req) => {
-  // Khách tự đặt lịch phải đã xác minh email (chống đặt lịch ảo bằng email không có thật).
-  // Nhân viên/admin đặt hộ khách tại quầy thì không bị chặn vì đã gặp trực tiếp khách.
-  if (actor.role_name === 'customer') {
-    const self = await userRepository.findById(actor.id);
-    if (!self?.email_verified) {
-      throw httpError(
-        403,
-        'Vui lòng xác minh email trước khi đặt lịch. Hãy kiểm tra hộp thư và bấm vào liên kết xác minh, hoặc gửi lại thư xác minh ở đầu trang.'
-      );
-    }
+  // Chỉ khách hàng tự đặt lịch (nhân viên/admin không đặt hộ).
+  if (actor.role_name !== 'customer') {
+    throw httpError(403, 'Chỉ khách hàng mới đặt được lịch hẹn. Khách có thể tự đặt trực tuyến hoặc đặt ngay tại quầy bằng tài khoản của mình.');
+  }
+  // Khách phải đã xác minh email (chống đặt lịch ảo bằng email không có thật).
+  const self = await userRepository.findById(actor.id);
+  if (!self?.email_verified) {
+    throw httpError(
+      403,
+      'Vui lòng xác minh email trước khi đặt lịch. Hãy kiểm tra hộp thư và bấm vào liên kết xác minh, hoặc gửi lại thư xác minh ở đầu trang.'
+    );
   }
 
   const normalized = normalizeAppointmentInput(rawBody);
   const parsed = createAppointmentSchema.parse(normalized);
 
   // 1. Xác định customerId
-  let customerId = actor.id;
-  if (actor.role_name === 'staff' || actor.role_name === 'admin') {
-    if (parsed.customer_id) {
-      customerId = parsed.customer_id;
-    }
-  }
+  const customerId = actor.id;
 
   // 2. Kiểm tra thông tin khách hàng và số điện thoại
   const customer = await userRepository.findById(customerId);
@@ -466,7 +473,7 @@ export const createAppointment = async (actor, rawBody, req) => {
 
       // Ghi nhật ký hệ thống
       const audit = auditContext(req);
-      await logRepository.insert({
+      await afterCommit(() => logRepository.insert({
         user_id: actor.id,
         action: 'CREATE_APPOINTMENT',
         entity_name: 'appointments',
@@ -483,11 +490,11 @@ export const createAppointment = async (actor, rawBody, req) => {
         },
         ip_address: audit.ip_address,
         user_agent: audit.user_agent,
-      });
+      }));
 
       const created = await appointmentRepository.findById(appointmentId);
       const details = await appointmentRepository.findDetailsByAppointmentId(appointmentId);
-      await notifyAppointment('created', created, actor);
+      await afterCommit(() => notifyAppointment('created', created, actor));
       return { ...created, details };
     } catch (err) {
       await conn.rollback();
@@ -742,7 +749,7 @@ export const rescheduleAppointment = async (actor, rawId, body, req) => {
     await conn.commit();
 
     const audit = auditContext(req);
-    await logRepository.insert({
+    await afterCommit(() => logRepository.insert({
       user_id: actor.id,
       action: 'RESCHEDULE_APPOINTMENT',
       entity_name: 'appointments',
@@ -751,9 +758,11 @@ export const rescheduleAppointment = async (actor, rawId, body, req) => {
       new_values: newValues,
       ip_address: audit.ip_address,
       user_agent: audit.user_agent,
-    });
+    }));
 
-    return appointmentRepository.findById(id);
+    const rescheduled = await appointmentRepository.findById(id);
+    await afterCommit(() => notifyAppointment('rescheduled', rescheduled, actor));
+    return rescheduled;
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -811,7 +820,7 @@ export const cancelAppointment = async (actor, rawId, body, req) => {
   });
 
   const result = await appointmentRepository.findById(id);
-  await notifyAppointment('cancelled', result, actor);
+  await afterCommit(() => notifyAppointment('cancelled', result, actor));
   return result;
 };
 
@@ -881,7 +890,7 @@ export const assignEmployee = async (actor, rawId, body, req) => {
     await conn.commit();
 
     const audit = auditContext(req);
-    await logRepository.insert({
+    await afterCommit(() => logRepository.insert({
       user_id: actor.id,
       action: 'ASSIGN_STAFF',
       entity_name: 'appointments',
@@ -890,10 +899,13 @@ export const assignEmployee = async (actor, rawId, body, req) => {
       new_values: { employee_id: parsed.employee_id },
       ip_address: audit.ip_address,
       user_agent: audit.user_agent,
-    });
+    }));
 
     const result = await appointmentRepository.findById(id);
-    await notifyAppointment('assigned', result, actor);
+    await afterCommit(() => notifyAppointment('assigned', result, actor));
+    if (appointment.employee_id && appointment.employee_id !== parsed.employee_id) {
+      await afterCommit(() => notifyAppointment('reassigned', result, actor));
+    }
     return result;
   } catch (err) {
     await conn.rollback();
@@ -937,7 +949,7 @@ export const confirmAppointment = async (actor, rawId, req) => {
   });
 
   const result = await appointmentRepository.findById(id);
-  await notifyAppointment('confirmed', result, actor);
+  await afterCommit(() => notifyAppointment('confirmed', result, actor));
   return result;
 };
 
@@ -964,6 +976,12 @@ export const updateAppointmentStatus = async (actor, rawId, body, req) => {
       422,
       'Vui lòng dùng chức năng Tiếp nhận hoặc Hoàn tất lịch hẹn để nhập ghi chú và ảnh trước khi đổi trạng thái.'
     );
+  }
+
+  if (parsed.status === APPOINTMENT_STATUS.NO_SHOW && appointment.status === APPOINTMENT_STATUS.CONFIRMED) {
+    if (!hasAppointmentStarted(appointment)) {
+      throw httpError(422, `Chỉ đánh dấu "Không đến" sau giờ hẹn ${getNoShowGraceMinutes()} phút.`);
+    }
   }
 
   if (parsed.status === APPOINTMENT_STATUS.CANCELLED) {
@@ -999,13 +1017,14 @@ export const updateAppointmentStatus = async (actor, rawId, body, req) => {
 
   const result = await appointmentRepository.findById(id);
   if (parsed.status !== appointment.status) {
-    if (parsed.status === APPOINTMENT_STATUS.CONFIRMED) await notifyAppointment('confirmed', result, actor);
-    if (parsed.status === APPOINTMENT_STATUS.CANCELLED) await notifyAppointment('cancelled', result, actor);
+    if (parsed.status === APPOINTMENT_STATUS.CONFIRMED) await afterCommit(() => notifyAppointment('confirmed', result, actor));
+    if (parsed.status === APPOINTMENT_STATUS.CANCELLED) await afterCommit(() => notifyAppointment('cancelled', result, actor));
   }
   return result;
 };
 
 export default {
+  assertStaffOwnsAppointment,
   getAvailability,
   createAppointment,
   getAppointmentById,

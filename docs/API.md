@@ -81,13 +81,13 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/appointments/availability`| Public / Customer | Tra cứu khung giờ trống hợp lệ (tính thời gian đệm 15p) |
 | `GET` | `/api/appointments` | Customer / Staff / Admin | Xem lịch hẹn (Khách xem của mình; Staff & Admin xem tất cả, lọc `my=true` cho Staff) |
-| `POST` | `/api/appointments` | Customer / Staff | Đặt lịch mới (tự gán nhân viên cân bằng tải). Admin: 403 |
+| `POST` | `/api/appointments` | Customer | Khách tự đặt lịch (trực tuyến hoặc tại quầy bằng tài khoản của mình; tự gán nhân viên cân bằng tải). Staff / Admin: 403 |
 | `GET` | `/api/appointments/:id` | Customer / Staff / Admin | Chi tiết lịch hẹn (Admin chỉ xem) |
 | `PATCH`| `/api/appointments/:id/reschedule` | Customer / Staff | Đổi lịch. Admin: 403 |
 | `PATCH`| `/api/appointments/:id/cancel` | Customer / Staff | Hủy lịch hẹn (bắt buộc nhập lý do). Admin: 403 |
 | `PATCH`| `/api/appointments/:id/assign` | Staff | Phân công nhân viên. Admin: 403 |
 | `PATCH`| `/api/appointments/:id/confirm` | Staff | Xác nhận lịch (`pending` → `confirmed`). Admin: 403 |
-| `PATCH`| `/api/appointments/:id/status` | Staff | Cập nhật ghi chú nội bộ / trạng thái hợp lệ. Admin: 403 |
+| `PATCH`| `/api/appointments/:id/status` | Staff | Cập nhật ghi chú nội bộ / trạng thái hợp lệ; `no_show` (khách không đến) chỉ từ `confirmed` và sau giờ hẹn. Admin: 403 |
 | `PATCH`| `/api/appointments/:id/check-in`| Staff | Tiếp nhận thú cưng (tình trạng ban đầu + ảnh trước). Admin: 403 |
 | `PATCH`| `/api/appointments/:id/start` | Staff | Bắt đầu làm dịch vụ (`checked_in` → `in_progress`). Admin: 403 |
 | `PATCH`| `/api/appointments/:id/complete`| Staff | Hoàn tất dịch vụ (ghi chú chăm sóc + ảnh sau). Admin: 403 |

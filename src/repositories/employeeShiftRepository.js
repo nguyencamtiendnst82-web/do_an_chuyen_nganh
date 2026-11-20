@@ -85,7 +85,7 @@ const countAppointmentsForEmployeeShift = async (employeeShiftId) => {
      JOIN employee_shifts es ON a.employee_id = es.employee_id AND a.appointment_date = es.work_date
      JOIN shifts s ON es.shift_id = s.id
      WHERE es.id = ?
-       AND a.status NOT IN ('cancelled', 'completed')
+       AND a.status NOT IN ('cancelled', 'completed', 'no_show')
        AND a.start_time < s.end_time AND a.end_time > s.start_time`,
     [employeeShiftId]
   );

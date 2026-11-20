@@ -9,7 +9,7 @@ import {
 } from '../utils/format'
 
 const emptyForm = {
-  name: '', species: 'dog', gender: 'unknown', breed: '', birth_month: '', weight_kg: '', special_notes: '',
+  name: '', species: 'dog', gender: 'unknown', breed: '', birth_month: '', weight_kg: '', special_notes: '', allergies: '', vaccination_notes: '',
 }
 
 const fromPet = (pet) => ({
@@ -20,6 +20,8 @@ const fromPet = (pet) => ({
   birth_month: pet.birth_month || '',
   weight_kg: pet.weight_kg ?? '',
   special_notes: pet.special_notes || '',
+  allergies: pet.allergies || '',
+  vaccination_notes: pet.vaccination_notes || '',
 })
 
 const MIN_YEAR_SPAN = 40
@@ -85,6 +87,8 @@ const PetFormModal = ({ pet = null, needsOwner = false, onClose, onSaved }) => {
       birth_month: form.birth_month === '' ? null : form.birth_month,
       weight_kg: form.weight_kg === '' ? null : Number(form.weight_kg),
       special_notes: form.special_notes.trim() || null,
+      allergies: form.allergies.trim() || null,
+      vaccination_notes: form.vaccination_notes.trim() || null,
     }
 
     if (needsOwner && !isEdit) payload.customer_id = owner.id
@@ -207,6 +211,22 @@ const PetFormModal = ({ pet = null, needsOwner = false, onClose, onSaved }) => {
             maxLength={2000} className={`${inputClass(errors.special_notes)} resize-none`}
             placeholder="Dị ứng, tính khí, bệnh lý, thói quen... để nhân viên chăm sóc phù hợp" />
           {errors.special_notes && <p className="mt-1 text-xs text-red-600">{errors.special_notes}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="pet-allergies" className="block text-sm font-medium text-gray-700 mb-1">Dị ứng</label>
+          <textarea id="pet-allergies" name="allergies" rows={2} value={form.allergies} onChange={handleChange}
+            maxLength={1000} className={`${inputClass(errors.allergies)} resize-none`}
+            placeholder="Thức ăn, thuốc, dầu tắm, hóa chất... (nếu có)" />
+          {errors.allergies && <p className="mt-1 text-xs text-red-600">{errors.allergies}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="pet-vaccine" className="block text-sm font-medium text-gray-700 mb-1">Tiêm phòng / tẩy giun</label>
+          <textarea id="pet-vaccine" name="vaccination_notes" rows={2} value={form.vaccination_notes} onChange={handleChange}
+            maxLength={1000} className={`${inputClass(errors.vaccination_notes)} resize-none`}
+            placeholder="Ví dụ: Dại - 03/2026, 5 bệnh - 01/2026" />
+          {errors.vaccination_notes && <p className="mt-1 text-xs text-red-600">{errors.vaccination_notes}</p>}
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
