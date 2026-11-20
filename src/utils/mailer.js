@@ -4,6 +4,7 @@
  * Cấu hình qua .env:
  *   SMTP_HOST, SMTP_PORT (mặc định 587), SMTP_SECURE (true nếu cổng 465),
  *   SMTP_USER, SMTP_PASS, MAIL_FROM (mặc định = SMTP_USER)
+ *   SMTP_TLS_REJECT_UNAUTHORIZED=false (chỉ để demo khi gặp lỗi self-signed certificate)
  *
  * - Chưa cấu hình SMTP_HOST:
  *     + môi trường phát triển → IN nội dung thư (kèm link xác minh) ra console để copy, không gửi thật
@@ -45,6 +46,9 @@ const sendMail = async ({ to, subject, text }) => {
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === 'true',
     auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+    // Chỉ dùng khi demo trên máy bị phần mềm diệt virus chen vào kết nối mã hóa (lỗi "self-signed certificate").
+    // Mặc định luôn kiểm tra chứng chỉ; KHÔNG bật khi triển khai thật.
+    ...(process.env.SMTP_TLS_REJECT_UNAUTHORIZED === 'false' ? { tls: { rejectUnauthorized: false } } : {}),
   });
 
   await transporter.sendMail({

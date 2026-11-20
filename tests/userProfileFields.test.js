@@ -74,17 +74,18 @@ describe('Admin: giới tính và năm sinh của nhân viên', () => {
     expect(res.status).toBe(422);
   });
 
-  test('U4. Admin cập nhật giới tính + năm sinh của nhân viên → 200', async () => {
-    const created = await createEmployee(employeePayload());
+  test('U4. Admin KHÔNG được sửa thông tin nhân viên → 403, dữ liệu giữ nguyên', async () => {
+    const created = await createEmployee(employeePayload({ gender: 'female', birth_year: 1997 }));
     const id = created.body.data.user.id;
 
     const res = await request(app)
       .put(`/api/users/${id}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ gender: 'male', birth_year: 1990 });
-    expect(res.status).toBe(200);
-    expect(res.body.data.user.gender).toBe('male');
-    expect(res.body.data.user.birth_year).toBe(1990);
+    expect(res.status).toBe(403);
+    const [[row]] = await pool.query('SELECT gender, birth_year FROM users WHERE id = ?', [id]);
+    expect(row.gender).toBe('female');
+    expect(row.birth_year).toBe(1997);
   });
 
   test('U4b. Admin KHÔNG được sửa hồ sơ khách hàng → 403', async () => {
@@ -124,13 +125,17 @@ describe('Admin: giới tính và năm sinh của nhân viên', () => {
     expect(row.password_hash).toBe('x');
   });
 
-  test('U4d. Admin vẫn đặt lại được mật khẩu nhân viên → 200', async () => {
+  test('U4d. Admin KHÔNG được đặt lại mật khẩu nhân viên → 403, mật khẩu không đổi', async () => {
     const created = await createEmployee(employeePayload());
+    const id = created.body.data.user.id;
+    const [[before]] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [id]);
     const res = await request(app)
-      .post(`/api/users/${created.body.data.user.id}/reset-password`)
+      .post(`/api/users/${id}/reset-password`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ password: 'MatKhauMoi123' });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(403);
+    const [[after]] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [id]);
+    expect(after.password_hash).toBe(before.password_hash);
   });
 
   test('U4e. Admin xem chi tiết khách hàng → 200, không lộ password_hash; xem admin → 404', async () => {

@@ -3,10 +3,9 @@ import { pool } from '../config/db.js';
 import userRepository from '../repositories/userRepository.js';
 import employeeRepository from '../repositories/employeeRepository.js';
 import logRepository from '../repositories/logRepository.js';
-import tokenVersionRepository from '../repositories/tokenVersionRepository.js';
 import petRepository from '../repositories/petRepository.js';
 import appointmentRepository from '../repositories/appointmentRepository.js';
-import { createEmployeeSchema, updateUserSchema, updateStatusSchema } from '../validations/userSchemas.js';
+import { createEmployeeSchema, updateStatusSchema } from '../validations/userSchemas.js';
 
 // Hằng role_id (đồng bộ seed.sql)
 const STAFF_ROLE_ID = 2;
@@ -70,18 +69,6 @@ const listUsers = async (query) => {
  * 2. Tạo bản ghi employees
  * Thực hiện trong 1 TRANSACTION
  */
-/** Admin chỉ được sửa / đặt lại mật khẩu tài khoản NHÂN VIÊN; khách hàng tự quản lý hồ sơ và mật khẩu của mình */
-const assertStaffTarget = (target, action) => {
-  if (target.role_name === 'staff') return;
-  const err = new Error(
-    target.role_name === 'customer'
-      ? `Quản trị viên chỉ được xem hồ sơ khách hàng, không được ${action}. Khách hàng tự quản lý tài khoản của mình.`
-      : `Không thể ${action} tài khoản này.`
-  );
-  err.statusCode = 403;
-  throw err;
-};
-
 const createEmployee = async (body, req) => {
   const parsed = createEmployeeSchema.parse(body);
 
@@ -167,79 +154,20 @@ const createEmployee = async (body, req) => {
 };
 
 /**
- * Admin cập nhật thông tin user (không cho đổi role_id, email, password_hash)
+ * Admin KHÔNG được sửa thông tin nhân viên/khách hàng (luôn 403 nếu tài khoản tồn tại)
  */
-const updateUser = async (targetId, body, req) => {
-  const parsed = updateUserSchema.parse(body);
-
+const updateUser = async (targetId) => {
   const target = await userRepository.findById(targetId);
   if (!target) {
     const err = new Error('Không tìm thấy tài khoản.');
     err.statusCode = 404;
     throw err;
   }
-
-  // Hồ sơ khách hàng chỉ do chính khách chỉnh sửa; admin chỉ được xem (vẫn khóa/mở khóa được).
-  // Admin chỉ sửa tài khoản nhân viên.
-  assertStaffTarget(target, 'chỉnh sửa');
-
-  // Kiểm tra phone trùng với người khác
-  if (parsed.phone) {
-    const existingByPhone = await userRepository.findByPhone(parsed.phone);
-    if (existingByPhone && existingByPhone.id !== parseInt(targetId)) {
-      const err = new Error('Số điện thoại này đã được đăng ký bởi tài khoản khác.');
-      err.statusCode = 409;
-      throw err;
-    }
-  }
-
-  // Lấy dữ liệu cũ để ghi log
-  const oldValues = {
-    full_name: target.full_name,
-    phone: target.phone,
-    address: target.address,
-    gender: target.gender ?? null,
-    birth_year: target.birth_year ?? null,
-    avatar_url: target.avatar_url,
-  };
-
-  // Cập nhật users (chỉ các trường được phép)
-  const userFields = {};
-  if (parsed.full_name !== undefined) userFields.full_name = parsed.full_name;
-  if (parsed.phone !== undefined) userFields.phone = parsed.phone;
-  if (parsed.address !== undefined) userFields.address = parsed.address;
-  if (parsed.avatar_url !== undefined) userFields.avatar_url = parsed.avatar_url;
-  if (parsed.gender !== undefined) userFields.gender = parsed.gender;
-  if (parsed.birth_year !== undefined) userFields.birth_year = parsed.birth_year;
-
-  if (Object.keys(userFields).length > 0) {
-    await userRepository.update(targetId, userFields);
-  }
-
-  // Cập nhật employees nếu user là staff và có dữ liệu nhân viên
-  if (target.role_name === 'staff' && (parsed.specialty !== undefined || parsed.experience_years !== undefined)) {
-    await employeeRepository.updateByUserId(targetId, {
-      specialty: parsed.specialty,
-      experience_years: parsed.experience_years,
-    });
-  }
-
-  // Ghi log
-  await logRepository.insert({
-    user_id: req.user.id,
-    action: 'UPDATE_USER',
-    entity_name: 'users',
-    entity_id: targetId,
-    old_values: oldValues,
-    new_values: parsed,
-    ip_address: req.ip || null,
-    user_agent: req.headers?.['user-agent'] || null,
-  });
-
-  const updated = await userRepository.findById(targetId);
-  const employee = target.role_name === 'staff' ? await employeeRepository.findByUserId(targetId) : null;
-
-  return { user: safeUser(updated), employee };
+  // Chủ cửa hàng không chỉnh sửa thông tin cá nhân của nhân viên và khách hàng:
+  // mỗi người tự cập nhật hồ sơ của mình ở mục "Hồ sơ cá nhân".
+  const err = new Error('Quản trị viên không được chỉnh sửa thông tin nhân viên hoặc khách hàng. Mỗi người tự cập nhật hồ sơ của mình.');
+  err.statusCode = 403;
+  throw err;
 };
 
 /**
@@ -296,38 +224,18 @@ const updateUserStatus = async (targetId, body, req) => {
  * Admin đặt lại mật khẩu cho tài khoản
  * Tăng token_version để vô hiệu hóa tất cả JWT cũ
  */
-const resetPassword = async (targetId, body, req) => {
-  const password = body?.password;
-  const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
-  if (!password || !passwordRegex.test(password)) {
-    const err = new Error('Mật khẩu mới phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số.');
-    err.statusCode = 422;
-    throw err;
-  }
-
+const resetPassword = async (targetId) => {
   const target = await userRepository.findById(targetId);
   if (!target) {
     const err = new Error('Không tìm thấy tài khoản.');
     err.statusCode = 404;
     throw err;
   }
-  assertStaffTarget(target, 'đặt lại mật khẩu');
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  await userRepository.changePassword(targetId, passwordHash);
-  await tokenVersionRepository.bump(targetId);
-
-  // Ghi log
-  await logRepository.insert({
-    user_id: req.user.id,
-    action: 'ADMIN_RESET_PASSWORD',
-    entity_name: 'users',
-    entity_id: targetId,
-    ip_address: req.ip || null,
-    user_agent: req.headers?.['user-agent'] || null,
-  });
-
-  return { message: 'Đặt lại mật khẩu thành công.' };
+  // Chủ cửa hàng không đặt lại mật khẩu của nhân viên hay khách hàng.
+  // Mỗi người tự đổi mật khẩu trong "Hồ sơ cá nhân" hoặc dùng chức năng "Quên mật khẩu" qua email.
+  const err = new Error('Quản trị viên không được đặt lại mật khẩu của nhân viên hoặc khách hàng. Người dùng tự đổi mật khẩu hoặc dùng chức năng "Quên mật khẩu".');
+  err.statusCode = 403;
+  throw err;
 };
 
 /**

@@ -100,7 +100,7 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 
 | Phương thức | Endpoint | Quyền hạn | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/incidents` | Staff / Admin | Ghi nhận sự cố trong quá trình phục vụ |
+| `POST` | `/api/incidents` | Staff | Ghi nhận sự cố trong quá trình phục vụ |
 | `GET` | `/api/incidents` | Staff / Admin | Danh sách sự cố (Staff xem của mình, Admin xem tất cả) |
 | `GET` | `/api/incidents/:id` | Staff / Admin | Chi tiết sự cố |
 | `PATCH`| `/api/incidents/:id` | Admin | Cập nhật hướng xử lý và đóng sự cố (`resolved`) |
@@ -167,11 +167,11 @@ Bảng tài khoản chỉ gồm **nhân viên** và **khách hàng**; tài kho�
 | Phương thức | Endpoint | Mô tả |
 | :--- | :--- | :--- |
 | `GET` | `/api/users` | Danh sách (phân trang, `role=staff\|customer`, `status`, `search`) |
-| `GET` | `/api/users/:id` | Chi tiết chỉ đọc: thông tin, thú cưng, 10 lịch hẹn gần nhất (admin: 404) |
+| `GET` | `/api/users/:id` | Chi tiết chỉ đọc: thông tin, hồ sơ nhân viên (nếu là staff), thú cưng (nếu là khách), 10 lịch hẹn gần nhất (admin: 404) |
 | `POST` | `/api/users` | Tạo tài khoản nhân viên |
-| `PUT` | `/api/users/:id` | Sửa thông tin **nhân viên** (khách hàng: 403) |
+| `PUT` | `/api/users/:id` | **Luôn 403**: admin không sửa thông tin nhân viên/khách hàng (mỗi người tự cập nhật ở `PUT /api/auth/me`) |
 | `PATCH` | `/api/users/:id/status` | Khóa / mở khóa tài khoản |
-| `POST` | `/api/users/:id/reset-password` | Đặt lại mật khẩu **nhân viên** (khách hàng: 403) |
+| `POST` | `/api/users/:id/reset-password` | **Luôn 403**: admin không đặt lại mật khẩu nhân viên/khách hàng (người dùng tự đổi mật khẩu hoặc dùng `POST /api/auth/forgot-password`) |
 
 ## 🔎 13. Tra cứu khách hàng (`/api/customers`)
 

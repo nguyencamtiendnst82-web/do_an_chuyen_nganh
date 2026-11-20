@@ -17,7 +17,7 @@ import {
  * Vận hành tại quầy (gắn thẳng vào /api, đường dẫn đầy đủ nằm ở từng route):
  *  - PATCH /appointments/:id/check-in | start | complete   (chỉ staff, staff chỉ lịch của mình; admin không can thiệp)
  *  - GET   /pets/:petId/care-history                       (khách xem thú của mình; staff/admin xem tất cả)
- *  - /incidents                                            (staff/admin tạo & xem; admin cập nhật)
+ *  - /incidents                                            (chỉ staff tạo; staff xem của mình, admin xem tất cả và cập nhật)
  *  - GET   /care-photos/:file                              (ảnh công khai, tên file là UUID)
  * Không dùng router.use(authenticate) để không ảnh hưởng các đường dẫn khác.
  */
@@ -43,7 +43,7 @@ router.patch(
 
 router.get('/pets/:petId/care-history', authenticate, petCareHistory);
 
-router.post('/incidents', authenticate, authorize('staff', 'admin'), createIncident);
+router.post('/incidents', authenticate, authorize('staff'), createIncident);
 router.get('/incidents', authenticate, authorize('staff', 'admin'), listIncidents);
 router.get('/incidents/:id', authenticate, authorize('staff', 'admin'), getIncident);
 router.patch('/incidents/:id', authenticate, authorize('admin'), updateIncident);

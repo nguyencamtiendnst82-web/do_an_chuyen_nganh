@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import axiosClient from '../../api/axiosClient'
 import PetAvatar from '../../components/PetAvatar'
+import PetDetailModal from '../../components/PetDetailModal'
 import { ListSkeleton } from '../../components/Skeleton'
 import {
   SPECIES_LABEL, GENDER_LABEL, formatAge, formatBirthMonth, errorMessage,
@@ -32,6 +33,7 @@ const PetsManagePage = () => {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [detailPetId, setDetailPetId] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -61,7 +63,7 @@ const PetsManagePage = () => {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Hồ sơ thú cưng</h1>
-          <p className="text-sm text-gray-500 mt-1">Tra cứu thú cưng của tất cả khách hàng. Chế độ chỉ xem: chủ nuôi tự cập nhật hồ sơ của mình.</p>
+          <p className="text-sm text-gray-500 mt-1">Tra cứu thú cưng của tất cả khách hàng. Bấm vào một thú cưng để xem chi tiết và sổ tay chăm sóc. Chế độ chỉ xem: chủ nuôi tự cập nhật hồ sơ của mình.</p>
         </div>
       </div>
 
@@ -107,12 +109,14 @@ const PetsManagePage = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {pets.map((p) => (
-                  <tr key={p.id} className={p.status === 'inactive' ? 'bg-gray-50 text-gray-500' : ''}>
+                  <tr key={p.id} onClick={() => setDetailPetId(p.id)}
+                    className={`cursor-pointer hover:bg-blue-50/40 ${p.status === 'inactive' ? 'bg-gray-50 text-gray-500' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <PetAvatar pet={p} size="w-10 h-10" text="text-lg" />
                         <div>
-                          <p className="font-medium text-gray-900">{p.name}</p>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setDetailPetId(p.id) }}
+                            className="font-medium text-gray-900 hover:text-blue-600 text-left">{p.name}</button>
                           <p className="text-xs text-gray-500">
                             {SPECIES_LABEL[p.species]}{p.breed ? ` · ${p.breed}` : ''} · {GENDER_LABEL[p.gender]}
                           </p>
@@ -139,7 +143,8 @@ const PetsManagePage = () => {
           {/* Điện thoại: thẻ */}
           <ul className="md:hidden space-y-3">
             {pets.map((p) => (
-              <li key={p.id} className={`bg-white rounded-2xl border border-gray-200 p-4 ${p.status === 'inactive' ? 'opacity-70' : ''}`}>
+              <li key={p.id} onClick={() => setDetailPetId(p.id)}
+                className={`bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer ${p.status === 'inactive' ? 'opacity-70' : ''}`}>
                 <div className="flex items-center gap-3">
                   <PetAvatar pet={p} size="w-12 h-12" text="text-xl" />
                   <div className="flex-1 min-w-0">
@@ -169,6 +174,8 @@ const PetsManagePage = () => {
         </div>
       </div>
 
+
+      {detailPetId && <PetDetailModal petId={detailPetId} onClose={() => setDetailPetId(null)} />}
     </div>
   )
 }

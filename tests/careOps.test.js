@@ -283,6 +283,9 @@ describe('Vận hành tại quầy: tiếp nhận, chăm sóc, sổ tay, sự c�
     const asCustomer = await request(app).post('/api/incidents').set(authHeader(custA)).send(body);
     expect(asCustomer.status).toBe(403);
 
+    const asAdmin = await request(app).post('/api/incidents').set(authHeader(admin)).send(body);
+    expect(asAdmin.status).toBe(403);
+
     const badType = await request(app).post('/api/incidents').set(authHeader(staff1)).send({ ...body, incidentType: 'khong-co' });
     expect(badType.status).toBe(422);
 

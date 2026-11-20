@@ -297,8 +297,10 @@ const IncidentsPage = () => {
             {isAdmin ? 'Tất cả sự cố trong quá trình phục vụ.' : 'Các sự cố do bạn ghi nhận.'} Sự cố chưa xử lý và nghiêm trọng hiện lên trước.
           </p>
         </div>
-        <button type="button" onClick={() => setShowForm(true)}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Ghi nhận sự cố</button>
+        {!isAdmin && (
+          <button type="button" onClick={() => setShowForm(true)}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Ghi nhận sự cố</button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -347,7 +349,7 @@ const IncidentsPage = () => {
         </div>
       )}
 
-      {showForm && <IncidentFormModal onClose={() => setShowForm(false)} onDone={afterChange} />}
+      {showForm && !isAdmin && <IncidentFormModal onClose={() => setShowForm(false)} onDone={afterChange} />}
       {selected && <IncidentDetailModal incident={selected} canEdit={isAdmin} onClose={() => setSelected(null)} onDone={afterChange} />}
     </div>
   )

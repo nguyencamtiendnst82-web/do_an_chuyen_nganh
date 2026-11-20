@@ -14,7 +14,7 @@ import {
 } from '../validations/careSchemas.js';
 import { httpError, fieldError, parseId, auditContext } from '../utils/params.js';
 
-/** POST /api/incidents (staff/admin) */
+/** POST /api/incidents (chỉ staff) */
 export const createIncident = async (actor, body, req) => {
   const parsed = incidentCreateSchema.parse(normalizeIncidentCreate(body));
 

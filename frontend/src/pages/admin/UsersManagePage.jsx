@@ -59,6 +59,7 @@ const UserDetailModal = ({ userId, onClose }) => {
   }, [userId]);
 
   const u = data?.user;
+  const emp = data?.employee;
   const appointments = data?.recent_appointments || [];
 
   return (
@@ -79,8 +80,9 @@ const UserDetailModal = ({ userId, onClose }) => {
             <Field label="Ngày tạo">{u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : ''}</Field>
             {u.role_name === 'staff' && (
               <>
-                <Field label="Chuyên môn">{u.specialty}</Field>
-                <Field label="Kinh nghiệm">{u.experience_years != null ? `${u.experience_years} năm` : ''}</Field>
+                <Field label="Chuyên môn">{emp?.specialty}</Field>
+                <Field label="Kinh nghiệm">{emp?.experience_years != null ? `${emp.experience_years} năm` : ''}</Field>
+                <Field label="Ngày vào làm">{emp?.hire_date ? new Date(emp.hire_date).toLocaleDateString('vi-VN') : ''}</Field>
               </>
             )}
           </dl>
@@ -120,7 +122,7 @@ const UserDetailModal = ({ userId, onClose }) => {
               </ul>
             )}
           </div>
-          <p className="text-xs text-gray-400">Chế độ chỉ xem. Khách hàng tự quản lý hồ sơ và mật khẩu của mình.</p>
+          <p className="text-xs text-gray-400">Chế độ chỉ xem. Mỗi người tự cập nhật hồ sơ và mật khẩu của mình.</p>
         </div>
       )}
     </Modal>
@@ -145,18 +147,6 @@ const UsersManagePage = () => {
   const [createForm, setCreateForm] = useState(EMPTY_EMPLOYEE_FORM);
   const [createErrors, setCreateErrors] = useState({});
   const [savingCreate, setSavingCreate] = useState(false);
-
-  // Modal sửa thông tin user / employee
-  const [editingUser, setEditingUser] = useState(null);
-  const [editForm, setEditForm] = useState({});
-  const [editErrors, setEditErrors] = useState({});
-  const [savingEdit, setSavingEdit] = useState(false);
-
-  // Modal đổi mật khẩu
-  const [resettingUser, setResettingUser] = useState(null);
-  const [newPassword, setNewPassword] = useState('');
-  const [resetError, setResetError] = useState('');
-  const [savingReset, setSavingReset] = useState(false);
 
   const fetchUsers = useCallback(
     async (page = 1) => {
@@ -223,56 +213,6 @@ const UsersManagePage = () => {
     }
   };
 
-  // Mở modal sửa
-  const openEditModal = (u) => {
-    setEditingUser(u);
-    setEditForm({
-      full_name: u.full_name || '',
-      phone: u.phone || '',
-      address: u.address || '',
-      gender: u.gender || '',
-      birth_year: u.birth_year ? String(u.birth_year) : '',
-      specialty: u.specialty || '',
-      experience_years: u.experience_years !== null ? String(u.experience_years) : '1.0',
-    });
-    setEditErrors({});
-  };
-
-  // Sửa user
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    setEditErrors({});
-    setSavingEdit(true);
-    try {
-      const payload = {
-        full_name: editForm.full_name.trim(),
-        phone: editForm.phone.trim(),
-        address: editForm.address.trim() || null,
-        gender: editForm.gender || null,
-        birth_year: editForm.birth_year ? Number(editForm.birth_year) : null,
-      };
-
-      if (editingUser.role_name === 'staff') {
-        payload.specialty = editForm.specialty.trim() || null;
-        payload.experience_years = editForm.experience_years ? Number(editForm.experience_years) : 1.0;
-      }
-
-      await userApi.updateUser(editingUser.id, payload);
-      toast.success('Cập nhật tài khoản thành công.');
-      setEditingUser(null);
-      fetchUsers(pagination.page);
-    } catch (err) {
-      const fieldErrs = mapFieldErrors(err);
-      if (fieldErrs) {
-        setEditErrors(fieldErrs);
-      } else {
-        toast.error(errorMessage(err, 'Cập nhật tài khoản thất bại.'));
-      }
-    } finally {
-      setSavingEdit(false);
-    }
-  };
-
   // Đổi trạng thái tài khoản (khóa / mở khóa)
   const handleToggleStatus = async (targetUser) => {
     const isLocking = targetUser.status === 'active';
@@ -297,27 +237,6 @@ const UsersManagePage = () => {
     }
   };
 
-  // Đặt lại mật khẩu
-  const handleResetPasswordSubmit = async (e) => {
-    e.preventDefault();
-    setResetError('');
-    if (!newPassword || newPassword.length < 8) {
-      setResetError('Mật khẩu mới phải có ít nhất 8 ký tự.');
-      return;
-    }
-    setSavingReset(true);
-    try {
-      await userApi.resetPassword(resettingUser.id, newPassword);
-      toast.success(`Đã đặt lại mật khẩu cho "${resettingUser.full_name}".`);
-      setResettingUser(null);
-      setNewPassword('');
-    } catch (err) {
-      setResetError(errorMessage(err, 'Không thể đặt lại mật khẩu.'));
-    } finally {
-      setSavingReset(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Tiêu đề & Nút thêm nhân viên */}
@@ -325,7 +244,7 @@ const UsersManagePage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý Nhân viên & Khách hàng</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Nhân viên: tạo, sửa, khóa/mở khóa, đặt lại mật khẩu. Khách hàng: chỉ xem thông tin (khách tự quản lý hồ sơ).
+            Nhân viên: tạo tài khoản, khóa/mở khóa. Thông tin cá nhân và mật khẩu (nhân viên, khách hàng) do mỗi người tự quản lý, admin chỉ xem.
           </p>
         </div>
         {roleFilter === 'staff' && <button
@@ -475,17 +394,6 @@ const UsersManagePage = () => {
 
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {u.role_name !== 'customer' && (
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(u)}
-                              className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                              title="Sửa thông tin"
-                            >
-                              ✏️
-                            </button>
-                          )}
-
                           <button
                             type="button"
                             onClick={() => setDetailUserId(u.id)}
@@ -494,21 +402,6 @@ const UsersManagePage = () => {
                           >
                             👁️
                           </button>
-
-                          {u.role_name === 'staff' && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setResettingUser(u);
-                                setNewPassword('');
-                                setResetError('');
-                              }}
-                              className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Đặt lại mật khẩu"
-                            >
-                              🔑
-                            </button>
-                          )}
 
                           {!isSelf && (
                             <button
@@ -586,15 +479,6 @@ const UsersManagePage = () => {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                    {u.role_name !== 'customer' && (
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(u)}
-                        className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                      >
-                        ✏️ Sửa
-                      </button>
-                    )}
                     <button
                       type="button"
                       onClick={() => setDetailUserId(u.id)}
@@ -602,19 +486,6 @@ const UsersManagePage = () => {
                     >
                       👁️ Chi tiết
                     </button>
-                    {u.role_name === 'staff' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setResettingUser(u);
-                          setNewPassword('');
-                          setResetError('');
-                        }}
-                        className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
-                      >
-                        🔑 Đổi MK
-                      </button>
-                    )}
                     {!isSelf && (
                       <button
                         type="button"
@@ -832,173 +703,6 @@ const UsersManagePage = () => {
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 {savingCreate ? 'Đang tạo...' : 'Tạo nhân viên'}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* MODAL: Sửa thông tin tài khoản */}
-      {editingUser && (
-        <Modal title={`Sửa thông tin: ${editingUser.full_name}`} onClose={() => setEditingUser(null)} width="max-w-lg">
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Họ và tên <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editForm.full_name}
-                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                  className={inputClass(editErrors.full_name)}
-                />
-                {editErrors.full_name && (
-                  <p className="text-xs text-red-500 mt-0.5">{editErrors.full_name}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Số điện thoại</label>
-                <input
-                  type="tel"
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                  className={inputClass(editErrors.phone)}
-                />
-                {editErrors.phone && <p className="text-xs text-red-500 mt-0.5">{editErrors.phone}</p>}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Giới tính</label>
-                <select
-                  value={editForm.gender}
-                  onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-                  className={inputClass(editErrors.gender)}
-                >
-                  <option value="">Chưa chọn</option>
-                  <option value="male">Nam</option>
-                  <option value="female">Nữ</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Năm sinh</label>
-                <input
-                  type="number"
-                  min="1940"
-                  max={new Date().getFullYear()}
-                  value={editForm.birth_year}
-                  onChange={(e) => setEditForm({ ...editForm, birth_year: e.target.value })}
-                  className={inputClass(editErrors.birth_year)}
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Địa chỉ</label>
-                <input
-                  type="text"
-                  value={editForm.address}
-                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                  className={inputClass(editErrors.address)}
-                />
-              </div>
-
-              {editingUser.role_name === 'staff' && (
-                <>
-                  <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-                    <h3 className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-2">
-                      Thông tin nhân viên
-                    </h3>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Chuyên môn</label>
-                    <input
-                      type="text"
-                      value={editForm.specialty}
-                      onChange={(e) => setEditForm({ ...editForm, specialty: e.target.value })}
-                      className={inputClass(editErrors.specialty)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Số năm kinh nghiệm</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="60"
-                      value={editForm.experience_years}
-                      onChange={(e) => setEditForm({ ...editForm, experience_years: e.target.value })}
-                      className={inputClass(editErrors.experience_years)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setEditingUser(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Hủy
-              </button>
-              <button
-                type="submit"
-                disabled={savingEdit}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-              >
-                {savingEdit ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* MODAL: Đặt lại mật khẩu */}
-      {resettingUser && (
-        <Modal title={`Đặt lại mật khẩu cho ${resettingUser.full_name}`} onClose={() => setResettingUser(null)} width="max-w-md">
-          <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
-            <p className="text-xs text-gray-500">
-              Sau khi đặt lại, tất cả phiên đăng nhập cũ của tài khoản <strong>{resettingUser.email}</strong> sẽ bị vô hiệu hóa ngay lập tức.
-            </p>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Mật khẩu mới <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  setResetError('');
-                }}
-                placeholder="Tối thiểu 8 ký tự, có chữ và số"
-                className={inputClass(Boolean(resetError))}
-              />
-              {resetError && <p className="text-xs text-red-500 mt-1">{resetError}</p>}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setResettingUser(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Hủy
-              </button>
-              <button
-                type="submit"
-                disabled={savingReset}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-              >
-                {savingReset ? 'Đang cập nhật...' : 'Xác nhận đặt lại'}
               </button>
             </div>
           </form>
