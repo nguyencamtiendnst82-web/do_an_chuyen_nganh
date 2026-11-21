@@ -79,6 +79,7 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 
 | Phương thức | Endpoint | Quyền hạn | Mô tả |
 | :--- | :--- | :--- | :--- |
+| `GET` | `/api/appointments/open-dates` | Mọi vai trò | Các ngày đã xếp ca (spa đã mở lịch) trong giới hạn `BOOKING_MAX_DAYS_AHEAD` (mặc định 30) |
 | `GET` | `/api/appointments/availability`| Public / Customer | Tra cứu khung giờ trống hợp lệ (tính thời gian đệm 15p) |
 | `GET` | `/api/appointments` | Customer / Staff / Admin | Xem lịch hẹn (Khách xem của mình; Staff & Admin xem tất cả, lọc `my=true` cho Staff) |
 | `POST` | `/api/appointments` | Customer | Khách tự đặt lịch (trực tuyến hoặc tại quầy bằng tài khoản của mình; tự gán nhân viên cân bằng tải). Staff / Admin: 403 |

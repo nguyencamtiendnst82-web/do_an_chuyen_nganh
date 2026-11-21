@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../src/app.js';
 import { pool } from '../src/config/db.js';
 import { createUser, authHeader } from './helpers/users.js';
+import { suspendActivePromotions, restorePromotions } from './helpers/promotions.js';
 
 describe('Thông báo gắn với sự kiện thật (/api/notifications)', () => {
   const prefix = 'test_nt';
@@ -33,7 +34,9 @@ describe('Thông báo gắn với sự kiện thật (/api/notifications)', () =
     return res.body.data.notifications.filter((n) => n.type === type);
   };
 
+  let suspendedPromos = [];
   beforeAll(async () => {
+    suspendedPromos = await suspendActivePromotions();
     admin = await createUser(app, { role: 'admin', prefix });
     staff = await createUser(app, { role: 'staff', prefix });
     custA = await createUser(app, { role: 'customer', prefix });
@@ -58,6 +61,7 @@ describe('Thông báo gắn với sự kiện thật (/api/notifications)', () =
   });
 
   afterAll(async () => {
+    await restorePromotions(suspendedPromos);
     try {
       const [users] = await pool.query(`SELECT id FROM users WHERE email LIKE '${prefix}\\_%'`);
       const ids = users.map((u) => u.id);

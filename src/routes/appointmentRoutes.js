@@ -3,6 +3,7 @@ import authenticate from '../middlewares/authenticate.js';
 import authorize from '../middlewares/authorize.js';
 import {
   getAvailability,
+  getOpenDates,
   create,
   getOne,
   list,
@@ -24,6 +25,8 @@ router.use(authenticate);
 
 // Tra cứu khung giờ trống (khách, nhân viên, admin)
 router.get('/availability', getAvailability);
+// Các ngày spa đã mở lịch (đã xếp ca) để khách chọn
+router.get('/open-dates', getOpenDates);
 
 // Danh sách lịch hẹn và Đặt lịch hẹn mới
 router.get('/', list);

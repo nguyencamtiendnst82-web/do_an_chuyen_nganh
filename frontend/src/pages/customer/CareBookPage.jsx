@@ -55,9 +55,12 @@ const CareBookPage = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Sổ tay chăm sóc</h1>
-        <p className="text-sm text-gray-500 mt-1">Xem lại những lần bé đi spa: tình trạng, quá trình chăm sóc, lời khuyên và ảnh trước/sau.</p>
+      <div className="flex items-start gap-3">
+        <span className="w-11 h-11 shrink-0 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-2xl" aria-hidden="true">🐾</span>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Sổ tay chăm sóc</h1>
+          <p className="text-sm text-gray-500 mt-1">Xem lại những lần bé đi spa: tình trạng, quá trình chăm sóc, lời khuyên và ảnh trước/sau.</p>
+        </div>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">{error}</div>}
@@ -74,8 +77,8 @@ const CareBookPage = () => {
             {pets.map((p) => (
               <button
                 key={p.id} type="button" role="tab" aria-selected={p.id === petId} onClick={() => setPetId(p.id)}
-                className={`flex items-center gap-2 shrink-0 px-3 py-2 rounded-full border text-sm ${
-                  p.id === petId ? 'bg-pink-50 border-pink-300 text-pink-700 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                className={`flex items-center gap-2 shrink-0 pl-2 pr-4 py-1.5 rounded-full border text-sm transition-colors ${
+                  p.id === petId ? 'bg-pink-600 border-pink-600 text-white font-semibold shadow-sm shadow-pink-200' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
                 }`}
               >
                 <PetAvatar pet={p} size="w-7 h-7" text="text-sm" />
@@ -84,6 +87,12 @@ const CareBookPage = () => {
             ))}
           </div>
 
+          {activePet && pagination.total > 0 && (
+            <p className="text-sm text-gray-500">
+              <strong className="text-gray-800">{activePet.name}</strong> đã hoàn tất <strong className="text-pink-600">{pagination.total}</strong> lần chăm sóc
+            </p>
+          )}
+
           {loading && records.length === 0 ? (
             <ListSkeleton rows={3} />
           ) : records.length === 0 ? (
@@ -91,12 +100,13 @@ const CareBookPage = () => {
               {activePet?.name} chưa có lần chăm sóc nào hoàn tất. Sau mỗi lần đi spa, ghi chú của nhân viên sẽ hiện ở đây.
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {records.map((r) => (
                 <CareRecordCard
                   key={r.id}
                   record={r}
-                  title={`${formatDate(r.service_date)}${r.service_names ? ` · ${r.service_names}` : ''}`}
+                  badge={formatDate(r.service_date)}
+                  title={r.service_names || 'Lần chăm sóc'}
                   subtitle={`Mã lịch hẹn ${r.appointment_code}`}
                 />
               ))}

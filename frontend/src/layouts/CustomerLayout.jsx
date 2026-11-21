@@ -23,10 +23,10 @@ const EXPLORE_LINKS = [
 ]
 
 const desktopLinkClass = ({ isActive }) =>
-  `relative h-16 flex items-center text-sm font-medium transition-colors border-b-2 ${
+  `flex items-center px-3.5 py-2 rounded-lg text-sm transition-colors ${
     isActive
-      ? 'text-pink-600 border-pink-600'
-      : 'text-gray-600 border-transparent hover:text-gray-900'
+      ? 'bg-pink-50 text-pink-700 font-semibold'
+      : 'text-gray-700 font-medium hover:bg-gray-100 hover:text-gray-900'
   }`
 
 const mobileLinkClass = ({ isActive }) =>
@@ -61,8 +61,8 @@ const ExploreMenu = () => {
         onClick={() => setOpen((p) => !p)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`h-16 flex items-center gap-1 text-sm font-medium border-b-2 transition-colors ${
-          active ? 'text-pink-600 border-pink-600' : 'text-gray-600 border-transparent hover:text-gray-900'
+        className={`flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm transition-colors ${
+          active || open ? 'bg-pink-50 text-pink-700 font-semibold' : 'text-gray-700 font-medium hover:bg-gray-100 hover:text-gray-900'
         }`}
       >
         Khám phá
@@ -108,7 +108,7 @@ const CustomerLayout = () => {
           </Link>
 
           {/* Menu trên máy tính */}
-          <nav className="hidden md:flex items-center gap-7 flex-1" aria-label="Menu chính">
+          <nav className="hidden md:flex items-center gap-1 flex-1" aria-label="Menu chính">
             {MAIN_LINKS.map(({ to, label, exact }) => (
               <NavLink key={to} to={to} end={exact} className={desktopLinkClass}>
                 {label}
@@ -121,7 +121,7 @@ const CustomerLayout = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/booking"
-              className="hidden sm:inline-flex items-center bg-pink-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors"
+              className="hidden sm:inline-flex items-center bg-pink-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm shadow-pink-200 hover:bg-pink-700 hover:shadow-md transition-all"
             >
               Đặt lịch
             </Link>

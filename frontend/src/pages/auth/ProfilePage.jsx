@@ -24,6 +24,7 @@ const GENDER_OPTIONS = [
 const ProfilePage = () => {
   const auth = useAuth()
   const { user } = auth
+  const isAdmin = user?.role_name === 'admin' // admin chỉ cần họ tên, SĐT, ảnh, mật khẩu
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -94,7 +95,7 @@ const ProfilePage = () => {
       setProfileErrors({ full_name: 'Họ và tên phải có ít nhất 2 ký tự.' })
       return
     }
-    if (profileForm.birth_year) {
+    if (!isAdmin && profileForm.birth_year) {
       const year = Number(profileForm.birth_year)
       if (!Number.isInteger(year) || year < 1900 || year > CURRENT_YEAR - 5) {
         setProfileErrors({ birth_year: `Năm sinh phải từ 1900 đến ${CURRENT_YEAR - 5}.` })
@@ -104,13 +105,17 @@ const ProfilePage = () => {
 
     setProfileLoading(true)
     try {
-      const res = await axiosClient.put('/auth/me', {
+      // Admin không gửi địa chỉ/giới tính/năm sinh (giữ nguyên giá trị cũ)
+      const payload = {
         full_name: profileForm.full_name.trim(),
         phone: profileForm.phone || undefined,
-        address: profileForm.address || null,
-        gender: profileForm.gender || null,
-        birth_year: profileForm.birth_year ? Number(profileForm.birth_year) : null,
-      })
+      }
+      if (!isAdmin) {
+        payload.address = profileForm.address || null
+        payload.gender = profileForm.gender || null
+        payload.birth_year = profileForm.birth_year ? Number(profileForm.birth_year) : null
+      }
+      const res = await axiosClient.put('/auth/me', payload)
       setProfileSuccess('Cập nhật hồ sơ thành công!')
       const updatedUser = res.data.data.user
       setProfileForm({
@@ -327,7 +332,9 @@ const ProfilePage = () => {
           <form onSubmit={handleProfileSubmit} className="bg-white rounded-2xl border border-gray-200" noValidate>
             <div className="px-6 py-4 border-b border-gray-100">
               <h3 className="text-base font-semibold text-gray-900">Thông tin cá nhân</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Số điện thoại dùng để nhân viên liên hệ khi cần.</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isAdmin ? 'Số điện thoại dùng để đăng nhập và nhận thông báo từ hệ thống.' : 'Số điện thoại dùng để nhân viên liên hệ khi cần.'}
+              </p>
             </div>
 
             <div className="p-6 space-y-5">
@@ -373,36 +380,40 @@ const ProfilePage = () => {
                 </p>
               </div>
 
-              {/* Giới tính + năm sinh: để nhân viên biết cách xưng hô */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
-                  <select id="gender" name="gender" value={profileForm.gender} onChange={handleProfileChange}
-                    className={`${inputClass('gender')} bg-white`}>
-                    {GENDER_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                  {profileErrors.gender && <p className="mt-1 text-xs text-red-600">{profileErrors.gender}</p>}
+              {!isAdmin && (
+                <>
+                {/* Giới tính + năm sinh: để nhân viên biết cách xưng hô */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                    <select id="gender" name="gender" value={profileForm.gender} onChange={handleProfileChange}
+                      className={`${inputClass('gender')} bg-white`}>
+                      {GENDER_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    {profileErrors.gender && <p className="mt-1 text-xs text-red-600">{profileErrors.gender}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="birth_year" className="block text-sm font-medium text-gray-700 mb-1">Năm sinh</label>
+                    <input id="birth_year" name="birth_year" type="number" inputMode="numeric"
+                      min={1900} max={CURRENT_YEAR - 5} value={profileForm.birth_year}
+                      onChange={handleProfileChange} placeholder="VD: 1998" className={inputClass('birth_year')} />
+                    {profileErrors.birth_year && <p className="mt-1 text-xs text-red-600">{profileErrors.birth_year}</p>}
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="birth_year" className="block text-sm font-medium text-gray-700 mb-1">Năm sinh</label>
-                  <input id="birth_year" name="birth_year" type="number" inputMode="numeric"
-                    min={1900} max={CURRENT_YEAR - 5} value={profileForm.birth_year}
-                    onChange={handleProfileChange} placeholder="VD: 1998" className={inputClass('birth_year')} />
-                  {profileErrors.birth_year && <p className="mt-1 text-xs text-red-600">{profileErrors.birth_year}</p>}
-                </div>
-              </div>
-              <p className="-mt-3 text-xs text-gray-400">
-                Không bắt buộc. Thông tin này giúp nhân viên Pet Spa xưng hô với bạn cho phù hợp khi tiếp đón.
-              </p>
+                <p className="-mt-3 text-xs text-gray-400">
+                  Không bắt buộc. Thông tin này giúp nhân viên Pet Spa xưng hô với bạn cho phù hợp khi tiếp đón.
+                </p>
 
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-                <textarea id="address" name="address" rows={2} value={profileForm.address}
-                  onChange={handleProfileChange} placeholder="Địa chỉ liên hệ"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none" />
-              </div>
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                  <textarea id="address" name="address" rows={2} value={profileForm.address}
+                    onChange={handleProfileChange} placeholder="Địa chỉ liên hệ"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none" />
+                </div>
+                </>
+              )}
             </div>
 
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/60 rounded-b-2xl flex justify-end">

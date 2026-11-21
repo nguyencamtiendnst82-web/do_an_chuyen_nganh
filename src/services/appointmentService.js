@@ -98,6 +98,29 @@ export const getTodayStr = () => {
   return `${y}-${m}-${d}`;
 };
 
+export const getBookingMaxDays = () => {
+  const n = Number(process.env.BOOKING_MAX_DAYS_AHEAD);
+  return Number.isInteger(n) && n > 0 ? n : 30;
+};
+
+const addDaysStr = (dateStr, days) => {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * GET /api/appointments/open-dates
+ * Các ngày spa đã mở lịch (có nhân viên active được xếp ca, không vắng) từ hôm nay tới giới hạn đặt.
+ */
+export const getOpenDates = async () => {
+  const today = getTodayStr();
+  const maxDays = getBookingMaxDays();
+  const to = addDaysStr(today, maxDays);
+  const dates = await appointmentRepository.getOpenDates(today, to);
+  return { dates, maxDaysAhead: maxDays, from: today, to };
+};
+
 export const getNowTimeStr = () => {
   const now = new Date();
   const h = String(now.getHours()).padStart(2, '0');
@@ -120,8 +143,8 @@ export const getAvailability = async (query = {}) => {
     return [];
   }
 
-  if (countDaysBetween(todayStr, date) > 60) {
-    throw httpError(422, 'Chỉ có thể tra cứu lịch trước tối đa 60 ngày.');
+  if (countDaysBetween(todayStr, date) > getBookingMaxDays()) {
+    throw httpError(422, `Chỉ có thể tra cứu lịch trước tối đa ${getBookingMaxDays()} ngày.`);
   }
 
   // Parse serviceIds
@@ -300,8 +323,8 @@ export const createAppointment = async (actor, rawBody, req) => {
   if (parsed.appointment_date < todayStr) {
     throw httpError(422, 'Không thể đặt lịch vào ngày trong quá khứ.');
   }
-  if (countDaysBetween(todayStr, parsed.appointment_date) > 60) {
-    throw httpError(422, 'Chỉ có thể đặt lịch trước tối đa 60 ngày.');
+  if (countDaysBetween(todayStr, parsed.appointment_date) > getBookingMaxDays()) {
+    throw httpError(422, `Chỉ có thể đặt lịch trước tối đa ${getBookingMaxDays()} ngày.`);
   }
 
   const startMinutes = timeToMinutes(parsed.start_time);
@@ -650,8 +673,8 @@ export const rescheduleAppointment = async (actor, rawId, body, req) => {
   if (parsed.appointment_date < todayStr) {
     throw httpError(422, 'Không thể đổi lịch sang ngày trong quá khứ.');
   }
-  if (countDaysBetween(todayStr, parsed.appointment_date) > 60) {
-    throw httpError(422, 'Chỉ có thể đổi lịch trong vòng 60 ngày tới.');
+  if (countDaysBetween(todayStr, parsed.appointment_date) > getBookingMaxDays()) {
+    throw httpError(422, `Chỉ có thể đổi lịch trong vòng ${getBookingMaxDays()} ngày tới.`);
   }
 
   // Lấy chi tiết dịch vụ của lịch hẹn để tính tổng thời lượng

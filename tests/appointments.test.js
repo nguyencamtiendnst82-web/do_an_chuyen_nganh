@@ -198,7 +198,7 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
     expect(res.body.message).toMatch(/cập nhật số điện thoại trong Hồ sơ/i);
   });
 
-  test('A2. Đặt lịch ở ngày quá khứ -> 422; đặt lịch quá 60 ngày tới -> 422', async () => {
+  test('A2. Đặt lịch ở ngày quá khứ -> 422; đặt lịch quá giới hạn ngày -> 422', async () => {
     const resPast = await request(app)
       .post('/api/appointments')
       .set(authHeader(customerUserA))
@@ -225,7 +225,7 @@ describe('Kiểm thử phân hệ Đặt lịch & Phân công nhân viên (/api/
         startTime: '09:00',
       });
     expect(resFar.status).toBe(422);
-    expect(resFar.body.message).toMatch(/60 ngày/i);
+    expect(resFar.body.message).toMatch(/tối đa \d+ ngày/i);
   });
 
   // ==========================================

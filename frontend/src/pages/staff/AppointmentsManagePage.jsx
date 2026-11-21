@@ -78,7 +78,7 @@ const AppointmentsManagePage = () => {
         search: search.trim() || undefined,
         my: isStaff && mine ? 'true' : undefined,
       }
-      if (allDates) { params.from = addDays(todayStr(), -30); params.to = addDays(todayStr(), 30) } else { params.date = date }
+      if (allDates) { params.from = addDays(todayStr(), -7); params.to = addDays(todayStr(), 7) } else { params.date = date }
       const res = await axiosClient.get('/appointments', { params })
       setItems(res.data.data.appointments)
       setPagination(res.data.data.pagination)
@@ -209,7 +209,7 @@ const AppointmentsManagePage = () => {
             className={`${selectClass} disabled:bg-gray-100`} />
           <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
             <input type="checkbox" checked={allDates} onChange={(e) => { setAllDates(e.target.checked); setPage(1) }} className="accent-blue-600" />
-            ±30 ngày
+            ±7 ngày
           </label>
           <input id="f-search" type="search" value={search} onChange={resetPage(setSearch)} aria-label="Tìm kiếm"
             placeholder="Tìm mã lịch, khách, SĐT, thú cưng..." className={`${selectClass} flex-1 min-w-[200px]`} />

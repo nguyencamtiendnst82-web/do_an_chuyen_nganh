@@ -3,10 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 /**
- * UserMenu: Avatar + tên người dùng + menu thả xuống (Hồ sơ, Trang quản lý, Đăng xuất)
+ * UserMenu: Avatar + tên người dùng + menu thả xuống (Hồ sơ, Đăng xuất); nút "Trang quản lý" của admin/staff nằm trên header
  * - Dùng chung cho PublicLayout và CustomerLayout
- * - "Vào trang quản lý" chỉ hiện với admin / staff, khách hàng không thấy
- */
+ *  */
 const UserMenu = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -34,9 +33,6 @@ const UserMenu = () => {
 
   if (!user) return null
 
-  const isStaff = user.role_name === 'staff'
-  const isAdmin = user.role_name === 'admin'
-  const managePath = isAdmin ? '/admin' : isStaff ? '/staff' : null
 
   const handleLogout = async () => {
     setOpen(false)
@@ -86,16 +82,6 @@ const UserMenu = () => {
             Hồ sơ cá nhân
           </Link>
 
-          {managePath && (
-            <Link
-              to={managePath}
-              role="menuitem"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              onClick={() => setOpen(false)}
-            >
-              Vào trang quản lý
-            </Link>
-          )}
 
           <hr className="my-1 border-gray-100" />
           <button

@@ -235,6 +235,26 @@ export const getActiveEmployeesWithShifts = async (dateStr, employeeId = null, c
 };
 
 /**
+ * Các ngày (YYYY-MM-DD) có ít nhất một nhân viên active được xếp ca (không vắng) trong [from, to]
+ */
+export const getOpenDates = async (from, to, conn = null) => {
+  const db = conn || pool;
+  const [rows] = await db.query(
+    `SELECT DISTINCT DATE_FORMAT(es.work_date, '%Y-%m-%d') AS d
+     FROM employee_shifts es
+     JOIN employees e ON e.id = es.employee_id
+     JOIN users u ON u.id = e.user_id
+     JOIN shifts s ON s.id = es.shift_id
+     WHERE es.work_date BETWEEN ? AND ?
+       AND u.status = 'active' AND e.status = 'active'
+       AND s.is_active = TRUE AND es.status <> 'absent'
+     ORDER BY d`,
+    [from, to]
+  );
+  return rows.map((r) => r.d);
+};
+
+/**
  * Lấy danh sách lịch hẹn hiện có trong ngày của các nhân viên (status != 'cancelled')
  */
 export const getAppointmentsOnDate = async (dateStr, conn = null) => {
@@ -495,6 +515,7 @@ export default {
   lockAndGetPetAppointments,
   getEmployeeShiftsOnDate,
   getActiveEmployeesWithShifts,
+  getOpenDates,
   getAppointmentsOnDate,
   countAppointmentsForEmployeeOnDate,
   update,

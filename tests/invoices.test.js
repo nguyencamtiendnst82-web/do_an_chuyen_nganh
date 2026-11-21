@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../src/app.js';
 import { pool } from '../src/config/db.js';
 import { createUser, authHeader } from './helpers/users.js';
+import { suspendActivePromotions, restorePromotions } from './helpers/promotions.js';
 
 describe('Kiểm thử phân hệ Hóa đơn & Thanh toán mô phỏng (/api/invoices)', () => {
   let adminUser;
@@ -20,7 +21,9 @@ describe('Kiểm thử phân hệ Hóa đơn & Thanh toán mô phỏng (/api/inv
 
   const prefix = 'test_inv';
 
+  let suspendedPromos = [];
   beforeAll(async () => {
+    suspendedPromos = await suspendActivePromotions();
     adminUser = await createUser(app, { role: 'admin', prefix });
     staffUser1 = await createUser(app, { role: 'staff', prefix });
     staffUser2 = await createUser(app, { role: 'staff', prefix });
@@ -91,6 +94,7 @@ describe('Kiểm thử phân hệ Hóa đơn & Thanh toán mô phỏng (/api/inv
   });
 
   afterAll(async () => {
+    await restorePromotions(suspendedPromos);
     const [allTestUsers] = await pool.query(`SELECT id FROM users WHERE email LIKE '${prefix}_%'`);
     const userIds = allTestUsers.map((u) => u.id);
 
@@ -115,6 +119,7 @@ describe('Kiểm thử phân hệ Hóa đơn & Thanh toán mô phỏng (/api/inv
     if (serviceId) {
       await pool.query(`DELETE FROM services WHERE id = ?`, [serviceId]);
     }
+    await pool.end();
   });
 
   // ==========================================

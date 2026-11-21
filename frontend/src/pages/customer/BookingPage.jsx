@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/Feedback'
 import PetAvatar from '../../components/PetAvatar'
 import SlotPicker from '../../components/SlotPicker'
+import OpenDatePicker from '../../components/OpenDatePicker'
 import { CardSkeletonGrid } from '../../components/Skeleton'
 import { formatVND, errorMessage, mapFieldErrors, SPECIES_LABEL } from '../../utils/format'
 import { todayStr, addDays, formatDateLong, sumDuration, sumPrice } from '../../utils/appointment'
@@ -115,7 +116,7 @@ const BookingPage = () => {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Đặt lịch hẹn</h1>
-        <p className="text-sm text-gray-500 mt-1">Chọn bé cưng, dịch vụ và khung giờ phù hợp. Có thể đặt trước tối đa 60 ngày.</p>
+        <p className="text-sm text-gray-500 mt-1">Chọn bé cưng, dịch vụ và khung giờ phù hợp. Chỉ chọn được những ngày spa đã mở lịch.</p>
       </div>
 
       {/* Thanh các bước */}
@@ -207,10 +208,9 @@ const BookingPage = () => {
       {step === 3 && (
         <div className="space-y-5">
           <div>
-            <label htmlFor="bk-date" className="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn</label>
-            <input id="bk-date" type="date" value={date} min={todayStr()} max={addDays(todayStr(), 60)}
-              onChange={(e) => { setDate(e.target.value || todayStr()); setSlot(null); setEmployeeId(null) }}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500" />
+            <p className="block text-sm font-medium text-gray-700 mb-2">Ngày hẹn</p>
+            <OpenDatePicker value={date}
+              onChange={(d) => { if (d !== date) { setDate(d); setSlot(null); setEmployeeId(null) } }} />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Khung giờ còn trống <span className="text-gray-400 font-normal">(tổng {totalMinutes} phút)</span></p>

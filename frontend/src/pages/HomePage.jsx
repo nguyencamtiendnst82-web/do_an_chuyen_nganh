@@ -147,8 +147,8 @@ const HomePage = () => {
     }
     if (role === 'staff' || role === 'admin') {
       return (
-        <Link to={role === 'admin' ? '/admin' : '/staff'} className={`${primaryBtn} bg-pink-600 text-white hover:bg-pink-700`}>
-          Vào trang quản lý
+        <Link to={allServices.to} className={`${primaryBtn} bg-pink-600 text-white hover:bg-pink-700`}>
+          Xem dịch vụ của spa
         </Link>
       )
     }

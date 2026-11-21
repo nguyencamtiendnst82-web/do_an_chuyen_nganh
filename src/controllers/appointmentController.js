@@ -10,6 +10,15 @@ export const getAvailability = async (req, res, next) => {
   }
 };
 
+export const getOpenDates = async (req, res, next) => {
+  try {
+    const data = await appointmentService.getOpenDates();
+    return sendSuccess(res, 'Lấy các ngày đã mở lịch thành công.', data);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const create = async (req, res, next) => {
   try {
     const data = await appointmentService.createAppointment(req.user, req.body, req);
@@ -104,6 +113,7 @@ export const updateStatus = async (req, res, next) => {
 
 export default {
   getAvailability,
+  getOpenDates,
   create,
   getOne,
   list,

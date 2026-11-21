@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import axiosClient from '../api/axiosClient'
 import Modal from './Modal'
+import OpenDatePicker from './OpenDatePicker'
 import SlotPicker from './SlotPicker'
 import { useToast } from './Feedback'
 import { errorMessage } from '../utils/format'
@@ -53,10 +54,9 @@ const RescheduleModal = ({ appointment, onClose, onDone, accent = 'pink' }) => {
           Lịch hiện tại của <strong>{appointment.pet_name}</strong>: {hm(appointment.start_time)} ngày {formatDate(appointment.appointment_date)}.
         </p>
         <div>
-          <label htmlFor="rs-date" className="block text-sm font-medium text-gray-700 mb-1">Ngày mới</label>
-          <input id="rs-date" type="date" value={date} min={todayStr()} max={addDays(todayStr(), 60)}
-            onChange={(e) => { setDate(e.target.value); setError('') }}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500" />
+          <p className="block text-sm font-medium text-gray-700 mb-2">Ngày mới</p>
+          <OpenDatePicker value={date} accent={accent}
+            onChange={(d) => { if (d !== date) { setDate(d); setSlot(null); setError('') } }} />
         </div>
         <div>
           <p className="text-sm font-medium text-gray-700 mb-2">Giờ mới</p>
