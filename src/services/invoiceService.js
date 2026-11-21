@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { pool } from '../config/db.js';
 import invoiceRepository from '../repositories/invoiceRepository.js';
+import promotionRepository from '../repositories/promotionRepository.js';
 import employeeRepository from '../repositories/employeeRepository.js';
 import logRepository from '../repositories/logRepository.js';
 import { notifyInvoice } from './notificationService.js';
@@ -10,9 +11,18 @@ import {
   invoiceListQuerySchema,
 } from '../validations/invoiceSchemas.js';
 import { auditContext, httpError, parseId } from '../utils/params.js';
+import { pickBestPromotion } from '../utils/promotionPicker.js';
+import { getVietnamDate } from '../utils/businessDate.js';
+import { discountApprovalSchema } from '../validations/promotionSchemas.js';
 
 const MONEY_PATTERN = /^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/;
 const MAX_INVOICE_CENTS = 999999999999n;
+
+/** Mức giảm giá tối đa (% tổng hóa đơn) nhân viên được tự áp dụng; cấu hình INVOICE_STAFF_MAX_DISCOUNT_PERCENT (mặc định 20) */
+const staffMaxDiscountPercent = () => {
+  const n = Number(process.env.INVOICE_STAFF_MAX_DISCOUNT_PERCENT);
+  return Number.isInteger(n) && n >= 0 && n <= 100 ? n : 20;
+};
 
 const toCents = (value) => {
   const str = typeof value === 'number' ? value.toFixed(2) : String(value ?? '');
@@ -68,6 +78,7 @@ const createForAppointment = async (actor, rawAppointmentId, body = {}, req = {}
   let transactionStarted = false;
   let invoiceId;
   let createdInvoice;
+  let waitingApproval = false;
 
   try {
     await conn.beginTransaction();
@@ -113,12 +124,43 @@ const createForAppointment = async (actor, rawAppointmentId, body = {}, req = {}
       surchargesCents += priceCents * BigInt(s.quantity ?? 1);
     }
 
-    const totalCents = subtotalCents + surchargesCents;
-    if (totalCents > MAX_INVOICE_CENTS) {
+    const grossCents = subtotalCents + surchargesCents;
+    if (grossCents > MAX_INVOICE_CENTS) {
       throw httpError(422, 'Tổng tiền hóa đơn vượt quá giới hạn cho phép.');
     }
 
-    const totalAmount = validSurcharges.length > 0 ? centsToString(totalCents) : subtotal;
+    // Bước 3: tự tìm khuyến mãi đang hoạt động, đủ điều kiện (chọn chương trình giảm nhiều nhất)
+    const promoPick = pickBestPromotion(
+      await promotionRepository.findActive(conn, getVietnamDate()),
+      services,
+      subtotalCents
+    );
+    const promoCents = promoPick?.discountCents ?? 0n;
+
+    // Bước 4-5: giảm giá thủ công cần lý do; nhân viên vượt hạn mức -> chờ admin duyệt
+    const manualCents = toCents(parsed.discount_amount ?? 0);
+    if (manualCents === null || manualCents < 0n) {
+      throw httpError(422, 'Số tiền giảm giá không hợp lệ.');
+    }
+    let needsApproval = false;
+    if (manualCents > 0n) {
+      if (!parsed.discount_reason) {
+        throw httpError(422, 'Vui lòng nhập lý do giảm giá (ví dụ: khách thân thiết, dịp lễ).');
+      }
+      if (promoCents + manualCents >= grossCents) {
+        throw httpError(422, 'Tổng giảm giá phải nhỏ hơn tổng tiền hóa đơn.');
+      }
+      if (actor.role_name === 'staff') {
+        const maxPercent = staffMaxDiscountPercent();
+        needsApproval = manualCents * 100n > (grossCents - promoCents) * BigInt(maxPercent);
+      }
+    }
+    const appliedManualCents = needsApproval ? 0n : manualCents;
+
+    // Bước 6: tổng tiền cuối cùng
+    const discountCents = promoCents + appliedManualCents;
+    const totalCents = grossCents - discountCents;
+    const totalAmount = validSurcharges.length > 0 || discountCents > 0n ? centsToString(totalCents) : subtotal;
 
     const invoice = {
       invoice_code: createInvoiceCode(),
@@ -126,6 +168,13 @@ const createForAppointment = async (actor, rawAppointmentId, body = {}, req = {}
       customer_id: appointment.customer_id,
       created_by: actor.id,
       subtotal,
+      discount_amount: centsToString(discountCents),
+      promotion_id: promoPick ? promoPick.promotion.id : null,
+      promotion_name: promoPick ? promoPick.promotion.name : null,
+      promotion_discount: centsToString(promoCents),
+      manual_discount_reason: manualCents > 0n ? parsed.discount_reason : null,
+      pending_discount: needsApproval ? centsToString(manualCents) : '0.00',
+      approval_status: needsApproval ? 'pending' : 'none',
       total_amount: totalAmount,
       notes: parsed.notes ?? null,
     };
@@ -136,6 +185,7 @@ const createForAppointment = async (actor, rawAppointmentId, body = {}, req = {}
       await invoiceRepository.createSurchargeDetails(conn, invoiceId, validSurcharges);
     }
 
+    waitingApproval = needsApproval;
     createdInvoice = await invoiceRepository.findById(invoiceId, conn);
     createdInvoice.details = await invoiceRepository.findDetailsByInvoiceId(invoiceId, conn);
     createdInvoice.payments = [];
@@ -164,12 +214,22 @@ const createForAppointment = async (actor, rawAppointmentId, body = {}, req = {}
     },
   });
 
-  await notifyInvoice('created', {
-    customerId: createdInvoice.customer_id,
-    invoiceId,
-    invoiceCode: createdInvoice.invoice_code,
-    amount: createdInvoice.total_amount,
-  }, actor);
+  if (waitingApproval) {
+    // Chờ admin duyệt giảm giá: chưa báo khách, chỉ báo admin
+    await notifyInvoice('approval_requested', {
+      invoiceId,
+      invoiceCode: createdInvoice.invoice_code,
+      amount: createdInvoice.pending_discount,
+      staffName: actor.full_name,
+    }, actor);
+  } else {
+    await notifyInvoice('created', {
+      customerId: createdInvoice.customer_id,
+      invoiceId,
+      invoiceCode: createdInvoice.invoice_code,
+      amount: createdInvoice.total_amount,
+    }, actor);
+  }
 
   return { invoice: createdInvoice };
 };
@@ -233,6 +293,9 @@ const recordPayment = async (actor, rawInvoiceId, body = {}, req = {}) => {
     const invoice = await invoiceRepository.findInvoiceForUpdate(conn, invoiceId);
     if (!invoice) throw httpError(404, 'Không tìm thấy hóa đơn.');
 
+    if (invoice.approval_status === 'pending') {
+      throw httpError(409, 'Hóa đơn đang chờ quản trị viên duyệt giảm giá, chưa thể thu tiền.');
+    }
     if (invoice.payment_status === 'paid') {
       throw httpError(409, 'Hóa đơn đã được thanh toán đầy đủ.');
     }
@@ -316,6 +379,9 @@ const getVietQR = async (actor, rawInvoiceId) => {
   const invoice = await invoiceRepository.findById(invoiceId);
   if (!invoice) throw httpError(404, 'Không tìm thấy hóa đơn.');
   await assertCanViewInvoice(actor, invoice);
+  if (invoice.approval_status === 'pending') {
+    throw httpError(409, 'Hóa đơn đang chờ quản trị viên duyệt giảm giá, chưa có mã thanh toán.');
+  }
 
   const totalPaidCents = toCents(await invoiceRepository.sumSuccessfulPayments(pool, invoiceId)) ?? 0n;
   const totalCents = toCents(invoice.total_amount) ?? 0n;
@@ -342,7 +408,101 @@ const getVietQR = async (actor, rawInvoiceId) => {
   };
 };
 
+/** Xem trước khuyến mãi tự áp dụng cho một lịch hẹn đã hoàn tất (để form lập hóa đơn hiển thị) */
+const previewInvoice = async (actor, rawAppointmentId) => {
+  if (!['admin', 'staff'].includes(actor.role_name)) {
+    throw httpError(403, 'Chỉ nhân viên hoặc quản trị viên được lập hóa đơn.');
+  }
+  const appointmentId = parseId(rawAppointmentId, 'Mã lịch hẹn');
+  const appointment = await invoiceRepository.findAppointmentForUpdate(pool, appointmentId);
+  if (!appointment) throw httpError(404, 'Không tìm thấy lịch hẹn.');
+  await assertStaffOwnsAppointment(actor, appointment, pool);
+  const services = await invoiceRepository.findAppointmentServicesForUpdate(pool, appointmentId);
+  const subtotalCents = toCents(await invoiceRepository.sumAppointmentServices(pool, appointmentId)) ?? 0n;
+  const pick = pickBestPromotion(await promotionRepository.findActive(pool, getVietnamDate()), services, subtotalCents);
+  return {
+    subtotal: centsToString(subtotalCents),
+    promotion: pick
+      ? { id: pick.promotion.id, name: pick.promotion.name, discount: centsToString(pick.discountCents) }
+      : null,
+    staff_max_discount_percent: staffMaxDiscountPercent(),
+  };
+};
+
+/** Admin duyệt / từ chối giảm giá thủ công vượt hạn mức của nhân viên */
+const decideDiscount = async (actor, rawInvoiceId, body = {}, req = {}) => {
+  if (actor.role_name !== 'admin') {
+    throw httpError(403, 'Chỉ quản trị viên mới được duyệt giảm giá.');
+  }
+  const invoiceId = parseId(rawInvoiceId, 'Mã hóa đơn');
+  const { approve } = discountApprovalSchema.parse(body);
+
+  const conn = await pool.getConnection();
+  let transactionStarted = false;
+  let invoice;
+  try {
+    await conn.beginTransaction();
+    transactionStarted = true;
+    invoice = await invoiceRepository.findInvoiceForUpdate(conn, invoiceId);
+    if (!invoice) throw httpError(404, 'Không tìm thấy hóa đơn.');
+    if (invoice.approval_status !== 'pending') {
+      throw httpError(409, 'Hóa đơn này không có yêu cầu giảm giá đang chờ duyệt.');
+    }
+
+    const pendingCents = toCents(invoice.pending_discount) ?? 0n;
+    const discountCents = toCents(invoice.discount_amount) ?? 0n;
+    const totalCents = toCents(invoice.total_amount) ?? 0n;
+    const grossCents = totalCents + discountCents;
+
+    let newDiscount = discountCents;
+    let newTotal = totalCents;
+    if (approve) {
+      newDiscount = discountCents + pendingCents;
+      if (newDiscount >= grossCents) {
+        throw httpError(422, 'Tổng giảm giá phải nhỏ hơn tổng tiền hóa đơn.');
+      }
+      newTotal = grossCents - newDiscount;
+    }
+    await invoiceRepository.resolveDiscountApproval(conn, invoiceId, {
+      status: approve ? 'approved' : 'rejected',
+      discount_amount: centsToString(newDiscount),
+      total_amount: centsToString(newTotal),
+      approved_by: actor.id,
+    });
+    await conn.commit();
+    transactionStarted = false;
+  } catch (error) {
+    if (transactionStarted) await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
+
+  await logRepository.insert({
+    ...auditContext(req),
+    action: approve ? 'APPROVE_INVOICE_DISCOUNT' : 'REJECT_INVOICE_DISCOUNT',
+    entity_name: 'invoices',
+    entity_id: invoiceId,
+    new_values: { invoice_code: invoice.invoice_code, pending_discount: invoice.pending_discount },
+  });
+
+  const updated = await invoiceRepository.findById(invoiceId);
+  updated.details = await invoiceRepository.findDetailsByInvoiceId(invoiceId);
+  updated.payments = await invoiceRepository.findPaymentsByInvoiceId(invoiceId);
+  await notifyInvoice('discount_decided', {
+    customerId: updated.customer_id,
+    createdBy: updated.created_by,
+    invoiceId,
+    invoiceCode: updated.invoice_code,
+    amount: updated.total_amount,
+    approved: approve,
+  }, actor);
+  return { invoice: updated };
+};
+
 export {
+  previewInvoice,
+  decideDiscount,
   createForAppointment,
   listInvoices,
   getInvoiceById,
@@ -351,6 +511,8 @@ export {
 };
 
 export default {
+  previewInvoice,
+  decideDiscount,
   createForAppointment,
   listInvoices,
   getInvoiceById,

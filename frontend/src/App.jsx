@@ -36,6 +36,7 @@ import StaffKanbanPage from './pages/staff/StaffKanbanPage'
 // Pages – Admin
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ServicesAdminPage from './pages/admin/ServicesAdminPage'
+import PromotionsPage from './pages/admin/PromotionsPage'
 import UsersManagePage from './pages/admin/UsersManagePage'
 import ShiftsManagePage from './pages/admin/ShiftsManagePage'
 import ReportsPage from './pages/admin/ReportsPage'
@@ -146,6 +147,7 @@ const App = () => {
               <Route path="/admin/incidents" element={<IncidentsPage />} />
               <Route path="/admin/shifts" element={<ShiftsManagePage />} />
               <Route path="/admin/services" element={<ServicesAdminPage />} />
+              <Route path="/admin/promotions" element={<PromotionsPage />} />
               <Route path="/admin/pets" element={<PetsManagePage />} />
             </Route>
           </Route>

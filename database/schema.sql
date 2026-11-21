@@ -208,7 +208,15 @@ CREATE TABLE `invoices` (
     `customer_id` INT NOT NULL COMMENT 'FK khách hàng users(id)',
     `created_by` INT NOT NULL COMMENT 'FK nhân viên hoặc admin lập hóa đơn users(id)',
     `subtotal` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền dịch vụ trước giảm giá (tính tại server)',
-    `discount_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền giảm giá (khuyến mãi, voucher)',
+    `discount_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng số tiền giảm giá đã áp dụng (khuyến mãi + giảm thủ công)',
+    `promotion_id` INT NULL COMMENT 'Khuyến mãi đã áp dụng',
+    `promotion_name` VARCHAR(150) NULL,
+    `promotion_discount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    `manual_discount_reason` VARCHAR(150) NULL,
+    `pending_discount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Giảm giá thủ công đang chờ admin duyệt',
+    `approval_status` ENUM('none', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'none',
+    `approved_by` INT NULL,
+    `approved_at` DATETIME NULL,
     `tax_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Thuế VAT (nếu có)',
     `total_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền thực tế phải thanh toán (tính tại server)',
     `payment_status` ENUM('unpaid', 'partially_paid', 'paid', 'refunded') DEFAULT 'unpaid' COMMENT 'Trạng thái thanh toán',
@@ -310,3 +318,21 @@ CREATE TABLE IF NOT EXISTS appointment_change_requests (
   INDEX idx_acr_appointment (appointment_id, status),
   CONSTRAINT fk_acr_appointment FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
 ) ENGINE=InnoDB COMMENT='Đề xuất thay đổi lịch hẹn cần khách đồng ý';
+
+-- Chương trình khuyến mãi tự động áp dụng khi lập hóa đơn
+CREATE TABLE IF NOT EXISTS promotions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  discount_type ENUM('percent','amount') NOT NULL COMMENT 'percent: giảm theo %; amount: giảm số tiền cố định',
+  discount_value DECIMAL(12,2) NOT NULL,
+  service_id INT NULL COMMENT 'NULL = áp dụng mọi dịch vụ',
+  min_invoice DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng hóa đơn tối thiểu để được áp dụng',
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_by INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_promo_active (is_active, start_date, end_date),
+  CONSTRAINT fk_promo_service FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE SET NULL
+) ENGINE=InnoDB COMMENT='Chương trình khuyến mãi tự động áp dụng khi lập hóa đơn';

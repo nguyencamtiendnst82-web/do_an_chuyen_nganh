@@ -15,6 +15,24 @@ const createForAppointment = async (req, res, next) => {
   }
 };
 
+const preview = async (req, res, next) => {
+  try {
+    const data = await invoiceService.previewInvoice(req.user, req.params.appointmentId);
+    return sendSuccess(res, 'Xem trước hóa đơn thành công.', data);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const decideDiscount = async (req, res, next) => {
+  try {
+    const data = await invoiceService.decideDiscount(req.user, req.params.id, req.body, req);
+    return sendSuccess(res, req.body.approve ? 'Đã duyệt giảm giá.' : 'Đã từ chối giảm giá.', data);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const list = async (req, res, next) => {
   try {
     const data = await invoiceService.listInvoices(req.user, req.query);
@@ -52,6 +70,8 @@ const getVietQR = async (req, res, next) => {
 };
 
 export {
+  preview,
+  decideDiscount,
   createForAppointment,
   list,
   getOne,
@@ -60,6 +80,8 @@ export {
 };
 
 export default {
+  preview,
+  decideDiscount,
   createForAppointment,
   list,
   getOne,

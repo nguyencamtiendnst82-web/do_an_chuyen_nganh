@@ -111,9 +111,14 @@ Máy trạng thái lịch hẹn: `pending` → `confirmed` → `checked_in` → 
 
 | Phương thức | Endpoint | Quyền hạn | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/appointments/:appointmentId/invoice` | Staff / Admin | Lập hóa đơn cho lịch đã hoàn thành (tự tính tiền server-side; Staff chỉ lịch của mình) |
+| `POST` | `/api/appointments/:appointmentId/invoice` | Staff / Admin | Lập hóa đơn cho lịch đã hoàn thành (tự tính tiền server-side; Staff chỉ lịch của mình). Body: `surcharges[]`, `discount_amount` + `discount_reason` (bắt buộc lý do; nhân viên tối đa `INVOICE_STAFF_MAX_DISCOUNT_PERCENT`% = 20 mặc định, admin không giới hạn), `notes` |
 | `GET` | `/api/invoices` | Customer / Staff / Admin | Danh sách hóa đơn (khách: của mình; Staff: lịch của mình; Admin: tất cả) |
 | `GET` | `/api/invoices/:id` | Customer / Staff / Admin | Chi tiết hóa đơn |
+| `GET` | `/api/appointments/:appointmentId/invoice-preview` | Staff / Admin | Xem trước khuyến mãi tự động áp dụng + hạn mức giảm của nhân viên |
+| `PATCH` | `/api/invoices/:id/discount-approval` | Admin | Duyệt / từ chối giảm giá thủ công vượt hạn mức (`{approve:true|false}`) |
+| `GET/POST` | `/api/promotions` | Admin | Danh sách / tạo khuyến mãi (% hoặc số tiền, theo ngày, theo dịch vụ, mức tối thiểu) |
+| `PUT` | `/api/promotions/:id` | Admin | Sửa khuyến mãi |
+| `PATCH` | `/api/promotions/:id/active` | Admin | Bật/tắt khuyến mãi |
 | `GET` | `/api/invoices/:id/vietqr`| Customer / Staff / Admin | Tạo mã VietQR mô phỏng thanh toán chuyển khoản |
 | `POST` | `/api/invoices/:id/payments` | Staff / Admin | Ghi nhận giao dịch thanh toán (tiền mặt/chuyển khoản) |
 
@@ -179,3 +184,8 @@ Bảng tài khoản chỉ gồm **nhân viên** và **khách hàng**; tài kho�
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/customers?search=` | Staff / Admin | Tìm khách theo tên/SĐT để đặt lịch hộ (chỉ trường cần thiết) |
 
+
+
+### Quy trình hóa đơn & giảm giá
+1. Kiểm tra lịch hẹn → 2. Tạo hóa đơn (tính tạm tính) → 3. Tự động áp khuyến mãi tốt nhất (không cộng dồn) → 4. Nhân viên nhập giảm giá thủ công + lý do → 5. Vượt `INVOICE_STAFF_MAX_DISCOUNT_PERCENT` (mặc định 20%): hóa đơn `approval_status=pending`, chặn thanh toán/VietQR (409) đến khi admin duyệt → 6. Lưu tạm tính, giảm giá, tổng → 7. Ghi nhận thanh toán.
+Migration: `node scripts/migrate-promotions.js`.

@@ -9,6 +9,8 @@ export const surchargeItemSchema = z.object({
 export const createInvoiceSchema = z.object({
   notes: z.string().trim().max(2000, 'Ghi chú hóa đơn tối đa 2000 ký tự').nullable().optional(),
   surcharges: z.array(surchargeItemSchema).optional().default([]),
+  discount_amount: z.coerce.number().min(0, 'Giảm giá không được âm').optional().default(0),
+  discount_reason: z.string().trim().max(150, 'Lý do giảm giá tối đa 150 ký tự').nullable().optional(),
 }).strict();
 
 export const createPaymentSchema = z.object({

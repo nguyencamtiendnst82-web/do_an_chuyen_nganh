@@ -22,6 +22,7 @@ const invoiceRepository = {
 };
 const employeeRepository = { findByUserId: jest.fn() };
 const logRepository = { insert: jest.fn() };
+const promotionRepository = { findActive: jest.fn() };
 
 jest.unstable_mockModule('../src/config/db.js', () => ({ pool }));
 jest.unstable_mockModule('../src/repositories/invoiceRepository.js', () => ({
@@ -32,6 +33,9 @@ jest.unstable_mockModule('../src/repositories/employeeRepository.js', () => ({
 }));
 jest.unstable_mockModule('../src/repositories/logRepository.js', () => ({
   default: logRepository,
+}));
+jest.unstable_mockModule('../src/repositories/promotionRepository.js', () => ({
+  default: promotionRepository,
 }));
 
 const { createForAppointment, getInvoiceById, listInvoices } = await import('../src/services/invoiceService.js');
@@ -70,6 +74,7 @@ const prepareCreateMocks = () => {
   });
   invoiceRepository.findDetailsByInvoiceId.mockResolvedValue([]);
   logRepository.insert.mockResolvedValue(undefined);
+  promotionRepository.findActive.mockResolvedValue([]);
 };
 
 describe('invoice service', () => {
@@ -156,6 +161,72 @@ describe('invoice service', () => {
     await expect(createForAppointment(staff, '10')).resolves.toHaveProperty('invoice.id', 81);
     expect(invoiceRepository.createInvoice).toHaveBeenCalledTimes(1);
     expect(conn.commit).toHaveBeenCalledTimes(1);
+  });
+
+  describe('khuyến mãi tự động, giảm giá thủ công và phê duyệt', () => {
+    const promo10 = { id: 7, name: 'KM 10%', discount_type: 'percent', discount_value: '10.00', service_id: null, min_invoice: '0.00' };
+
+    test('khuyến mãi đang hoạt động được tự áp dụng', async () => {
+      promotionRepository.findActive.mockResolvedValue([promo10]);
+      await createForAppointment(admin, '10');
+      expect(invoiceRepository.createInvoice).toHaveBeenCalledWith(
+        conn,
+        expect.objectContaining({
+          promotion_id: 7,
+          promotion_name: 'KM 10%',
+          promotion_discount: '30.03',
+          discount_amount: '30.03',
+          total_amount: '270.27',
+          approval_status: 'none',
+        })
+      );
+    });
+
+    test('khuyến mãi + giảm thủ công của admin cộng dồn, có lý do', async () => {
+      promotionRepository.findActive.mockResolvedValue([promo10]);
+      await createForAppointment(admin, '10', { discount_amount: 20, discount_reason: 'Khách thân thiết' });
+      expect(invoiceRepository.createInvoice).toHaveBeenCalledWith(
+        conn,
+        expect.objectContaining({
+          discount_amount: '50.03',
+          total_amount: '250.27',
+          manual_discount_reason: 'Khách thân thiết',
+          approval_status: 'none',
+          notes: null,
+        })
+      );
+    });
+
+    test('nhân viên giảm trong hạn mức 20% -> áp dụng ngay', async () => {
+      invoiceRepository.findEmployeeUserId.mockResolvedValue(staff.id);
+      await createForAppointment(staff, '10', { discount_amount: 60, discount_reason: 'Dịp lễ' });
+      expect(invoiceRepository.createInvoice).toHaveBeenCalledWith(
+        conn,
+        expect.objectContaining({ discount_amount: '60.00', total_amount: '240.30', approval_status: 'none' })
+      );
+    });
+
+    test('nhân viên vượt hạn mức -> hóa đơn chờ admin duyệt, chưa trừ giảm giá', async () => {
+      invoiceRepository.findEmployeeUserId.mockResolvedValue(staff.id);
+      await createForAppointment(staff, '10', { discount_amount: 100, discount_reason: 'Dịp lễ' });
+      expect(invoiceRepository.createInvoice).toHaveBeenCalledWith(
+        conn,
+        expect.objectContaining({
+          discount_amount: '0.00',
+          pending_discount: '100.00',
+          approval_status: 'pending',
+          total_amount: '300.30',
+        })
+      );
+    });
+
+    test('thiếu lý do hoặc tổng giảm >= tổng tiền -> 422', async () => {
+      await expect(createForAppointment(admin, '10', { discount_amount: 10 })).rejects.toMatchObject({ statusCode: 422 });
+      await expect(
+        createForAppointment(admin, '10', { discount_amount: 300.3, discount_reason: 'Quá tay' })
+      ).rejects.toMatchObject({ statusCode: 422 });
+      expect(invoiceRepository.createInvoice).not.toHaveBeenCalled();
+    });
   });
 
   test.each([

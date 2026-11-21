@@ -13,6 +13,8 @@ const ICONS = {
   appointment_reassigned: '🔄',
   appointment_rescheduled: '🕒',
   change_request: '🙋',
+  discount_approval_requested: '🏷️',
+  discount_approval_result: '✅',
   change_request_result: '💬',
   appointment_checked_in: '🐾',
   appointment_started: '✂️',

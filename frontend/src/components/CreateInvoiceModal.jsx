@@ -1,15 +1,29 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Modal from './Modal';
 import { formatVND, errorMessage } from '../utils/format';
 import invoiceApi from '../api/invoiceApi';
 import { useToast } from './Feedback';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
   const toast = useToast();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [notes, setNotes] = useState('');
   const [surcharges, setSurcharges] = useState([]);
+  const [discount, setDiscount] = useState('');
+  const [discountReason, setDiscountReason] = useState('');
+  const [preview, setPreview] = useState(null); // { promotion, staff_max_discount_percent }
+
+  // Bước 3: hệ thống tự tìm khuyến mãi đang áp dụng
+  useEffect(() => {
+    let alive = true;
+    invoiceApi.previewInvoice(appointment.id)
+      .then((res) => { if (alive) setPreview(res.data.data); })
+      .catch(() => { if (alive) setPreview(null); });
+    return () => { alive = false; };
+  }, [appointment.id]);
 
   // Dịch vụ của lịch hẹn
   const services = appointment?.details || [];
@@ -26,7 +40,14 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
     }, 0);
   }, [surcharges]);
 
-  const grandTotal = servicesSubtotal + surchargesTotal;
+  const grossTotal = servicesSubtotal + surchargesTotal;
+  const promoDiscount = Number(preview?.promotion?.discount) || 0;
+  const discountValue = Math.max(0, Number(discount) || 0);
+  const maxPercent = preview?.staff_max_discount_percent ?? 20;
+  const isStaff = user?.role_name === 'staff';
+  // Bước 5: nhân viên vượt hạn mức -> hóa đơn chờ admin duyệt, chưa trừ phần giảm thủ công
+  const needsApproval = isStaff && discountValue > 0 && discountValue * 100 > (grossTotal - promoDiscount) * maxPercent;
+  const grandTotal = grossTotal - promoDiscount - (needsApproval ? 0 : discountValue);
 
   const handleAddSurcharge = () => {
     setSurcharges((prev) => [
@@ -70,10 +91,23 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
       }
     }
 
+    if (discountValue > 0) {
+      if (!discountReason.trim()) {
+        setError('Vui lòng nhập lý do giảm giá.');
+        return;
+      }
+      if (promoDiscount + discountValue >= grossTotal) {
+        setError('Số tiền giảm giá phải nhỏ hơn tổng tiền hóa đơn.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         notes: notes.trim() || null,
+        discount_amount: discountValue,
+        discount_reason: discountValue > 0 ? discountReason.trim() : null,
         surcharges: surcharges.map((s) => ({
           item_name: s.item_name.trim(),
           quantity: Number(s.quantity) || 1,
@@ -204,6 +238,27 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
           )}
         </div>
 
+        {/* Giảm giá */}
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900">Giảm giá (nếu có)</h4>
+          <p className="text-xs text-gray-500 mb-2">Chỉ dùng cho dịp đặc biệt. Nhân viên tự giảm tối đa {maxPercent}%; vượt mức này hóa đơn sẽ chờ quản trị viên duyệt.</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input type="number" min="0" step="1000" value={discount} onChange={(e) => setDiscount(e.target.value)}
+              placeholder="Số tiền giảm (đ)" aria-label="Số tiền giảm giá"
+              className="sm:w-44 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="text" maxLength={150} value={discountReason} onChange={(e) => setDiscountReason(e.target.value)}
+              placeholder="Lý do (VD: khách thân thiết, khuyến mãi tháng 11)" aria-label="Lý do giảm giá"
+              disabled={discountValue <= 0}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" />
+          </div>
+        </div>
+
+        {needsApproval && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2" role="status">
+            Mức giảm vượt {maxPercent}% nên cần quản trị viên duyệt. Hóa đơn sẽ được tạo ở trạng thái chờ duyệt và chưa thu tiền được cho đến khi có kết quả.
+          </div>
+        )}
+
         {/* Ghi chú */}
         <div>
           <label htmlFor="invoice-notes" className="block text-sm font-medium text-gray-700 mb-1">
@@ -230,6 +285,18 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
             <div className="flex justify-between text-gray-600">
               <span>Phụ phí:</span>
               <span>+{formatVND(surchargesTotal)}</span>
+            </div>
+          )}
+          {promoDiscount > 0 && (
+            <div className="flex justify-between text-rose-600">
+              <span>Khuyến mãi tự động ({preview.promotion.name}):</span>
+              <span>−{formatVND(promoDiscount)}</span>
+            </div>
+          )}
+          {discountValue > 0 && (
+            <div className={`flex justify-between ${needsApproval ? 'text-amber-700' : 'text-rose-600'}`}>
+              <span>Giảm giá thủ công{needsApproval ? ' (chờ duyệt)' : ''}:</span>
+              <span>{needsApproval ? formatVND(discountValue) : `−${formatVND(discountValue)}`}</span>
             </div>
           )}
           <div className="flex justify-between text-base font-bold text-blue-900 pt-2 border-t border-blue-200">

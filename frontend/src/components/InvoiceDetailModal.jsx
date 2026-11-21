@@ -1,11 +1,22 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Modal from './Modal';
 import { formatVND, errorMessage } from '../utils/format';
-import { formatDate } from '../utils/appointment';
+import { formatDate, hm } from '../utils/appointment';
 import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE, PAYMENT_METHOD_LABEL } from '../utils/invoice';
 import invoiceApi from '../api/invoiceApi';
 import { useAuth } from '../contexts/AuthContext';
 import PaymentModal from './PaymentModal';
+
+const SPA = {
+  address: '538 Tôn Đức Thắng, P. Hòa Khánh, Đà Nẵng',
+  phone: '0338 919 227',
+};
+
+const TX_STATUS = {
+  success: { label: 'Thành công', style: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  pending: { label: 'Chờ xử lý', style: 'bg-amber-50 text-amber-700 border-amber-200' },
+  failed: { label: 'Thất bại', style: 'bg-red-50 text-red-700 border-red-200' },
+};
 
 const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
   const { user } = useAuth();
@@ -65,7 +76,29 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
   }, [payments]);
 
   const totalAmount = Number(invoice?.total_amount) || 0;
+  const discount = Number(invoice?.discount_amount) || 0;
+  const surchargeTotal = details
+    .filter((d) => d.service_id === null)
+    .reduce((sum, d) => sum + Number(d.total_price || 0), 0);
   const remaining = Math.max(0, totalAmount - totalPaid);
+
+  const [deciding, setDeciding] = useState(false);
+  const isAdmin = user?.role_name === 'admin';
+  const pendingApproval = invoice?.approval_status === 'pending';
+
+  const decide = async (approve) => {
+    setDeciding(true);
+    setError('');
+    try {
+      await invoiceApi.decideDiscount(invoiceId, approve);
+      await loadInvoice();
+      onUpdated?.();
+    } catch (err) {
+      setError(errorMessage(err, 'Không xử lý được yêu cầu giảm giá.'));
+    } finally {
+      setDeciding(false);
+    }
+  };
 
   const handlePaymentSuccess = () => {
     setShowPaymentModal(false);
@@ -113,6 +146,8 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
                     <p className="text-[11px] text-gray-500">Dịch vụ chăm sóc & làm đẹp thú cưng</p>
                   </div>
                 </div>
+                <p className="text-[11px] text-gray-600 mt-2">📍 {SPA.address}</p>
+                <p className="text-[11px] text-gray-600">📞 {SPA.phone}</p>
               </div>
               <div className="text-right">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500 font-semibold">Hóa đơn dịch vụ</p>
@@ -128,19 +163,45 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
               </div>
             </div>
 
+            {pendingApproval && (
+              <div className="print:hidden bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-900 space-y-2" role="status">
+                <p>
+                  <strong>Đang chờ quản trị viên duyệt giảm giá {formatVND(invoice.pending_discount)}</strong>
+                  {invoice.manual_discount_reason ? ` – lý do: ${invoice.manual_discount_reason}` : ''}. Chưa thể thu tiền.
+                </p>
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <button type="button" disabled={deciding} onClick={() => decide(true)} className="px-3 py-1.5 rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60">Duyệt giảm giá</button>
+                    <button type="button" disabled={deciding} onClick={() => decide(false)} className="px-3 py-1.5 rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-60">Từ chối</button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Thông tin khách hàng & lịch hẹn */}
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 text-xs">
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 text-xs bg-gray-50 rounded-lg p-3">
               <div>
                 <dt className="text-gray-500">Khách hàng</dt>
                 <dd className="font-semibold text-gray-900 mt-0.5">{invoice.customer_name}</dd>
+                {invoice.customer_phone && <dd className="text-gray-600">{invoice.customer_phone}</dd>}
               </div>
               <div>
                 <dt className="text-gray-500">Thú cưng</dt>
                 <dd className="font-semibold text-gray-900 mt-0.5">{invoice.pet_name}</dd>
               </div>
               <div>
-                <dt className="text-gray-500">Thanh toán</dt>
-                <dd className="font-semibold text-gray-900 mt-0.5">Ngay khi hoàn tất dịch vụ</dd>
+                <dt className="text-gray-500">Mã lịch hẹn</dt>
+                <dd className="font-mono font-semibold text-gray-900 mt-0.5">{invoice.appointment_code}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Nhân viên thực hiện</dt>
+                <dd className="font-semibold text-gray-900 mt-0.5">{invoice.employee_name || '—'}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-gray-500">Thời gian sử dụng dịch vụ</dt>
+                <dd className="font-semibold text-gray-900 mt-0.5">
+                  {hm(invoice.start_time)} – {hm(invoice.end_time)}, ngày {formatDate(String(invoice.appointment_date || ''))}
+                </dd>
               </div>
             </dl>
 
@@ -185,12 +246,16 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
                   <span>Tạm tính dịch vụ</span>
                   <span className="tabular-nums">{formatVND(invoice.subtotal)}</span>
                 </div>
-                {totalAmount !== Number(invoice.subtotal) && (
+                {surchargeTotal > 0 && (
                   <div className="flex justify-between text-gray-600">
                     <span>Phụ phí</span>
-                    <span className="tabular-nums">{formatVND(totalAmount - Number(invoice.subtotal))}</span>
+                    <span className="tabular-nums">{formatVND(surchargeTotal)}</span>
                   </div>
                 )}
+                <div className={`flex justify-between ${discount > 0 ? 'text-rose-600' : 'text-gray-600'}`}>
+                  <span>Giảm giá{invoice.promotion_name && Number(invoice.promotion_discount) > 0 ? ` (${invoice.promotion_name})` : ''}</span>
+                  <span className="tabular-nums">{discount > 0 ? `− ${formatVND(discount)}` : formatVND(0)}</span>
+                </div>
                 <div className="flex justify-between font-bold text-gray-900 pt-1.5 border-t border-gray-300 text-base">
                   <span>Tổng cộng</span>
                   <span className="tabular-nums">{formatVND(totalAmount)}</span>
@@ -220,6 +285,7 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
                       <th className="text-left font-semibold py-1.5">Mã giao dịch</th>
                       <th className="text-left font-semibold py-1.5">Phương thức</th>
                       <th className="text-left font-semibold py-1.5">Ngày</th>
+                      <th className="text-left font-semibold py-1.5">Trạng thái</th>
                       <th className="text-right font-semibold py-1.5">Số tiền</th>
                     </tr>
                   </thead>
@@ -229,6 +295,11 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
                         <td className="py-2 font-mono text-gray-800">{p.payment_code}{p.notes && <span className="block text-[11px] text-gray-500 italic font-sans">{p.notes}</span>}</td>
                         <td className="py-2 text-gray-600">{PAYMENT_METHOD_LABEL[p.payment_method] || p.payment_method}</td>
                         <td className="py-2 text-gray-600">{formatDate(p.payment_time)}</td>
+                        <td className="py-2">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold border ${(TX_STATUS[p.status] || {}).style || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                            {(TX_STATUS[p.status] || {}).label || p.status}
+                          </span>
+                        </td>
                         <td className="py-2 text-right font-semibold text-emerald-700 tabular-nums">{formatVND(p.amount)}</td>
                       </tr>
                     ))}
@@ -238,7 +309,7 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
             </div>
 
             {/* Khách hàng: Hiển thị VietQR để quét thanh toán */}
-            {!isStaffOrAdmin && remaining > 0 && (
+            {!isStaffOrAdmin && remaining > 0 && !pendingApproval && (
               <div className="print:hidden p-4 bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-2xl text-center space-y-3">
                 <div>
                   <h4 className="text-sm font-bold text-pink-900">Quét mã VietQR để thanh toán</h4>
@@ -297,7 +368,7 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
                   Đóng
                 </button>
 
-                {isStaffOrAdmin && remaining > 0 && (
+                {isStaffOrAdmin && remaining > 0 && !pendingApproval && (
                   <button
                     type="button"
                     onClick={() => setShowPaymentModal(true)}

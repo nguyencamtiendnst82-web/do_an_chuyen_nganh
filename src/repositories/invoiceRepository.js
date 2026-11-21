@@ -55,14 +55,22 @@ const createInvoice = async (conn, invoice) => {
   const [result] = await conn.query(
     `INSERT INTO invoices
        (invoice_code, appointment_id, customer_id, created_by, subtotal,
-        discount_amount, tax_amount, total_amount, payment_status, notes)
-     VALUES (?, ?, ?, ?, ?, 0.00, 0.00, ?, 'unpaid', ?)`,
+        discount_amount, promotion_id, promotion_name, promotion_discount, manual_discount_reason,
+        pending_discount, approval_status, tax_amount, total_amount, payment_status, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, 'unpaid', ?)`,
     [
       invoice.invoice_code,
       invoice.appointment_id,
       invoice.customer_id,
       invoice.created_by,
       invoice.subtotal,
+      invoice.discount_amount ?? '0.00',
+      invoice.promotion_id ?? null,
+      invoice.promotion_name ?? null,
+      invoice.promotion_discount ?? '0.00',
+      invoice.manual_discount_reason ?? null,
+      invoice.pending_discount ?? '0.00',
+      invoice.approval_status ?? 'none',
       invoice.total_amount,
       invoice.notes,
     ]
@@ -94,10 +102,20 @@ const createSurchargeDetails = async (conn, invoiceId, surcharges) => {
   }
 };
 
+const resolveDiscountApproval = async (conn, invoiceId, { status, discount_amount, total_amount, approved_by }) => {
+  await conn.query(
+    `UPDATE invoices
+     SET approval_status = ?, discount_amount = ?, total_amount = ?, pending_discount = 0.00,
+         approved_by = ?, approved_at = NOW()
+     WHERE id = ?`,
+    [status, discount_amount, total_amount, approved_by, invoiceId]
+  );
+};
+
 const findInvoiceForUpdate = async (conn, invoiceId) => {
   const [rows] = await conn.query(
     `SELECT id, invoice_code, appointment_id, customer_id, subtotal,
-            discount_amount, tax_amount, total_amount, payment_status, notes
+            discount_amount, pending_discount, approval_status, tax_amount, total_amount, payment_status, notes
      FROM invoices
      WHERE id = ?
      LIMIT 1
@@ -145,15 +163,20 @@ const sumSuccessfulPayments = async (conn, invoiceId) => {
 const findById = async (id, conn = pool) => {
   const [rows] = await conn.query(
     `SELECT i.id, i.invoice_code, i.appointment_id, i.customer_id, i.created_by,
-            i.subtotal, i.discount_amount, i.tax_amount, i.total_amount,
+            i.subtotal, i.discount_amount, i.promotion_name, i.promotion_discount, i.manual_discount_reason,
+            i.pending_discount, i.approval_status, i.tax_amount, i.total_amount,
             i.payment_status, i.notes, i.created_at, i.updated_at,
             a.appointment_code, a.employee_id,
+            a.appointment_date, a.start_time, a.end_time,
             p.name AS pet_name, p.species AS pet_species,
-            u.full_name AS customer_name
+            u.full_name AS customer_name, u.phone AS customer_phone,
+            ue.full_name AS employee_name
      FROM invoices i
      JOIN appointments a ON a.id = i.appointment_id
      JOIN pets p ON p.id = a.pet_id
      JOIN users u ON u.id = i.customer_id
+     LEFT JOIN employees e ON e.id = a.employee_id
+     LEFT JOIN users ue ON ue.id = e.user_id
      WHERE i.id = ?
      LIMIT 1`,
     [id]
@@ -230,6 +253,7 @@ export {
   createInvoiceDetails,
   createSurchargeDetails,
   findInvoiceForUpdate,
+  resolveDiscountApproval,
   createPayment,
   updatePaymentStatus,
   sumSuccessfulPayments,
@@ -249,6 +273,7 @@ export default {
   createInvoiceDetails,
   createSurchargeDetails,
   findInvoiceForUpdate,
+  resolveDiscountApproval,
   createPayment,
   updatePaymentStatus,
   sumSuccessfulPayments,

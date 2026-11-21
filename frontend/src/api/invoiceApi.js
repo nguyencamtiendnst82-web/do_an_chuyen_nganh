@@ -9,6 +9,10 @@ export const invoiceApi = {
     axiosClient.get(`/invoices/${id}`),
   recordPayment: (id, data) =>
     axiosClient.post(`/invoices/${id}/payments`, data),
+  previewInvoice: (appointmentId) =>
+    axiosClient.get(`/appointments/${appointmentId}/invoice-preview`),
+  decideDiscount: (id, approve) =>
+    axiosClient.patch(`/invoices/${id}/discount-approval`, { approve }),
   getVietQR: (id) =>
     axiosClient.get(`/invoices/${id}/vietqr`),
 };

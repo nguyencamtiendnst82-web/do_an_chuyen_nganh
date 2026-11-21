@@ -16,6 +16,7 @@ import employeeShiftRoutes from './employeeShiftRoutes.js';
 import appointmentRoutes from './appointmentRoutes.js';
 import operationsRoutes from './operationsRoutes.js'
 import invoiceRoutes from './invoiceRoutes.js';
+import promotionRoutes from './promotionRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
 import reportRoutes from './reportRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
@@ -26,6 +27,7 @@ router.use('/', healthRoutes);
 router.use('/auth/google', googleAuthRoutes);
 router.use('/auth', authRoutes);
 router.use('/services', serviceRoutes);
+router.use('/promotions', promotionRoutes);
 router.use('/pets', petRoutes);
 router.use('/users', userRoutes);
 router.use('/customers', customerRoutes);

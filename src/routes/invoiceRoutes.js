@@ -7,6 +7,8 @@ import {
   list,
   recordPayment,
   getVietQR,
+  preview,
+  decideDiscount,
 } from '../controllers/invoiceController.js';
 
 const router = express.Router();
@@ -18,6 +20,12 @@ router.post(
   authorize('staff', 'admin'),
   createForAppointment
 );
+
+// Xem trước khuyến mãi tự áp dụng cho lịch đã hoàn tất (form lập hóa đơn)
+router.get('/appointments/:appointmentId/invoice-preview', authenticate, authorize('staff', 'admin'), preview);
+
+// Admin duyệt / từ chối giảm giá thủ công vượt hạn mức của nhân viên
+router.patch('/invoices/:id/discount-approval', authenticate, authorize('admin'), decideDiscount);
 
 // Danh sách hóa đơn (Admin xem hết, Staff xem lịch của mình, Customer xem của mình)
 router.get('/invoices', authenticate, authorize('admin', 'staff', 'customer'), list);

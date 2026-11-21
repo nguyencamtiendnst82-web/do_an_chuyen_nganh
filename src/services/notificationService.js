@@ -178,8 +178,26 @@ export const notifyChangeRequest = async (event, request, appointment, actor) =>
 };
 
 /** Hóa đơn mới / thanh toán: báo cho khách của lịch hẹn */
-export const notifyInvoice = async (event, { customerId, invoiceId, invoiceCode, amount, paid }, actor) => {
+export const notifyInvoice = async (event, { customerId, createdBy, invoiceId, invoiceCode, amount, paid, approved, staffName }, actor) => {
   if (event === 'created') {
+    await send([customerId], 'new_invoice', {
+      invoice_id: invoiceId, invoice_code: invoiceCode, link: 'appointments',
+      title: 'Bạn có hóa đơn mới',
+      message: `Hóa đơn ${invoiceCode} – tổng ${money(amount)}.`,
+    }, { excludeUserId: actor?.id });
+  } else if (event === 'approval_requested') {
+    await send(await adminIds(), 'discount_approval_requested', {
+      invoice_id: invoiceId, invoice_code: invoiceCode, link: 'appointments',
+      title: 'Cần duyệt giảm giá hóa đơn',
+      message: `${staffName || 'Nhân viên'} đề nghị giảm ${money(amount)} cho hóa đơn ${invoiceCode} (vượt hạn mức).`,
+    }, { excludeUserId: actor?.id });
+  } else if (event === 'discount_decided') {
+    await send([createdBy], 'discount_approval_result', {
+      invoice_id: invoiceId, invoice_code: invoiceCode, link: 'appointments',
+      title: approved ? 'Giảm giá đã được duyệt' : 'Giảm giá bị từ chối',
+      message: `Hóa đơn ${invoiceCode} ${approved ? 'được áp dụng giảm giá' : 'giữ nguyên giá (không giảm thêm)'}; có thể thu tiền.`,
+    }, { excludeUserId: actor?.id });
+    // Hóa đơn đã chốt giá: giờ mới báo khách
     await send([customerId], 'new_invoice', {
       invoice_id: invoiceId, invoice_code: invoiceCode, link: 'appointments',
       title: 'Bạn có hóa đơn mới',
