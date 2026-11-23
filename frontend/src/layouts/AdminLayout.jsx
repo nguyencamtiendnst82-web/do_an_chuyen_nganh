@@ -61,7 +61,7 @@ const AdminLayout = () => {
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
               <p className="text-xs text-purple-600 truncate">Quản trị viên</p>
             </div>
-            <NotificationBell tone="blue" />
+            <NotificationBell tone="blue" placement="sidebar" />
           </div>
         </div>
 

@@ -5,6 +5,7 @@ import {
   getEmployeesReport,
   getAppointmentsReport,
   getCustomersReport,
+  exportReportExcel,
   exportReportCsv,
 } from '../../api/reportsApi'
 import { addDays, vietnamYmd } from '../../utils/date'
@@ -73,22 +74,36 @@ const ReportsPage = () => {
     loadCurrentTab()
   }, [activeTab, dateRange.from, dateRange.to, dateRange.groupBy])
 
-  const handleExportCsv = async () => {
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = async (format = 'xlsx') => {
+    setExporting(true)
     try {
       const endpoint = `/reports/${activeTab}`
       const params = { from: dateRange.from, to: dateRange.to }
       if (activeTab === 'revenue') params.groupBy = dateRange.groupBy
 
-      const res = await exportReportCsv(endpoint, params)
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8;' }))
+      const res = format === 'xlsx'
+        ? await exportReportExcel(endpoint, params)
+        : await exportReportCsv(endpoint, params)
+
+      const mimeType = format === 'xlsx'
+        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        : 'text/csv;charset=utf-8;'
+      const ext = format === 'xlsx' ? 'xlsx' : 'csv'
+
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: mimeType }))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `bao_cao_${activeTab}_${dateRange.from}_${dateRange.to}.csv`)
+      link.setAttribute('download', `bao_cao_${activeTab}_${dateRange.from}_${dateRange.to}.${ext}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
+      window.URL.revokeObjectURL(url)
     } catch (err) {
-      alert('Không thể xuất file CSV: ' + (err.response?.data?.message || err.message))
+      alert(`Không thể xuất file ${format.toUpperCase()}: ` + (err.response?.data?.message || err.message))
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -110,12 +125,24 @@ const ReportsPage = () => {
             Tổng hợp dữ liệu kinh doanh, hiệu suất và khách hàng
           </p>
         </div>
-        <button
-          onClick={handleExportCsv}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition shadow-xs"
-        >
-          📥 Xuất CSV (Excel)
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleExport('xlsx')}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-sm font-medium transition shadow-xs cursor-pointer"
+            title="Xuất file Microsoft Excel chuyên nghiệp (.xlsx)"
+          >
+            📊 {exporting ? 'Đang xuất...' : 'Xuất Excel (.xlsx)'}
+          </button>
+          <button
+            onClick={() => handleExport('csv')}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-60 text-gray-700 rounded-xl text-sm font-medium transition shadow-xs cursor-pointer"
+            title="Xuất file CSV"
+          >
+            📄 CSV
+          </button>
+        </div>
       </div>
 
       {/* Bộ lọc khoảng ngày */}

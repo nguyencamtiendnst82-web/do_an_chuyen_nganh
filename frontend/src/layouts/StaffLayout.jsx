@@ -58,7 +58,7 @@ const StaffLayout = () => {
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
-            <NotificationBell tone="blue" />
+            <NotificationBell tone="blue" placement="sidebar" />
           </div>
         </div>
 

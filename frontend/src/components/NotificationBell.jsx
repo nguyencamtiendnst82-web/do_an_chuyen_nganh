@@ -50,7 +50,7 @@ const resolvePath = (link, role) => {
  * NotificationBell: chuông thông báo (hỏi lại mỗi 30 giây khi tab đang mở).
  * Bấm vào một thông báo → đánh dấu đã đọc và chuyển tới trang liên quan.
  */
-const NotificationBell = ({ tone = 'pink' }) => {
+const NotificationBell = ({ tone = 'pink', placement = 'dropdown' }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -58,6 +58,7 @@ const NotificationBell = ({ tone = 'pink' }) => {
   const [unread, setUnread] = useState(0)
   const [loading, setLoading] = useState(false)
   const ref = useRef(null)
+  const [anchor, setAnchor] = useState(null) // vị trí khung thông báo khi đặt trong sidebar
 
   const refreshCount = useCallback(async () => {
     try {
@@ -85,18 +86,51 @@ const NotificationBell = ({ tone = 'pink' }) => {
     return () => clearInterval(timer)
   }, [user, refreshCount])
 
+  const updatePosition = useCallback(() => {
+    if (!ref.current) return
+    const r = ref.current.getBoundingClientRect()
+    const side = ref.current.closest('aside')
+    const isSidebar = placement === 'sidebar' || !!side || r.left < 280
+
+    if (window.innerWidth < 640) {
+      setAnchor({
+        top: Math.max(12, r.bottom + 8),
+        left: 12,
+        right: 12,
+        width: 'calc(100vw - 24px)',
+      })
+    } else if (isSidebar) {
+      const sideRight = side ? side.getBoundingClientRect().right : r.right + 20
+      const top = Math.max(16, Math.min(r.top, window.innerHeight - 480))
+      const left = Math.max(16, Math.min(sideRight + 12, window.innerWidth - 360))
+      setAnchor({ top, left, width: '340px' })
+    } else {
+      setAnchor(null)
+    }
+  }, [placement])
+
   useEffect(() => {
     if (!open) return undefined
     loadList()
-    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    updatePosition()
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && !e.target.closest('[data-notification-panel]')) {
+        setOpen(false)
+      }
+    }
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    const onResize = () => updatePosition()
+    window.addEventListener('resize', onResize)
+    window.addEventListener('scroll', onResize, true)
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
     return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', onResize, true)
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, loadList])
+  }, [open, loadList, updatePosition])
 
   if (!user) return null
 
@@ -129,11 +163,16 @@ const NotificationBell = ({ tone = 'pink' }) => {
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen((p) => !p)}
+        onClick={() => {
+          if (!open) {
+            updatePosition()
+          }
+          setOpen((p) => !p)
+        }}
         aria-label={unread ? `Thông báo, ${unread} chưa đọc` : 'Thông báo'}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative p-2 text-gray-500 hover:text-gray-900 rounded-full focus:outline-none"
+        className="relative p-2 text-gray-500 hover:text-gray-900 rounded-full focus:outline-none cursor-pointer"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -147,7 +186,16 @@ const NotificationBell = ({ tone = 'pink' }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-[60] overflow-hidden">
+        <div
+          data-notification-panel="true"
+          className={`${anchor ? 'fixed' : 'absolute right-0 mt-2'} w-84 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[9999] overflow-hidden`}
+          style={anchor ? {
+            top: anchor.top,
+            left: anchor.left,
+            ...(anchor.width ? { width: anchor.width } : {}),
+            ...(anchor.right ? { right: anchor.right } : {}),
+          } : undefined}
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="text-sm font-semibold text-gray-800">Thông báo</span>
             {unread > 0 && (

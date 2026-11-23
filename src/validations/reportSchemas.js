@@ -20,7 +20,7 @@ export const dateRangeSchema = z
     from: z.string().refine(isValidDateStr, { message: 'Từ ngày (from) phải có định dạng YYYY-MM-DD.' }),
     to: z.string().refine(isValidDateStr, { message: 'Đến ngày (to) phải có định dạng YYYY-MM-DD.' }),
     groupBy: z.enum(['day', 'month']).default('day'),
-    format: z.enum(['json', 'csv']).default('json'),
+    format: z.enum(['json', 'csv', 'xlsx', 'excel']).default('json'),
   })
   .refine(
     (data) => {

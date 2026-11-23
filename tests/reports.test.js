@@ -182,6 +182,18 @@ describe('ĐỢT 5: Báo cáo, Nhật ký, Dashboard', () => {
       expect(res.text.charCodeAt(0)).toBe(0xfeff);
       expect(res.text).toContain('Số lượng hóa đơn');
     });
+
+    test('Xuất file Excel (.xlsx) doanh thu thành công với MIME chuẩn', async () => {
+      const res = await request(app)
+        .get('/api/reports/revenue')
+        .query({ from: today, to: today, format: 'xlsx' })
+        .set(authHeader(admin));
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('spreadsheetml.sheet');
+      expect(res.headers['content-disposition']).toContain('.xlsx');
+      expect(res.body).toBeDefined();
+    });
   });
 
   /* ------------------- 2. BÁO CÁO DỊCH VỤ ------------------- */
