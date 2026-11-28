@@ -6,7 +6,7 @@ import { useToast } from './Feedback'
 import { errorMessage, mapFieldErrors } from '../utils/format'
 import { formatDate, hm } from '../utils/appointment'
 
-const inputClass = 'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+const inputClass = 'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500'
 
 /**
  * CareStepModal: form tiếp nhận (mode="checkin") hoặc hoàn tất (mode="complete") một lịch hẹn.
@@ -137,7 +137,7 @@ const CareStepModal = ({ appointment, mode, onClose, onDone }) => {
         <div className="flex justify-end gap-3">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Đóng</button>
           <button type="submit" disabled={saving}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-60">
             {saving ? 'Đang lưu...' : isCheckIn ? 'Tiếp nhận' : 'Hoàn tất'}
           </button>
         </div>

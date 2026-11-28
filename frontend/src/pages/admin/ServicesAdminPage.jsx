@@ -10,9 +10,9 @@ const EMPTY_FORM = { name: '', description: '', price: '', duration_minutes: '60
 
 const Thumb = ({ service }) =>
   service.image_url ? (
-    <img src={service.image_url} alt={service.name} loading="lazy" className="w-12 h-12 rounded-lg object-cover bg-purple-50 shrink-0" />
+    <img src={service.image_url} alt={service.name} loading="lazy" className="w-12 h-12 rounded-lg object-cover bg-pink-50 shrink-0" />
   ) : (
-    <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center text-xl shrink-0" aria-hidden="true">✂️</div>
+    <div className="w-12 h-12 rounded-lg bg-pink-50 flex items-center justify-center text-xl shrink-0" aria-hidden="true">✂️</div>
   )
 
 const StatusBadge = ({ active }) => (
@@ -22,7 +22,7 @@ const StatusBadge = ({ active }) => (
 )
 
 const inputClass = (hasError) =>
-  `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`
+  `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`
 
 /**
  * ServicesAdminPage: quản lý danh mục dịch vụ (admin)
@@ -188,7 +188,7 @@ const ServicesAdminPage = () => {
           <p className="text-sm text-gray-500 mt-1">Giá và thời lượng ở đây là giá niêm yết; hệ thống sẽ tự tính tiền khi đặt lịch.</p>
         </div>
         <button type="button" onClick={openCreate}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700">
+          className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pink-700">
           + Thêm dịch vụ
         </button>
       </div>
@@ -196,9 +196,9 @@ const ServicesAdminPage = () => {
       <div className="flex flex-wrap gap-3">
         <input type="search" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm theo tên hoặc mô tả..." aria-label="Tìm dịch vụ"
-          className="w-full sm:w-72 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+          className="w-full sm:w-72 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent" />
         <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Lọc theo trạng thái"
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500">
           <option value="all">Tất cả</option>
           <option value="true">Đang bật</option>
           <option value="false">Đang ẩn</option>
@@ -241,7 +241,7 @@ const ServicesAdminPage = () => {
                     <td className="px-4 py-3 whitespace-nowrap">{s.duration_minutes} phút</td>
                     <td className="px-4 py-3"><StatusBadge active={s.is_active} /></td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button type="button" onClick={() => openEdit(s)} className="text-purple-700 hover:underline mr-3">Sửa</button>
+                      <button type="button" onClick={() => openEdit(s)} className="text-pink-700 hover:underline mr-3">Sửa</button>
                       <button type="button" onClick={() => toggleActive(s)} disabled={busyId === s.id}
                         className={`hover:underline disabled:opacity-60 ${s.is_active ? 'text-red-600' : 'text-green-700'}`}>
                         {busyId === s.id ? '...' : s.is_active ? 'Ẩn' : 'Bật lại'}
@@ -261,13 +261,13 @@ const ServicesAdminPage = () => {
                   <Thumb service={s} />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{s.name}</p>
-                    <p className="text-sm text-purple-700 font-medium">{formatVND(s.price)} · {s.duration_minutes} phút</p>
+                    <p className="text-sm text-pink-700 font-medium">{formatVND(s.price)} · {s.duration_minutes} phút</p>
                   </div>
                   <StatusBadge active={s.is_active} />
                 </div>
                 {s.description && <p className="mt-2 text-xs text-gray-600 line-clamp-3">{s.description}</p>}
                 <div className="mt-3 flex justify-end gap-2">
-                  <button type="button" onClick={() => openEdit(s)} className="text-sm text-purple-700 border border-purple-200 rounded-lg px-3 py-1.5">Sửa</button>
+                  <button type="button" onClick={() => openEdit(s)} className="text-sm text-pink-700 border border-pink-200 rounded-lg px-3 py-1.5">Sửa</button>
                   <button type="button" onClick={() => toggleActive(s)} disabled={busyId === s.id}
                     className={`text-sm rounded-lg px-3 py-1.5 disabled:opacity-60 ${s.is_active ? 'text-red-600 hover:bg-red-50' : 'text-green-700 hover:bg-green-50'}`}>
                     {busyId === s.id ? '...' : s.is_active ? 'Ẩn' : 'Bật lại'}
@@ -321,7 +321,7 @@ const ServicesAdminPage = () => {
               <button type="button" onClick={() => setModal(null)} disabled={saving}
                 className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-60">Hủy</button>
               <button type="submit" disabled={saving}
-                className="bg-purple-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                className="bg-pink-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed">
                 {saving ? 'Đang lưu...' : modal.service ? 'Lưu thay đổi' : 'Thêm dịch vụ'}
               </button>
             </div>

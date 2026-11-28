@@ -54,7 +54,7 @@ const LogsPage = () => {
             placeholder="VD: CHECK_IN, CREATE..."
             value={filters.action}
             onChange={(e) => setFilters({ ...filters, action: e.target.value })}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
@@ -64,7 +64,7 @@ const LogsPage = () => {
             type="date"
             value={filters.from}
             onChange={(e) => setFilters({ ...filters, from: e.target.value })}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
@@ -74,14 +74,14 @@ const LogsPage = () => {
             type="date"
             value={filters.to}
             onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition"
+          className="px-4 py-1.5 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium transition"
         >
           {loading ? 'Đang lọc...' : 'Lọc nhật ký'}
         </button>
@@ -129,7 +129,7 @@ const LogsPage = () => {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 rounded bg-purple-50 text-purple-700 font-mono text-xs font-semibold">
+                      <span className="px-2 py-1 rounded bg-pink-50 text-pink-700 font-mono text-xs font-semibold">
                         {log.action}
                       </span>
                     </td>
@@ -140,7 +140,7 @@ const LogsPage = () => {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setSelectedLog(log)}
-                        className="text-xs text-purple-600 hover:text-purple-800 font-medium hover:underline"
+                        className="text-xs text-pink-600 hover:text-pink-800 font-medium hover:underline"
                       >
                         Xem thay đổi
                       </button>

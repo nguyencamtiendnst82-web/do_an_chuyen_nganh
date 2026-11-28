@@ -1,3 +1,5 @@
+import { toXlsx, XLSX_CONTENT_TYPE } from './xlsxExport.js';
+
 /**
  * Xuất dữ liệu sang định dạng CSV chuyên nghiệp
  * Cải tiến chuẩn cho Excel:
@@ -86,4 +88,21 @@ export const toCsv = (headers, rows, options = {}) => {
 
   const BOM = '\ufeff';
   return BOM + lines.join('\r\n');
+};
+
+/**
+ * Tạo file tải về cho báo cáo: format 'xlsx' -> Excel thật, còn lại -> CSV.
+ * Trả về { isCsv: true, contentType, body, filename } (isCsv giữ tên cũ: "là file tải về").
+ */
+export const buildExportFile = (format, headers, rows, options, baseName) => {
+  if (format === 'xlsx') {
+    return {
+      isCsv: true,
+      contentType: XLSX_CONTENT_TYPE,
+      body: toXlsx(headers, rows, options),
+      filename: `${baseName}.xlsx`,
+    };
+  }
+  const csv = toCsv(headers, rows, options);
+  return { isCsv: true, contentType: 'text/csv; charset=utf-8', body: csv, csv, filename: `${baseName}.csv` };
 };

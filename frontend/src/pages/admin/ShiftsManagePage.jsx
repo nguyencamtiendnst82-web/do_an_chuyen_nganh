@@ -26,7 +26,7 @@ const EMPTY_SHIFT_FORM = {
 };
 
 const inputClass = (hasError) =>
-  `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+  `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
     hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
   }`;
 
@@ -320,7 +320,7 @@ const ShiftsManagePage = () => {
                 });
                 setShowBulkModal(true);
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm"
             >
               <span>📅</span>
               <span>Phân ca hàng loạt</span>
@@ -329,7 +329,7 @@ const ShiftsManagePage = () => {
             <button
               type="button"
               onClick={() => openShiftModal()}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm"
             >
               <span>➕</span>
               <span>Thêm ca làm mẫu</span>
@@ -345,7 +345,7 @@ const ShiftsManagePage = () => {
           onClick={() => setActiveTab('schedule')}
           className={`py-3 px-6 font-medium text-sm border-b-2 transition-colors ${
             activeTab === 'schedule'
-              ? 'border-purple-600 text-purple-600'
+              ? 'border-pink-600 text-pink-600'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -356,7 +356,7 @@ const ShiftsManagePage = () => {
           onClick={() => setActiveTab('templates')}
           className={`py-3 px-6 font-medium text-sm border-b-2 transition-colors ${
             activeTab === 'templates'
-              ? 'border-purple-600 text-purple-600'
+              ? 'border-pink-600 text-pink-600'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -420,7 +420,7 @@ const ShiftsManagePage = () => {
               </button>
             </div>
 
-            <div className="text-sm font-semibold text-purple-900">
+            <div className="text-sm font-semibold text-pink-900">
               Tuần: {formatDateVN(currentMonday)} – {formatDateVN(addDays(currentMonday, 6))}
             </div>
 
@@ -429,7 +429,7 @@ const ShiftsManagePage = () => {
               <select
                 value={filterEmployeeId}
                 onChange={(e) => setFilterEmployeeId(e.target.value)}
-                className="w-full sm:w-48 px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full sm:w-48 px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500"
               >
                 <option value="">Tất cả nhân viên</option>
                 {employees.map((e) => (
@@ -447,7 +447,7 @@ const ShiftsManagePage = () => {
                 type="checkbox"
                 checked={showEmptyShifts}
                 onChange={(e) => setShowEmptyShifts(e.target.checked)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
               />
               Hiện cả ca chưa có ai trong tuần{hiddenEmptyCount > 0 ? ` (${hiddenEmptyCount})` : ''}
             </label>
@@ -473,7 +473,7 @@ const ShiftsManagePage = () => {
                         <th
                           key={day.dateStr}
                           className={`p-3 text-center border-r border-gray-200 last:border-r-0 ${
-                            day.isToday ? 'bg-purple-50 text-purple-800 font-bold' : ''
+                            day.isToday ? 'bg-pink-50 text-pink-800 font-bold' : ''
                           }`}
                         >
                           <div>{day.label}</div>
@@ -487,7 +487,7 @@ const ShiftsManagePage = () => {
                       <tr key={shift.id} className="hover:bg-gray-50/50">
                         <td className="p-3 border-r border-gray-200 bg-gray-50 sticky left-0 z-10">
                           <div className="font-semibold text-gray-900">{shift.shift_name}</div>
-                          <div className="text-xs text-purple-700 font-medium">
+                          <div className="text-xs text-pink-700 font-medium">
                             {shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)}
                           </div>
                           {!shift.is_active && (
@@ -506,20 +506,20 @@ const ShiftsManagePage = () => {
                             <td
                               key={day.dateStr}
                               className={`group/cell p-2 border-r border-gray-200 last:border-r-0 align-top ${
-                                day.isToday ? 'bg-purple-50/20' : ''
+                                day.isToday ? 'bg-pink-50/20' : ''
                               }`}
                             >
                               <div className="space-y-1.5 min-h-[50px]">
                                 {assigned.map((rec) => (
                                   <div
                                     key={rec.id}
-                                    className="group flex items-center justify-between bg-purple-100 hover:bg-purple-200 text-purple-900 px-2 py-1 rounded text-xs transition-colors shadow-2xs"
+                                    className="group flex items-center justify-between bg-pink-100 hover:bg-pink-200 text-pink-900 px-2 py-1 rounded text-xs transition-colors shadow-2xs"
                                   >
                                     <span className="truncate font-medium">{rec.full_name}</span>
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteAssignment(rec)}
-                                      className="text-purple-400 hover:text-red-600 font-bold ml-1 px-1 rounded transition-colors"
+                                      className="text-pink-400 hover:text-red-600 font-bold ml-1 px-1 rounded transition-colors"
                                       title="Xóa phân ca"
                                     >
                                       ×
@@ -530,7 +530,7 @@ const ShiftsManagePage = () => {
                                   <button
                                     type="button"
                                     onClick={() => handleQuickAssign(shift, day.dateStr)}
-                                    className={`w-full rounded border border-dashed border-gray-300 text-gray-400 text-xs py-1 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-colors ${
+                                    className={`w-full rounded border border-dashed border-gray-300 text-gray-400 text-xs py-1 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50 transition-colors ${
                                       assigned.length ? 'opacity-0 group-hover/cell:opacity-100 focus:opacity-100' : ''
                                     }`}
                                     aria-label={`Phân ca ${shift.shift_name} ngày ${day.displayDate}`}
@@ -559,7 +559,7 @@ const ShiftsManagePage = () => {
                     <div
                       key={day.dateStr}
                       className={`p-4 rounded-xl border shadow-sm ${
-                        day.isToday ? 'bg-purple-50/40 border-purple-300' : 'bg-white border-gray-200'
+                        day.isToday ? 'bg-pink-50/40 border-pink-300' : 'bg-white border-gray-200'
                       }`}
                     >
                       <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
@@ -567,7 +567,7 @@ const ShiftsManagePage = () => {
                           {day.label} <span className="text-xs text-gray-500 font-normal">({day.displayDate})</span>
                         </div>
                         {day.isToday && (
-                          <span className="text-xs bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-pink-600 text-white font-bold px-2 py-0.5 rounded-full">
                             Hôm nay
                           </span>
                         )}
@@ -580,7 +580,7 @@ const ShiftsManagePage = () => {
                           <div key={shift.id} className="py-2 border-b border-gray-50 last:border-none">
                             <div className="text-xs font-medium text-gray-700 flex justify-between">
                               <span>{shift.shift_name}</span>
-                              <span className="text-purple-700">
+                              <span className="text-pink-700">
                                 {shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)}
                               </span>
                             </div>
@@ -592,13 +592,13 @@ const ShiftsManagePage = () => {
                                 assignedInShift.map((rec) => (
                                   <span
                                     key={rec.id}
-                                    className="inline-flex items-center gap-1 bg-purple-100 text-purple-900 px-2 py-0.5 rounded text-xs"
+                                    className="inline-flex items-center gap-1 bg-pink-100 text-pink-900 px-2 py-0.5 rounded text-xs"
                                   >
                                     <span>{rec.full_name}</span>
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteAssignment(rec)}
-                                      className="text-purple-400 hover:text-red-600 font-bold"
+                                      className="text-pink-400 hover:text-red-600 font-bold"
                                     >
                                       ×
                                     </button>
@@ -635,7 +635,7 @@ const ShiftsManagePage = () => {
               {shifts.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">{s.shift_name}</td>
-                  <td className="px-4 py-3 font-mono text-purple-700 font-medium">
+                  <td className="px-4 py-3 font-mono text-pink-700 font-medium">
                     {s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">{s.description || '—'}</td>
@@ -653,7 +653,7 @@ const ShiftsManagePage = () => {
                       <button
                         type="button"
                         onClick={() => openShiftModal(s)}
-                        className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg"
+                        className="p-1.5 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg"
                         title="Sửa ca"
                       >
                         ✏️
@@ -765,7 +765,7 @@ const ShiftsManagePage = () => {
                 id="is_active_check"
                 checked={shiftForm.is_active}
                 onChange={(e) => setShiftForm({ ...shiftForm, is_active: e.target.checked })}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
               />
               <label htmlFor="is_active_check" className="text-xs font-medium text-gray-700">
                 Cho phép sử dụng ca này để phân công nhân viên
@@ -783,7 +783,7 @@ const ShiftsManagePage = () => {
               <button
                 type="submit"
                 disabled={savingShift}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 {savingShift ? 'Đang lưu...' : 'Lưu ca làm việc'}
               </button>
@@ -839,10 +839,10 @@ const ShiftsManagePage = () => {
                               });
                             }
                           }}
-                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
                         />
                         <span className="font-medium">{s.shift_name}</span>
-                        <span className="text-purple-600">
+                        <span className="text-pink-600">
                           ({s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)})
                         </span>
                       </label>
@@ -896,7 +896,7 @@ const ShiftsManagePage = () => {
                       }}
                       className={`px-2.5 py-1 text-xs rounded-lg font-medium border transition-colors ${
                         isChecked
-                          ? 'bg-purple-600 text-white border-purple-600'
+                          ? 'bg-pink-600 text-white border-pink-600'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                       }`}
                     >
@@ -944,7 +944,7 @@ const ShiftsManagePage = () => {
               <button
                 type="submit"
                 disabled={savingBulk}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 {savingBulk ? 'Đang phân ca...' : 'Thực hiện phân ca'}
               </button>

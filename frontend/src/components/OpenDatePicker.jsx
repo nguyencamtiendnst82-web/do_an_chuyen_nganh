@@ -37,7 +37,7 @@ const OpenDatePicker = ({ value, onChange, accent = 'pink' }) => {
     )
   }
 
-  const on = accent === 'blue' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-pink-600 border-pink-600 text-white'
+  const on = accent === 'blue' ? 'bg-pink-600 border-pink-600 text-white' : 'bg-pink-600 border-pink-600 text-white'
   const off = 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
   const last = info.dates[info.dates.length - 1]
 

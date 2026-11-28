@@ -19,20 +19,20 @@ export const getCustomersReport = (params) =>
   axiosClient.get('/reports/customers', { params });
 
 /**
- * Tải file Excel (.xlsx) chuẩn từ các endpoint báo cáo
- */
-export const exportReportExcel = (endpoint, params = {}) =>
-  axiosClient.get(endpoint, {
-    params: { ...params, format: 'xlsx' },
-    responseType: 'blob',
-  });
-
-/**
  * Tải file CSV từ các endpoint báo cáo
  */
 export const exportReportCsv = (endpoint, params = {}) =>
   axiosClient.get(endpoint, {
     params: { ...params, format: 'csv' },
+    responseType: 'blob',
+  });
+
+/**
+ * Tải file Excel (.xlsx) từ các endpoint báo cáo
+ */
+export const exportReportXlsx = (endpoint, params = {}) =>
+  axiosClient.get(endpoint, {
+    params: { ...params, format: 'xlsx' },
     responseType: 'blob',
   });
 
@@ -57,8 +57,8 @@ export default {
   getEmployeesReport,
   getAppointmentsReport,
   getCustomersReport,
-  exportReportExcel,
   exportReportCsv,
+  exportReportXlsx,
   getSystemLogs,
   getAdminDashboard,
   getStaffDashboard,

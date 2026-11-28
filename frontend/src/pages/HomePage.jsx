@@ -163,7 +163,7 @@ const HomePage = () => {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-pink-50 to-purple-50 py-14 sm:py-16 px-4">
+      <section className="bg-gradient-to-br from-pink-50 to-pink-50 py-14 sm:py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-medium text-pink-600 mb-3">🐾 Chuyên nghiệp · Tận tâm · An toàn</p>
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-4">
@@ -225,7 +225,7 @@ const HomePage = () => {
       {/* Lời kêu gọi */}
       {(role === 'customer' || !user) && (
         <section className="px-4 pb-16">
-          <div className="max-w-4xl mx-auto rounded-3xl bg-gradient-to-r from-pink-600 to-purple-600 px-6 py-12 text-center text-white">
+          <div className="max-w-4xl mx-auto rounded-3xl bg-gradient-to-r from-pink-600 to-pink-600 px-6 py-12 text-center text-white">
             <h2 className="text-2xl sm:text-3xl font-bold">Sẵn sàng cho bé một ngày làm đẹp?</h2>
             <p className="mt-2 text-pink-50">Đặt lịch chỉ mất vài phút, hệ thống tự tìm giờ trống phù hợp.</p>
             <Link

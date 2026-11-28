@@ -60,7 +60,7 @@ const MyShiftsPage = () => {
           </p>
         </div>
         {range.from && range.to && (
-          <div className="text-xs font-medium text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 self-start sm:self-auto">
+          <div className="text-xs font-medium text-pink-700 bg-pink-50 px-3 py-1.5 rounded-lg border border-pink-200 self-start sm:self-auto">
             📅 {formatDateVN(range.from)} – {formatDateVN(range.to)}
           </div>
         )}
@@ -69,7 +69,7 @@ const MyShiftsPage = () => {
       {/* Tóm tắt hôm nay */}
       {!loading && shifts.length > 0 && (
         <div className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 ${
-          todayShifts.length ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+          todayShifts.length ? 'bg-pink-600 border-pink-600 text-white' : 'bg-white border-gray-200 text-gray-700'
         }`}>
           <span className="text-sm font-semibold">
             {todayShifts.length ? 'Hôm nay bạn làm:' : 'Hôm nay bạn không có ca.'}
@@ -109,7 +109,7 @@ const MyShiftsPage = () => {
                   key={dateStr}
                   className={`rounded-xl border p-4 shadow-sm transition-all ${
                     isToday
-                      ? 'bg-blue-50/40 border-blue-300 ring-2 ring-blue-500/20 shadow-blue-50'
+                      ? 'bg-pink-50/40 border-pink-300 ring-2 ring-pink-500/20 shadow-pink-50'
                       : 'bg-white border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -122,7 +122,7 @@ const MyShiftsPage = () => {
                       </span>
                     </div>
                     {isToday && (
-                      <span className="px-2 py-0.5 text-xs font-bold bg-blue-600 text-white rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-bold bg-pink-600 text-white rounded-full">
                         Hôm nay
                       </span>
                     )}
@@ -144,7 +144,7 @@ const MyShiftsPage = () => {
                           <span className="font-semibold text-gray-900 text-sm">
                             {s.shift_name}
                           </span>
-                          <span className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                          <span className="text-xs font-mono font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded">
                             {s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}
                           </span>
                         </div>

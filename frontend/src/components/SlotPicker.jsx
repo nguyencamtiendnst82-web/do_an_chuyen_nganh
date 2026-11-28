@@ -4,7 +4,7 @@ import { errorMessage } from '../utils/format'
 
 const ACCENT = {
   pink: { on: 'bg-pink-600 text-white border-pink-600', off: 'bg-white text-gray-700 border-gray-300 hover:border-pink-400 hover:bg-pink-50' },
-  blue: { on: 'bg-blue-600 text-white border-blue-600', off: 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50' },
+  blue: { on: 'bg-pink-600 text-white border-pink-600', off: 'bg-white text-gray-700 border-gray-300 hover:border-pink-400 hover:bg-pink-50' },
 }
 
 /**

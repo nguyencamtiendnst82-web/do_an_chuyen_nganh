@@ -16,7 +16,7 @@ import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from '../../utils/invoice'
 import CreateInvoiceModal from '../../components/CreateInvoiceModal'
 import InvoiceDetailModal from '../../components/InvoiceDetailModal'
 
-const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500'
 
 /**
  * AppointmentsManagePage: quản lý lịch hẹn.
@@ -184,7 +184,7 @@ const AppointmentsManagePage = () => {
         )}
         {canMove && (
           <>
-            <button type="button" onClick={() => openReschedule(apt)} className="px-3 py-2 rounded-lg text-sm text-blue-700 bg-blue-50 hover:bg-blue-100">Đổi lịch</button>
+            <button type="button" onClick={() => openReschedule(apt)} className="px-3 py-2 rounded-lg text-sm text-pink-700 bg-pink-50 hover:bg-pink-100">Đổi lịch</button>
             <button type="button" onClick={() => { setDetailId(null); setCancelTarget(apt) }} className="px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50">Hủy lịch</button>
           </>
         )}
@@ -208,14 +208,14 @@ const AppointmentsManagePage = () => {
           <input id="f-date" type="date" value={date} disabled={allDates} onChange={resetPage(setDate)} aria-label="Ngày"
             className={`${selectClass} disabled:bg-gray-100`} />
           <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
-            <input type="checkbox" checked={allDates} onChange={(e) => { setAllDates(e.target.checked); setPage(1) }} className="accent-blue-600" />
+            <input type="checkbox" checked={allDates} onChange={(e) => { setAllDates(e.target.checked); setPage(1) }} className="accent-pink-600" />
             ±7 ngày
           </label>
           <input id="f-search" type="search" value={search} onChange={resetPage(setSearch)} aria-label="Tìm kiếm"
             placeholder="Tìm mã lịch, khách, SĐT, thú cưng..." className={`${selectClass} flex-1 min-w-[200px]`} />
           {isStaff && (
             <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
-              <input type="checkbox" checked={mine} onChange={(e) => { setMine(e.target.checked); setPage(1) }} className="accent-blue-600" />
+              <input type="checkbox" checked={mine} onChange={(e) => { setMine(e.target.checked); setPage(1) }} className="accent-pink-600" />
               Chỉ lịch của tôi
             </label>
           )}
@@ -224,7 +224,7 @@ const AppointmentsManagePage = () => {
           {[['', 'Tất cả'], ...Object.entries(STATUS_LABEL)].map(([k, v]) => (
             <button key={k || 'all'} type="button" onClick={() => { setStatus(k); setPage(1) }} aria-pressed={status === k}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition ${status === k
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'bg-pink-600 text-white border-pink-600'
                 : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>{v}</button>
           ))}
         </div>
@@ -283,7 +283,7 @@ const AppointmentsManagePage = () => {
                         <div className="flex items-center justify-end gap-1.5">
                           {next && canAct(a) && (
                             <button type="button" disabled={busyId === a.id} onClick={() => advance(a)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-60">
                               {busyId === a.id ? '...' : next.label}
                             </button>
                           )}
@@ -331,7 +331,7 @@ const AppointmentsManagePage = () => {
                     )}
                     {next && canAct(a) && (
                       <button type="button" disabled={busyId === a.id} onClick={() => advance(a)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-600 disabled:opacity-60">{busyId === a.id ? '...' : next.label}</button>
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-pink-600 disabled:opacity-60">{busyId === a.id ? '...' : next.label}</button>
                     )}
                     {a.status === 'completed' && !a.invoice_id && canAct(a) && (
                       <button type="button" onClick={() => openCreateInvoice(a)} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-emerald-600">+ Lập hóa đơn</button>

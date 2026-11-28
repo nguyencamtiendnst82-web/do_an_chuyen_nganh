@@ -18,16 +18,16 @@ const AdminLayout = () => {
 
   const navLinks = [
     { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
-    { to: '/admin/reports', label: 'Báo cáo doanh thu', icon: '📈' },
-    { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: '📋' },
+    { to: '/admin/reports', label: 'Báo cáo doanh thu', icon: '💰' },
+    { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: '📝' },
     { to: '/admin/users', label: 'Nhân viên & khách hàng', icon: '👥' },
     { to: '/admin/appointments', label: 'Lịch hẹn', icon: '📅' },
-    { to: '/admin/incidents', label: 'Sự cố', icon: '⚠️' },
-    { to: '/admin/shifts', label: 'Ca làm việc', icon: '⏰' },
-    { to: '/admin/services', label: 'Dịch vụ', icon: '✂️' },
-    { to: '/admin/promotions', label: 'Khuyến mãi', icon: '🏷️' },
+    { to: '/admin/incidents', label: 'Sự cố', icon: '🚨' },
+    { to: '/admin/shifts', label: 'Ca làm việc', icon: '🕒' },
+    { to: '/admin/services', label: 'Dịch vụ', icon: '🛁' },
+    { to: '/admin/promotions', label: 'Khuyến mãi', icon: '🎁' },
     { to: '/admin/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
-    { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
+    { to: '/profile', label: 'Hồ sơ cá nhân', icon: '🧑' },
   ]
 
   const Sidebar = ({ mobile = false }) => (
@@ -45,13 +45,13 @@ const AdminLayout = () => {
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
           <span className="text-2xl mr-2">🐾</span>
           <span className="font-bold text-gray-800">Pet Spa</span>
-          <span className="ml-2 text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Admin</span>
+          <span className="ml-2 text-xs text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">Admin</span>
         </div>
 
         {/* User info */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm overflow-hidden shrink-0">
+            <div className="w-9 h-9 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-sm overflow-hidden shrink-0">
   {user?.avatar_url
     ? <img src={user.avatar_url} alt="Ảnh đại diện" className="w-9 h-9 rounded-full object-cover" />
     : user?.full_name?.[0]?.toUpperCase() || 'A'
@@ -59,9 +59,9 @@ const AdminLayout = () => {
 </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
-              <p className="text-xs text-purple-600 truncate">Quản trị viên</p>
+              <p className="text-xs text-pink-600 truncate">Quản trị viên</p>
             </div>
-            <NotificationBell tone="blue" placement="sidebar" />
+            <NotificationBell placement="sidebar" />
           </div>
         </div>
 
@@ -74,14 +74,18 @@ const AdminLayout = () => {
               end={exact}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                  ? 'bg-purple-50 text-purple-700'
+                `flex items-center gap-3 px-2.5 py-1.5 rounded-xl text-sm font-medium transition-colors ${isActive
+                  ? 'bg-pink-50 text-pink-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
             >
-              <span>{icon}</span>
-              <span>{label}</span>
+              {({ isActive }) => (
+                <>
+                  <span className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center text-base transition-colors ${isActive ? 'bg-white shadow-sm' : 'bg-pink-50'}`}>{icon}</span>
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -90,9 +94,9 @@ const AdminLayout = () => {
         <div className="px-3 py-4 border-t border-gray-100">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-3 px-2.5 py-1.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <span>🚪</span>
+            <span className="w-8 h-8 shrink-0 rounded-xl bg-red-50 flex items-center justify-center text-base">👋</span>
             <span>Đăng xuất</span>
           </button>
         </div>

@@ -25,12 +25,12 @@ const SEVERITY_STYLE = {
 const STATUS_LABEL = { open: 'Mới', investigating: 'Đang xử lý', resolved: 'Đã xử lý' }
 const STATUS_STYLE = {
   open: 'bg-red-50 text-red-700 border-red-200',
-  investigating: 'bg-blue-50 text-blue-700 border-blue-200',
+  investigating: 'bg-pink-50 text-pink-700 border-pink-200',
   resolved: 'bg-green-50 text-green-700 border-green-200',
 }
 
-const fieldClass = 'w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
-const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+const fieldClass = 'w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500'
+const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500'
 
 const Chip = ({ style, children }) => (
   <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${style}`}>{children}</span>
@@ -96,7 +96,7 @@ const IncidentFormModal = ({ onClose, onDone }) => {
             <div className="flex items-center gap-3 border border-gray-200 rounded-lg px-3 py-2">
               <PetAvatar pet={pet} size="w-9 h-9" text="text-lg" />
               <span className="flex-1 text-sm font-medium text-gray-900">{pet.name}{pet.owner_name ? <span className="text-gray-400 font-normal"> · {pet.owner_name}</span> : null}</span>
-              <button type="button" onClick={() => { setPet(null); setKeyword('') }} className="text-sm text-blue-600 hover:underline">Đổi</button>
+              <button type="button" onClick={() => { setPet(null); setKeyword('') }} className="text-sm text-pink-600 hover:underline">Đổi</button>
             </div>
           ) : (
             <>
@@ -152,7 +152,7 @@ const IncidentFormModal = ({ onClose, onDone }) => {
         {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
         <div className="flex justify-end gap-3">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Đóng</button>
-          <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+          <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-60">
             {saving ? 'Đang lưu...' : 'Ghi nhận'}
           </button>
         </div>
@@ -228,7 +228,7 @@ const IncidentDetailModal = ({ incident, canEdit, onClose, onDone }) => {
             {error && <p className="text-red-600" role="alert">{error}</p>}
             <div className="flex justify-end gap-3">
               <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Đóng</button>
-              <button type="button" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-60">
+              <button type="button" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-60">
                 {saving ? 'Đang lưu...' : 'Lưu'}
               </button>
             </div>
@@ -299,7 +299,7 @@ const IncidentsPage = () => {
         </div>
         {!isAdmin && (
           <button type="button" onClick={() => setShowForm(true)}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Ghi nhận sự cố</button>
+            className="px-4 py-2 rounded-lg bg-pink-600 text-white text-sm font-medium hover:bg-pink-700">+ Ghi nhận sự cố</button>
         )}
       </div>
 

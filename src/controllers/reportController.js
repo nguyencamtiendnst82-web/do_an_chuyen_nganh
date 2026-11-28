@@ -13,21 +13,10 @@ const parseDateRange = (query) => {
 };
 
 const handleOutput = (res, result, successMsg = 'Lấy báo cáo thành công.') => {
-  if (result.isExcel) {
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${result.filename}"; filename*=UTF-8''${encodeURIComponent(result.filename)}`
-    );
-    return res.status(200).send(result.buffer);
-  }
   if (result.isCsv) {
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Type', result.contentType || 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-    return res.status(200).send(result.csv);
+    return res.status(200).send(result.body ?? result.csv);
   }
   return sendSuccess(res, successMsg, result.data);
 };
@@ -44,7 +33,7 @@ export const revenueReport = async (req, res, next) => {
 
 export const servicesReport = async (req, res, next) => {
   try {
-    const format = ['csv', 'xlsx', 'excel'].includes(req.query.format) ? req.query.format : 'json';
+    const format = ['csv', 'xlsx'].includes(req.query.format) ? req.query.format : 'json';
     const from = req.query.from;
     const to = req.query.to;
     if (from || to) {
@@ -59,7 +48,7 @@ export const servicesReport = async (req, res, next) => {
 
 export const employeesReport = async (req, res, next) => {
   try {
-    const format = ['csv', 'xlsx', 'excel'].includes(req.query.format) ? req.query.format : 'json';
+    const format = ['csv', 'xlsx'].includes(req.query.format) ? req.query.format : 'json';
     const from = req.query.from;
     const to = req.query.to;
     if (from || to) {
@@ -74,7 +63,7 @@ export const employeesReport = async (req, res, next) => {
 
 export const appointmentsReport = async (req, res, next) => {
   try {
-    const format = ['csv', 'xlsx', 'excel'].includes(req.query.format) ? req.query.format : 'json';
+    const format = ['csv', 'xlsx'].includes(req.query.format) ? req.query.format : 'json';
     const from = req.query.from;
     const to = req.query.to;
     if (from || to) {

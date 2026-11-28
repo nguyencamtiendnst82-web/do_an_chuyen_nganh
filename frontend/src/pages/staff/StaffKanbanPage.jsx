@@ -90,7 +90,7 @@ const StaffKanbanPage = () => {
         </div>
         <button
           onClick={loadTodayAppointments}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition shadow-xs"
+          className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-sm font-medium transition shadow-xs"
         >
           🔄 Làm mới danh sách
         </button>
@@ -139,7 +139,7 @@ const StaffKanbanPage = () => {
                         key={apt.id}
                         onClick={() => handleCardClick(apt)}
                         className={`bg-white rounded-xl p-4 border border-gray-200 shadow-xs transition hover:shadow-md cursor-pointer ${
-                          col.actionText ? 'hover:border-blue-400' : ''
+                          col.actionText ? 'hover:border-pink-400' : ''
                         }`}
                       >
                         <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
@@ -169,7 +169,7 @@ const StaffKanbanPage = () => {
 
                         {col.actionText && (
                           <div className="mt-3 pt-2 border-t border-gray-100 flex justify-end">
-                            <span className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            <span className="text-xs font-medium text-pink-600 hover:text-pink-800 flex items-center gap-1">
                               👉 {col.actionText}
                             </span>
                           </div>

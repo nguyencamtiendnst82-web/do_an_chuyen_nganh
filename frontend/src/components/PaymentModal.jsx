@@ -103,7 +103,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
             <span className="text-gray-600">Đã thanh toán:</span>
             <span className="text-emerald-600 font-medium">{formatVND(totalPaid)}</span>
           </div>
-          <div className="flex justify-between text-base font-bold text-blue-900 border-t border-dashed border-gray-300 pt-1.5">
+          <div className="flex justify-between text-base font-bold text-pink-900 border-t border-dashed border-gray-300 pt-1.5">
             <span>Còn lại cần thu:</span>
             <span className="text-red-600">{formatVND(remaining)}</span>
           </div>
@@ -122,7 +122,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
                 onClick={() => setPaymentMethod(key)}
                 className={`p-2.5 rounded-xl border text-sm font-medium text-left transition ${
                   paymentMethod === key
-                    ? 'border-blue-600 bg-blue-50 text-blue-900 ring-2 ring-blue-500/20'
+                    ? 'border-pink-600 bg-pink-50 text-pink-900 ring-2 ring-pink-500/20'
                     : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -134,8 +134,8 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
 
         {/* Khu vực VietQR minh họa nếu chọn bank_transfer */}
         {paymentMethod === 'bank_transfer' && (
-          <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl text-center space-y-2">
-            <p className="text-xs font-semibold text-blue-900 uppercase tracking-wide">
+          <div className="p-4 bg-pink-50/70 border border-pink-200 rounded-xl text-center space-y-2">
+            <p className="text-xs font-semibold text-pink-900 uppercase tracking-wide">
               Mã QR thanh toán VietQR (Minh họa)
             </p>
             {loadingQR ? (
@@ -143,7 +143,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
                 Đang tạo mã VietQR...
               </div>
             ) : (vietqrData?.qr_url || vietqrData?.vietqr_url) ? (
-              <div className="inline-block p-2 bg-white rounded-xl shadow-sm border border-blue-100">
+              <div className="inline-block p-2 bg-white rounded-xl shadow-sm border border-pink-100">
                 <img
                   src={vietqrData.qr_url || vietqrData.vietqr_url}
                   alt="VietQR Payment Code"
@@ -156,7 +156,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
             ) : (
               <p className="text-xs text-gray-500">Không tải được ảnh mã QR.</p>
             )}
-            <p className="text-xs text-blue-700">
+            <p className="text-xs text-pink-700">
               * Khách hàng quét mã bằng ứng dụng ngân hàng hoặc ví điện tử.
             </p>
           </div>
@@ -172,7 +172,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
               <button
                 type="button"
                 onClick={() => setAmount(remaining)}
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-pink-600 hover:underline"
               >
                 Điền đủ ({formatVND(remaining)})
               </button>
@@ -187,7 +187,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
             required
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
@@ -203,7 +203,7 @@ const PaymentModal = ({ invoice, onClose, onSuccess }) => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Số tham chiếu, mã GD ngân hàng, POS ID..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 

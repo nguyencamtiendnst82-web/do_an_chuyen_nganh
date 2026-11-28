@@ -15,7 +15,7 @@ const SORT_OPTIONS = [
   { value: 'name', label: 'Tên A → Z' },
 ]
 
-const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+const selectClass = 'px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500'
 
 /**
  * PetsManagePage: tra cứu hồ sơ thú cưng của mọi khách hàng (nhân viên + admin)
@@ -71,7 +71,7 @@ const PetsManagePage = () => {
         <input type="search" value={search} aria-label="Tìm thú cưng"
           onChange={resetPage(setSearch)}
           placeholder="Tên thú cưng, tên chủ hoặc số điện thoại..."
-          className="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          className="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent" />
         <select value={species} aria-label="Lọc theo loài" onChange={resetPage(setSpecies)} className={selectClass}>
           <option value="">Tất cả loài</option>
           {Object.entries(SPECIES_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -110,13 +110,13 @@ const PetsManagePage = () => {
               <tbody className="divide-y divide-gray-100">
                 {pets.map((p) => (
                   <tr key={p.id} onClick={() => setDetailPetId(p.id)}
-                    className={`cursor-pointer hover:bg-blue-50/40 ${p.status === 'inactive' ? 'bg-gray-50 text-gray-500' : ''}`}>
+                    className={`cursor-pointer hover:bg-pink-50/40 ${p.status === 'inactive' ? 'bg-gray-50 text-gray-500' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <PetAvatar pet={p} size="w-10 h-10" text="text-lg" />
                         <div>
                           <button type="button" onClick={(e) => { e.stopPropagation(); setDetailPetId(p.id) }}
-                            className="font-medium text-gray-900 hover:text-blue-600 text-left">{p.name}</button>
+                            className="font-medium text-gray-900 hover:text-pink-600 text-left">{p.name}</button>
                           <p className="text-xs text-gray-500">
                             {SPECIES_LABEL[p.species]}{p.breed ? ` · ${p.breed}` : ''} · {GENDER_LABEL[p.gender]}
                           </p>

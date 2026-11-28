@@ -6,7 +6,7 @@ import { useToast, useConfirm } from '../../components/Feedback';
 import { errorMessage, mapFieldErrors } from '../../utils/format';
 import { useAuth } from '../../contexts/AuthContext';
 import { SPECIES_LABEL, GENDER_LABEL, formatAge } from '../../utils/format';
-import { STATUS_LABEL, formatDate, hm } from '../../utils/appointment';
+import { STATUS_LABEL, STATUS_STYLE, formatDate, hm } from '../../utils/appointment';
 
 const ROLE_BADGE = {
   admin: { bg: 'bg-purple-100 text-purple-700', label: 'Quản trị viên' },
@@ -34,7 +34,7 @@ const EMPTY_EMPLOYEE_FORM = {
 };
 
 const inputClass = (hasError) =>
-  `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+  `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
     hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
   }`;
 
@@ -114,15 +114,23 @@ const UserDetailModal = ({ userId, onClose }) => {
             ) : (
               <ul className="space-y-1.5">
                 {appointments.map((a) => (
-                  <li key={a.id} className="text-sm flex justify-between gap-3">
+                  <li key={a.id} className="text-sm flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                     <span className="text-gray-900"><span className="font-mono text-xs">{a.appointment_code}</span> · {a.pet_name}</span>
-                    <span className="text-gray-500 shrink-0">{formatDate(a.appointment_date)} {hm(a.start_time)} · {STATUS_LABEL[a.status] || a.status}</span>
+                    <span className="flex items-center gap-2 shrink-0">
+                      <span className="text-gray-500">{formatDate(a.appointment_date)} {hm(a.start_time)}</span>
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[a.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                        {STATUS_LABEL[a.status] || a.status}
+                      </span>
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
           </div>
           <p className="text-xs text-gray-400">Chế độ chỉ xem. Mỗi người tự cập nhật hồ sơ và mật khẩu của mình.</p>
+          <div className="flex justify-end pt-3 border-t border-gray-100">
+            <button type="button" onClick={onClose} className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200">Đóng</button>
+          </div>
         </div>
       )}
     </Modal>
@@ -254,7 +262,7 @@ const UsersManagePage = () => {
             setCreateErrors({});
             setShowCreateModal(true);
           }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm"
         >
           <span>➕</span>
           <span>Thêm nhân viên mới</span>
@@ -271,7 +279,7 @@ const UsersManagePage = () => {
             aria-selected={roleFilter === value}
             onClick={() => setRoleFilter(value)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              roleFilter === value ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              roleFilter === value ? 'bg-pink-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             {label}
@@ -287,7 +295,7 @@ const UsersManagePage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên, email, số điện thoại..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
         </div>
@@ -296,7 +304,7 @@ const UsersManagePage = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white"
           >
             <option value="">Tất cả trạng thái</option>
             <option value="active">Hoạt động</option>
@@ -323,7 +331,7 @@ const UsersManagePage = () => {
                   <th className="px-4 py-3 font-semibold">Người dùng</th>
                   <th className="px-4 py-3 font-semibold">Liên hệ</th>
                   <th className="px-4 py-3 font-semibold">Vai trò</th>
-                  <th className="px-4 py-3 font-semibold">Chuyên môn / Ghi chú</th>
+                  {roleFilter === 'staff' && <th className="px-4 py-3 font-semibold">Chuyên môn / Ghi chú</th>}
                   <th className="px-4 py-3 font-semibold">Trạng thái</th>
                   <th className="px-4 py-3 font-semibold text-right">Thao tác</th>
                 </tr>
@@ -338,7 +346,7 @@ const UsersManagePage = () => {
                     <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold shrink-0 overflow-hidden">
+                          <div className="w-9 h-9 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold shrink-0 overflow-hidden">
                             {u.avatar_url ? (
                               <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -349,7 +357,7 @@ const UsersManagePage = () => {
                             <div className="font-medium text-gray-900 flex items-center gap-1.5">
                               {u.full_name}
                               {isSelf && (
-                                <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded">
+                                <span className="text-[10px] bg-pink-100 text-pink-700 font-bold px-1.5 py-0.2 rounded">
                                   Bạn
                                 </span>
                               )}
@@ -373,18 +381,20 @@ const UsersManagePage = () => {
                         </span>
                       </td>
 
-                      <td className="px-4 py-3 text-xs">
-                        {u.role_name === 'staff' ? (
-                          <div>
-                            <span className="font-medium text-purple-900">{u.specialty || 'Chưa phân chuyên môn'}</span>
-                            <div className="text-gray-400">
-                              {u.experience_years ? `${u.experience_years} năm kinh nghiệm` : 'Chưa cập nhật kinh nghiệm'}
+                      {roleFilter === 'staff' && (
+                        <td className="px-4 py-3 text-xs">
+                          {u.role_name === 'staff' ? (
+                            <div>
+                              <span className="font-medium text-pink-900">{u.specialty || 'Chưa phân chuyên môn'}</span>
+                              <div className="text-gray-400">
+                                {u.experience_years ? `${u.experience_years} năm kinh nghiệm` : 'Chưa cập nhật kinh nghiệm'}
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      )}
 
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge.bg}`}>
@@ -397,7 +407,7 @@ const UsersManagePage = () => {
                           <button
                             type="button"
                             onClick={() => setDetailUserId(u.id)}
-                            className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
                             title="Xem chi tiết"
                           >
                             👁️
@@ -437,7 +447,7 @@ const UsersManagePage = () => {
                 <div key={u.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold shrink-0 overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold shrink-0 overflow-hidden">
                         {u.avatar_url ? (
                           <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -448,7 +458,7 @@ const UsersManagePage = () => {
                         <div className="font-semibold text-gray-900 flex items-center gap-1.5">
                           {u.full_name}
                           {isSelf && (
-                            <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded">
+                            <span className="text-[10px] bg-pink-100 text-pink-700 font-bold px-1.5 py-0.2 rounded">
                               Bạn
                             </span>
                           )}
@@ -471,7 +481,7 @@ const UsersManagePage = () => {
                       <span className={`px-1.5 py-0.5 rounded text-[11px] ${roleBadge.bg}`}>{roleBadge.label}</span>
                     </div>
                     {u.role_name === 'staff' && (
-                      <div className="col-span-2 text-purple-900">
+                      <div className="col-span-2 text-pink-900">
                         <span className="text-gray-400">Chuyên môn: </span>
                         {u.specialty || 'Chưa phân'} • {u.experience_years ? `${u.experience_years} năm` : '1 năm'}
                       </div>
@@ -646,7 +656,7 @@ const UsersManagePage = () => {
               </div>
 
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-                <h3 className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-2">
+                <h3 className="text-xs font-bold text-pink-700 uppercase tracking-wider mb-2">
                   Thông tin chuyên môn Spa
                 </h3>
               </div>
@@ -700,7 +710,7 @@ const UsersManagePage = () => {
               <button
                 type="submit"
                 disabled={savingCreate}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 {savingCreate ? 'Đang tạo...' : 'Tạo nhân viên'}
               </button>

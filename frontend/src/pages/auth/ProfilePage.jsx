@@ -210,8 +210,8 @@ const ProfilePage = () => {
   }
 
   const roleColors = {
-    admin: 'text-purple-600 bg-purple-50',
-    staff: 'text-blue-600 bg-blue-50',
+    admin: 'text-pink-600 bg-pink-50',
+    staff: 'text-pink-600 bg-pink-50',
     customer: 'text-pink-600 bg-pink-50',
   }
   const roleColor = roleColors[user?.role_name] || 'text-gray-600 bg-gray-50'

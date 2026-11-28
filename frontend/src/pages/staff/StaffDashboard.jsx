@@ -48,13 +48,13 @@ const StaffDashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Xin chào, <span className="text-blue-600">{user?.full_name}</span>! 👋
+            Xin chào, <span className="text-pink-600">{user?.full_name}</span>!
           </h1>
           <p className="text-sm text-gray-500 mt-1">Chào mừng bạn đến với Bảng điều khiển nhân viên</p>
         </div>
         <Link
           to="/staff/today"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition shadow-sm inline-flex items-center gap-2"
+          className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-sm font-medium transition shadow-sm inline-flex items-center gap-2"
         >
           📋 Bảng điều phối hôm nay (Kanban)
         </Link>
@@ -69,7 +69,7 @@ const StaffDashboard = () => {
       {/* 3 Thẻ số liệu */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-blue-600 bg-blue-50 mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-pink-600 bg-pink-50 mb-3">
             📅
           </div>
           <p className="text-sm text-gray-500">Lịch của tôi hôm nay</p>
@@ -85,11 +85,11 @@ const StaffDashboard = () => {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-purple-600 bg-purple-50 mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-pink-600 bg-pink-50 mb-3">
             🏆
           </div>
           <p className="text-sm text-gray-500">Đã làm trong tháng này</p>
-          <p className="text-2xl font-bold text-purple-600 mt-1">{data?.completed_this_month || 0} lịch</p>
+          <p className="text-2xl font-bold text-pink-600 mt-1">{data?.completed_this_month || 0} lịch</p>
         </div>
       </div>
 
@@ -97,17 +97,17 @@ const StaffDashboard = () => {
       <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
         <h2 className="text-base font-semibold text-gray-900 mb-3">Ca làm việc hôm nay</h2>
         {data?.my_shift_today ? (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-blue-50 border border-blue-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-pink-50 border border-pink-100">
             <div>
-              <p className="font-bold text-blue-900 text-lg">{data.my_shift_today.shift_name}</p>
-              <p className="text-sm text-blue-700 mt-0.5">
+              <p className="font-bold text-pink-900 text-lg">{data.my_shift_today.shift_name}</p>
+              <p className="text-sm text-pink-700 mt-0.5">
                 Thời gian: <span className="font-medium">{data.my_shift_today.start_time.slice(0, 5)} - {data.my_shift_today.end_time.slice(0, 5)}</span>
               </p>
               {data.my_shift_today.notes && (
-                <p className="text-xs text-blue-600 mt-1 italic">Ghi chú: {data.my_shift_today.notes}</p>
+                <p className="text-xs text-pink-600 mt-1 italic">Ghi chú: {data.my_shift_today.notes}</p>
               )}
             </div>
-            <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-xs font-semibold self-start sm:self-auto">
+            <span className="px-3 py-1 bg-pink-600 text-white rounded-full text-xs font-semibold self-start sm:self-auto">
               Đang trong lịch làm việc
             </span>
           </div>
@@ -122,7 +122,7 @@ const StaffDashboard = () => {
       <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-gray-900">Danh sách chăm sóc hôm nay</h2>
-          <Link to="/staff/today" className="text-sm text-blue-600 hover:underline font-medium">
+          <Link to="/staff/today" className="text-sm text-pink-600 hover:underline font-medium">
             Mở Kanban toàn màn hình →
           </Link>
         </div>

@@ -5,7 +5,7 @@ import { useToast } from './Feedback'
 import { errorMessage } from '../utils/format'
 import { formatDate, hm } from '../utils/appointment'
 
-const input = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+const input = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500'
 
 export const REQUEST_STATUS_LABEL = {
   pending: 'Chờ khách phản hồi',
@@ -108,7 +108,7 @@ const ChangeRequestModal = ({ appointment, onClose, onDone }) => {
             {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
             <div className="flex justify-end gap-2">
               <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Đóng</button>
-              <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+              <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-60">
                 {saving ? 'Đang gửi...' : 'Gửi đề xuất cho khách'}
               </button>
             </div>

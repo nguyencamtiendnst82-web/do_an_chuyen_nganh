@@ -5,8 +5,8 @@ import {
   getEmployeesReport,
   getAppointmentsReport,
   getCustomersReport,
-  exportReportExcel,
   exportReportCsv,
+  exportReportXlsx,
 } from '../../api/reportsApi'
 import { addDays, vietnamYmd } from '../../utils/date'
 import {
@@ -74,36 +74,22 @@ const ReportsPage = () => {
     loadCurrentTab()
   }, [activeTab, dateRange.from, dateRange.to, dateRange.groupBy])
 
-  const [exporting, setExporting] = useState(false)
-
-  const handleExport = async (format = 'xlsx') => {
-    setExporting(true)
+  const handleExportCsv = async () => {
     try {
       const endpoint = `/reports/${activeTab}`
       const params = { from: dateRange.from, to: dateRange.to }
       if (activeTab === 'revenue') params.groupBy = dateRange.groupBy
 
-      const res = format === 'xlsx'
-        ? await exportReportExcel(endpoint, params)
-        : await exportReportCsv(endpoint, params)
-
-      const mimeType = format === 'xlsx'
-        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        : 'text/csv;charset=utf-8;'
-      const ext = format === 'xlsx' ? 'xlsx' : 'csv'
-
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: mimeType }))
+      const res = await exportReportXlsx(endpoint, params)
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `bao_cao_${activeTab}_${dateRange.from}_${dateRange.to}.${ext}`)
+      link.setAttribute('download', `bao_cao_${activeTab}_${dateRange.from}_${dateRange.to}.xlsx`)
       document.body.appendChild(link)
       link.click()
       link.remove()
-      window.URL.revokeObjectURL(url)
     } catch (err) {
-      alert(`Không thể xuất file ${format.toUpperCase()}: ` + (err.response?.data?.message || err.message))
-    } finally {
-      setExporting(false)
+      alert('Không thể xuất file Excel: ' + (err.response?.data?.message || err.message))
     }
   }
 
@@ -125,24 +111,12 @@ const ReportsPage = () => {
             Tổng hợp dữ liệu kinh doanh, hiệu suất và khách hàng
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleExport('xlsx')}
-            disabled={exporting}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-sm font-medium transition shadow-xs cursor-pointer"
-            title="Xuất file Microsoft Excel chuyên nghiệp (.xlsx)"
-          >
-            📊 {exporting ? 'Đang xuất...' : 'Xuất Excel (.xlsx)'}
-          </button>
-          <button
-            onClick={() => handleExport('csv')}
-            disabled={exporting}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-60 text-gray-700 rounded-xl text-sm font-medium transition shadow-xs cursor-pointer"
-            title="Xuất file CSV"
-          >
-            📄 CSV
-          </button>
-        </div>
+        <button
+          onClick={handleExportCsv}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition shadow-xs"
+        >
+          📥 Xuất Excel (.xlsx)
+        </button>
       </div>
 
       {/* Bộ lọc khoảng ngày */}
@@ -153,7 +127,7 @@ const ReportsPage = () => {
             type="date"
             value={dateRange.from}
             onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
@@ -163,7 +137,7 @@ const ReportsPage = () => {
             type="date"
             value={dateRange.to}
             onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
@@ -173,7 +147,7 @@ const ReportsPage = () => {
             <select
               value={dateRange.groupBy}
               onChange={(e) => setDateRange({ ...dateRange, groupBy: e.target.value })}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
             >
               <option value="day">Theo ngày</option>
               <option value="month">Theo tháng</option>
@@ -184,7 +158,7 @@ const ReportsPage = () => {
         <button
           onClick={loadCurrentTab}
           disabled={loading}
-          className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition"
+          className="px-4 py-1.5 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium transition"
         >
           {loading ? 'Đang lọc...' : 'Lọc'}
         </button>
@@ -198,7 +172,7 @@ const ReportsPage = () => {
             onClick={() => setActiveTab(t.key)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition ${
               activeTab === t.key
-                ? 'bg-white text-purple-700 border-t-2 border-purple-600 shadow-xs'
+                ? 'bg-white text-pink-700 border-t-2 border-pink-600 shadow-xs'
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -239,7 +213,7 @@ const ReportsPage = () => {
                           <YAxis tickFormatter={(v) => `${v / 1000}k`} />
                           <Tooltip formatter={(v) => formatVND(v)} />
                           <Legend />
-                          <Bar dataKey="total_revenue" name="Doanh thu (VNĐ)" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="total_revenue" name="Doanh thu (VNĐ)" fill="#E6007E" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -259,7 +233,7 @@ const ReportsPage = () => {
                             <tr key={row.period} className="hover:bg-gray-50">
                               <td className="px-4 py-3 font-medium text-gray-900">{row.period}</td>
                               <td className="px-4 py-3 text-right">{row.invoice_count}</td>
-                              <td className="px-4 py-3 text-right font-medium text-purple-700">{formatVND(row.total_revenue)}</td>
+                              <td className="px-4 py-3 text-right font-medium text-pink-700">{formatVND(row.total_revenue)}</td>
                               <td className="px-4 py-3 text-right">{formatVND(row.avg_per_invoice)}</td>
                             </tr>
                           ))}
@@ -293,7 +267,7 @@ const ReportsPage = () => {
                           <tr key={s.service_id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 text-gray-500">#{s.service_id}</td>
                             <td className="px-4 py-3 font-medium text-gray-900">{s.service_name}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-blue-600">{s.booking_count} lượt</td>
+                            <td className="px-4 py-3 text-right font-semibold text-pink-600">{s.booking_count} lượt</td>
                             <td className="px-4 py-3 text-right font-medium text-emerald-600">{formatVND(s.total_revenue)}</td>
                           </tr>
                         ))}
@@ -331,7 +305,7 @@ const ReportsPage = () => {
                             <td className="px-4 py-3 text-right text-emerald-600 font-semibold">{e.completed_count}</td>
                             <td className="px-4 py-3 text-right text-red-500">{e.cancelled_count}</td>
                             <td className="px-4 py-3 text-right font-medium">{e.cancel_rate}%</td>
-                            <td className="px-4 py-3 text-right font-medium text-purple-700">{formatVND(e.total_revenue)}</td>
+                            <td className="px-4 py-3 text-right font-medium text-pink-700">{formatVND(e.total_revenue)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -355,7 +329,7 @@ const ReportsPage = () => {
                         <XAxis dataKey="hour_slot" />
                         <YAxis allowDecimals={false} />
                         <Tooltip />
-                        <Bar dataKey="appointment_count" name="Số lượt hẹn" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="appointment_count" name="Số lượt hẹn" fill="#F472B6" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -367,13 +341,13 @@ const ReportsPage = () => {
             {activeTab === 'customers' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
-                    <p className="text-sm text-purple-600 font-medium">Tổng số khách hàng</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">{customersData?.total_customers || 0}</p>
+                  <div className="p-4 bg-pink-50 rounded-xl border border-pink-100">
+                    <p className="text-sm text-pink-600 font-medium">Tổng số khách hàng</p>
+                    <p className="text-2xl font-bold text-pink-900 mt-1">{customersData?.total_customers || 0}</p>
                   </div>
-                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                    <p className="text-sm text-blue-600 font-medium">Khách hàng quay lại (≥ 2 lịch)</p>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">{customersData?.returning_customers || 0}</p>
+                  <div className="p-4 bg-pink-50 rounded-xl border border-pink-100">
+                    <p className="text-sm text-pink-600 font-medium">Khách hàng quay lại (≥ 2 lịch)</p>
+                    <p className="text-2xl font-bold text-pink-900 mt-1">{customersData?.returning_customers || 0}</p>
                   </div>
                 </div>
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import notificationApi from '../api/notificationApi'
@@ -58,6 +59,7 @@ const NotificationBell = ({ tone = 'pink', placement = 'dropdown' }) => {
   const [unread, setUnread] = useState(0)
   const [loading, setLoading] = useState(false)
   const ref = useRef(null)
+  const panelRef = useRef(null)
   const [anchor, setAnchor] = useState(null) // vị trí khung thông báo khi đặt trong sidebar
 
   const refreshCount = useCallback(async () => {
@@ -86,51 +88,21 @@ const NotificationBell = ({ tone = 'pink', placement = 'dropdown' }) => {
     return () => clearInterval(timer)
   }, [user, refreshCount])
 
-  const updatePosition = useCallback(() => {
-    if (!ref.current) return
-    const r = ref.current.getBoundingClientRect()
-    const side = ref.current.closest('aside')
-    const isSidebar = placement === 'sidebar' || !!side || r.left < 280
-
-    if (window.innerWidth < 640) {
-      setAnchor({
-        top: Math.max(12, r.bottom + 8),
-        left: 12,
-        right: 12,
-        width: 'calc(100vw - 24px)',
-      })
-    } else if (isSidebar) {
-      const sideRight = side ? side.getBoundingClientRect().right : r.right + 20
-      const top = Math.max(16, Math.min(r.top, window.innerHeight - 480))
-      const left = Math.max(16, Math.min(sideRight + 12, window.innerWidth - 360))
-      setAnchor({ top, left, width: '340px' })
-    } else {
-      setAnchor(null)
-    }
-  }, [placement])
-
   useEffect(() => {
     if (!open) return undefined
     loadList()
-    updatePosition()
     const onDown = (e) => {
-      if (ref.current && !ref.current.contains(e.target) && !e.target.closest('[data-notification-panel]')) {
-        setOpen(false)
-      }
+      if (ref.current?.contains(e.target) || panelRef.current?.contains(e.target)) return
+      setOpen(false)
     }
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
-    const onResize = () => updatePosition()
-    window.addEventListener('resize', onResize)
-    window.addEventListener('scroll', onResize, true)
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
     return () => {
-      window.removeEventListener('resize', onResize)
-      window.removeEventListener('scroll', onResize, true)
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, loadList, updatePosition])
+  }, [open, loadList])
 
   if (!user) return null
 
@@ -157,22 +129,30 @@ const NotificationBell = ({ tone = 'pink', placement = 'dropdown' }) => {
     notificationApi.markAllRead().catch(() => {})
   }
 
-  const accent = tone === 'blue' ? 'bg-blue-50' : 'bg-pink-50'
+  // Trong sidebar: vẽ hộp thông báo ra ngoài sidebar (portal) để không bị cắt bởi vùng cuộn/ẩn của sidebar
+  const wrapPanel = (node) => (anchor ? createPortal(node, document.body) : node)
+
+  const accent = tone === 'blue' ? 'bg-pink-50' : 'bg-pink-50'
 
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
         onClick={() => {
-          if (!open) {
-            updatePosition()
+          if (!open && ref.current && (placement === 'sidebar' || ref.current.closest('aside'))) {
+            // Mở ngay bên phải sidebar (vùng nội dung) để không che menu; luôn nằm trọn trong màn hình
+            const r = ref.current.getBoundingClientRect()
+            const side = ref.current.closest('aside')
+            const sideRight = side ? side.getBoundingClientRect().right : r.right
+            const top = Math.max(8, Math.min(r.top, window.innerHeight - 440))
+            setAnchor({ top, left: Math.max(8, Math.min(sideRight + 8, window.innerWidth - 328)) })
           }
           setOpen((p) => !p)
         }}
         aria-label={unread ? `Thông báo, ${unread} chưa đọc` : 'Thông báo'}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative p-2 text-gray-500 hover:text-gray-900 rounded-full focus:outline-none cursor-pointer"
+        className="relative p-2 text-gray-500 hover:text-gray-900 rounded-full focus:outline-none"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -185,16 +165,11 @@ const NotificationBell = ({ tone = 'pink', placement = 'dropdown' }) => {
         )}
       </button>
 
-      {open && (
+      {open && wrapPanel(
         <div
-          data-notification-panel="true"
-          className={`${anchor ? 'fixed' : 'absolute right-0 mt-2'} w-84 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[9999] overflow-hidden`}
-          style={anchor ? {
-            top: anchor.top,
-            left: anchor.left,
-            ...(anchor.width ? { width: anchor.width } : {}),
-            ...(anchor.right ? { right: anchor.right } : {}),
-          } : undefined}
+          ref={panelRef}
+          className={`${anchor ? 'fixed' : 'absolute right-0 mt-2'} w-80 max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-[60] overflow-hidden`}
+          style={anchor ? { top: anchor.top, left: anchor.left } : undefined}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="text-sm font-semibold text-gray-800">Thông báo</span>

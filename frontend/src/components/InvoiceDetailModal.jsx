@@ -310,7 +310,7 @@ const InvoiceDetailModal = ({ invoiceId, onClose, onUpdated }) => {
 
             {/* Khách hàng: Hiển thị VietQR để quét thanh toán */}
             {!isStaffOrAdmin && remaining > 0 && !pendingApproval && (
-              <div className="print:hidden p-4 bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-2xl text-center space-y-3">
+              <div className="print:hidden p-4 bg-gradient-to-br from-pink-50 to-pink-50 border border-pink-200 rounded-2xl text-center space-y-3">
                 <div>
                   <h4 className="text-sm font-bold text-pink-900">Quét mã VietQR để thanh toán</h4>
                   <p className="text-xs text-gray-600 mt-0.5">

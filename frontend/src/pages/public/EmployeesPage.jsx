@@ -59,7 +59,7 @@ const EmployeesPage = () => {
               className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col"
             >
               {/* Ảnh đại diện */}
-              <div className="h-48 bg-gradient-to-tr from-pink-50 to-purple-50 flex items-center justify-center overflow-hidden">
+              <div className="h-48 bg-gradient-to-tr from-pink-50 to-pink-50 flex items-center justify-center overflow-hidden">
                 {emp.avatar_url ? (
                   <img
                     src={emp.avatar_url}

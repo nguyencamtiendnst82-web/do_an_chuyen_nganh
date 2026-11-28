@@ -6,7 +6,7 @@ import { useToast } from '../../components/Feedback'
 import { formatVND, errorMessage, mapFieldErrors } from '../../utils/format'
 import { formatDate } from '../../utils/appointment'
 
-const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500'
 const EMPTY = { name: '', discount_type: 'percent', discount_value: '', service_id: '', min_invoice: '', start_date: '', end_date: '' }
 
 const valueText = (p) => (p.discount_type === 'percent' ? `${Number(p.discount_value)}%` : formatVND(p.discount_value))
@@ -15,7 +15,7 @@ const ymd = (v) => String(v || '').slice(0, 10)
 const statusOf = (p, today) => {
   if (!p.is_active) return { label: 'Đã tắt', style: 'bg-gray-100 text-gray-600 border-gray-200' }
   if (ymd(p.end_date) < today) return { label: 'Hết hạn', style: 'bg-gray-100 text-gray-600 border-gray-200' }
-  if (ymd(p.start_date) > today) return { label: 'Sắp diễn ra', style: 'bg-blue-50 text-blue-700 border-blue-200' }
+  if (ymd(p.start_date) > today) return { label: 'Sắp diễn ra', style: 'bg-pink-50 text-pink-700 border-pink-200' }
   return { label: 'Đang áp dụng', style: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
 }
 
@@ -105,7 +105,7 @@ const PromotionsPage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Khuyến mãi</h1>
           <p className="text-sm text-gray-500 mt-0.5">Hệ thống tự áp dụng chương trình giảm nhiều nhất còn hiệu lực khi nhân viên lập hóa đơn (không cộng dồn).</p>
         </div>
-        <button type="button" onClick={openCreate} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Thêm khuyến mãi</button>
+        <button type="button" onClick={openCreate} className="px-4 py-2 rounded-lg bg-pink-600 text-white text-sm font-medium hover:bg-pink-700">+ Thêm khuyến mãi</button>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700" role="alert">{error}</div>}
@@ -199,7 +199,7 @@ const PromotionsPage = () => {
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
               <button type="button" onClick={() => setModal(null)} className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Hủy</button>
-              <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">{saving ? 'Đang lưu...' : 'Lưu'}</button>
+              <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-60">{saving ? 'Đang lưu...' : 'Lưu'}</button>
             </div>
           </form>
         </Modal>

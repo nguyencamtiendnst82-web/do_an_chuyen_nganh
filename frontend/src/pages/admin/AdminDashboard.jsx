@@ -97,7 +97,7 @@ const AdminDashboard = () => {
         <div className="flex gap-2">
           <Link
             to="/admin/reports"
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium transition shadow-sm"
+            className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-sm font-medium transition shadow-sm"
           >
             📈 Xem Báo cáo
           </Link>
@@ -121,7 +121,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-blue-600 bg-blue-50 mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-pink-600 bg-pink-50 mb-3">
             📅
           </div>
           <p className="text-sm text-gray-500">Lịch hẹn hôm nay</p>
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-purple-600 bg-purple-50 mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-pink-600 bg-pink-50 mb-3">
             💰
           </div>
           <p className="text-sm text-gray-500">Doanh thu tháng này</p>

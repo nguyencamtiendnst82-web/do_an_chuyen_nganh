@@ -180,7 +180,7 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={handleAddSurcharge}
-              className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
+              className="px-3 py-1 text-xs font-medium text-pink-600 bg-pink-50 hover:bg-pink-100 rounded-lg transition"
             >
               + Thêm phụ phí
             </button>
@@ -201,7 +201,7 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
                       placeholder="Tên phụ phí..."
                       value={item.item_name}
                       onChange={(e) => handleSurchargeChange(idx, 'item_name', e.target.value)}
-                      className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-pink-500"
                     />
                     <input
                       type="number"
@@ -209,7 +209,7 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
                       placeholder="SL"
                       value={item.quantity}
                       onChange={(e) => handleSurchargeChange(idx, 'quantity', e.target.value)}
-                      className="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-center focus:outline-none focus:ring-1 focus:ring-pink-500"
                     />
                     <input
                       type="number"
@@ -218,7 +218,7 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
                       placeholder="Đơn giá"
                       value={item.unit_price}
                       onChange={(e) => handleSurchargeChange(idx, 'unit_price', e.target.value)}
-                      className="w-28 px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-28 px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm bg-white text-right focus:outline-none focus:ring-1 focus:ring-pink-500"
                     />
                     <span className="w-24 text-right font-medium text-xs text-gray-700">
                       {formatVND(rowTotal)}
@@ -245,11 +245,11 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
           <div className="flex flex-col sm:flex-row gap-2">
             <input type="number" min="0" step="1000" value={discount} onChange={(e) => setDiscount(e.target.value)}
               placeholder="Số tiền giảm (đ)" aria-label="Số tiền giảm giá"
-              className="sm:w-44 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="sm:w-44 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-pink-500" />
             <input type="text" maxLength={150} value={discountReason} onChange={(e) => setDiscountReason(e.target.value)}
               placeholder="Lý do (VD: khách thân thiết, khuyến mãi tháng 11)" aria-label="Lý do giảm giá"
               disabled={discountValue <= 0}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" />
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:bg-gray-100" />
           </div>
         </div>
 
@@ -271,12 +271,12 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Ghi chú thêm cho khách hàng hoặc nội bộ..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 
         {/* Tổng kết tiền */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-1 text-sm">
+        <div className="bg-pink-50 border border-pink-200 rounded-xl p-4 space-y-1 text-sm">
           <div className="flex justify-between text-gray-600">
             <span>Tiền dịch vụ:</span>
             <span>{formatVND(servicesSubtotal)}</span>
@@ -299,7 +299,7 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
               <span>{needsApproval ? formatVND(discountValue) : `−${formatVND(discountValue)}`}</span>
             </div>
           )}
-          <div className="flex justify-between text-base font-bold text-blue-900 pt-2 border-t border-blue-200">
+          <div className="flex justify-between text-base font-bold text-pink-900 pt-2 border-t border-pink-200">
             <span>Tổng cộng thanh toán:</span>
             <span>{formatVND(grandTotal)}</span>
           </div>
@@ -316,7 +316,7 @@ const CreateInvoiceModal = ({ appointment, onClose, onSuccess }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+            className="px-5 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
           >
             {submitting ? 'Đang tạo...' : 'Tạo hóa đơn'}
           </button>

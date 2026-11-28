@@ -183,16 +183,33 @@ describe('ĐỢT 5: Báo cáo, Nhật ký, Dashboard', () => {
       expect(res.text).toContain('Số lượng hóa đơn');
     });
 
-    test('Xuất file Excel (.xlsx) doanh thu thành công với MIME chuẩn', async () => {
+    test('Xuất file Excel (.xlsx) doanh thu: đúng loại file, là gói zip hợp lệ', async () => {
       const res = await request(app)
         .get('/api/reports/revenue')
         .query({ from: today, to: today, format: 'xlsx' })
-        .set(authHeader(admin));
+        .set(authHeader(admin))
+        .buffer(true)
+        .parse((r, cb) => {
+          const chunks = [];
+          r.on('data', (c) => chunks.push(c));
+          r.on('end', () => cb(null, Buffer.concat(chunks)));
+        });
 
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toContain('spreadsheetml.sheet');
       expect(res.headers['content-disposition']).toContain('.xlsx');
-      expect(res.body).toBeDefined();
+      // Tệp xlsx là zip: bắt đầu bằng "PK"
+      expect(res.body.subarray(0, 2).toString()).toBe('PK');
+      // Nội dung nén có tên sheet và dữ liệu tiêu đề (kiểm tra tên file trong zip)
+      expect(res.body.includes(Buffer.from('xl/worksheets/sheet1.xml'))).toBe(true);
+    });
+
+    test('Khách và nhân viên không xuất được file Excel -> 403', async () => {
+      const res = await request(app)
+        .get('/api/reports/revenue')
+        .query({ from: today, to: today, format: 'xlsx' })
+        .set(authHeader(staff));
+      expect(res.status).toBe(403);
     });
   });
 

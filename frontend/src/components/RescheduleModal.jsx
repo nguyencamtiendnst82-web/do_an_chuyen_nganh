@@ -45,7 +45,7 @@ const RescheduleModal = ({ appointment, onClose, onDone, accent = 'pink' }) => {
     }
   }
 
-  const btn = accent === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-pink-600 hover:bg-pink-700'
+  const btn = accent === 'blue' ? 'bg-pink-600 hover:bg-pink-700' : 'bg-pink-600 hover:bg-pink-700'
 
   return (
     <Modal title="Đổi lịch hẹn" onClose={onClose} width="max-w-xl">

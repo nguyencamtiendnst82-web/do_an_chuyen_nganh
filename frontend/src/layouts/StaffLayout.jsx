@@ -18,13 +18,13 @@ const StaffLayout = () => {
 
   const navLinks = [
     { to: '/staff', label: 'Dashboard', icon: '📊', exact: true },
-    { to: '/staff/today', label: 'Hôm nay (Kanban)', icon: '📋' },
+    { to: '/staff/today', label: 'Hôm nay (Kanban)', icon: '🗂️' },
     { to: '/staff/appointments', label: 'Lịch hẹn', icon: '📅' },
-    { to: '/staff/incidents', label: 'Sự cố', icon: '⚠️' },
-    { to: '/staff/shifts', label: 'Ca làm của tôi', icon: '⏰' },
+    { to: '/staff/incidents', label: 'Sự cố', icon: '🚨' },
+    { to: '/staff/shifts', label: 'Ca làm của tôi', icon: '🕒' },
     { to: '/staff/pets', label: 'Hồ sơ thú cưng', icon: '🐶' },
-    { to: '/staff/services', label: 'Dịch vụ', icon: '✂️' },
-    { to: '/profile', label: 'Hồ sơ cá nhân', icon: '👤' },
+    { to: '/staff/services', label: 'Dịch vụ', icon: '🛁' },
+    { to: '/profile', label: 'Hồ sơ cá nhân', icon: '🧑' },
     { to: '/', label: 'Về trang chủ', icon: '🏠', exact: true },
   ]
   const Sidebar = ({ mobile = false }) => (
@@ -42,13 +42,13 @@ const StaffLayout = () => {
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
           <span className="text-2xl mr-2">🐾</span>
           <span className="font-bold text-gray-800">Pet Spa</span>
-          <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Nhân viên</span>
+          <span className="ml-2 text-xs text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">Nhân viên</span>
         </div>
 
         {/* User info */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden shrink-0">
+            <div className="w-9 h-9 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-sm overflow-hidden shrink-0">
              {user?.avatar_url
              ? <img src={user.avatar_url} alt="Ảnh đại diện" className="w-9 h-9 rounded-full object-cover" />
     : user?.full_name?.[0]?.toUpperCase() || 'S'
@@ -58,7 +58,7 @@ const StaffLayout = () => {
               <p className="text-sm font-medium text-gray-800 truncate">{user?.full_name}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
-            <NotificationBell tone="blue" placement="sidebar" />
+            <NotificationBell placement="sidebar" />
           </div>
         </div>
 
@@ -71,14 +71,18 @@ const StaffLayout = () => {
               end={exact}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                  ? 'bg-blue-50 text-blue-700'
+                `flex items-center gap-3 px-2.5 py-1.5 rounded-xl text-sm font-medium transition-colors ${isActive
+                  ? 'bg-pink-50 text-pink-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
             >
-              <span>{icon}</span>
-              <span>{label}</span>
+              {({ isActive }) => (
+                <>
+                  <span className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center text-base transition-colors ${isActive ? 'bg-white shadow-sm' : 'bg-pink-50'}`}>{icon}</span>
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -87,9 +91,9 @@ const StaffLayout = () => {
         <div className="px-3 py-4 border-t border-gray-100">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-3 px-2.5 py-1.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <span>🚪</span>
+            <span className="w-8 h-8 shrink-0 rounded-xl bg-red-50 flex items-center justify-center text-base">👋</span>
             <span>Đăng xuất</span>
           </button>
         </div>
